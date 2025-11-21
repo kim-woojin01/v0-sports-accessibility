@@ -8,7 +8,7 @@ export function SiteFooter() {
         <div className="space-y-4">
           <h3 className="text-lg font-bold">국민체육진흥공단</h3>
           <p className="text-sm text-muted-foreground">
-            Wits seamlessly connects your members with the community, resources.
+            <Link href="https://www.kspo.or.kr/kspo/main/main.do">https://www.kspo.or.kr/kspo/main/main.do</Link>
           </p>
           <div className="flex gap-4">
             <Link href="#" className="text-muted-foreground hover:text-primary">

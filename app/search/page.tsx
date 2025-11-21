@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -15,34 +16,211 @@ import {
   ChevronLeft,
   ChevronRight,
   Crosshair,
+  Loader2,
 } from "lucide-react"
-import { facilities } from "@/lib/data"
+import { facilities, type Facility } from "@/lib/data"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+
+const FacilityMap = dynamic(() => import("@/components/facility-map"), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-slate-200 animate-pulse" />,
+})
 
 const regionData: Record<string, string[]> = {
-  서울특별시: ["강남구", "송파구", "서초구", "강동구", "마포구", "영등포구", "종로구", "중구"],
-  경기도: ["수원시", "성남시", "고양시", "용인시", "부천시", "안산시", "안양시"],
-  충청북도: ["청주시", "충주시", "제천시"],
-  부산광역시: ["해운대구", "수영구", "남구", "동래구"],
+  서울특별시: [
+    "종로구",
+    "중구",
+    "용산구",
+    "성동구",
+    "광진구",
+    "동대문구",
+    "중랑구",
+    "성북구",
+    "강북구",
+    "도봉구",
+    "노원구",
+    "은평구",
+    "서대문구",
+    "마포구",
+    "양천구",
+    "강서구",
+    "구로구",
+    "금천구",
+    "영등포구",
+    "동작구",
+    "관악구",
+    "서초구",
+    "강남구",
+    "송파구",
+    "강동구",
+  ],
+  부산광역시: [
+    "중구",
+    "서구",
+    "동구",
+    "영도구",
+    "부산진구",
+    "동래구",
+    "남구",
+    "북구",
+    "해운대구",
+    "사하구",
+    "금정구",
+    "강서구",
+    "연제구",
+    "수영구",
+    "사상구",
+    "기장군",
+  ],
+  대구광역시: ["중구", "동구", "서구", "남구", "북구", "수성구", "달서구", "달성군", "군위군"],
+  인천광역시: ["중구", "동구", "미추홀구", "연수구", "남동구", "부평구", "계양구", "서구", "강화군", "옹진군"],
+  광주광역시: ["동구", "서구", "남구", "북구", "광산구"],
+  대전광역시: ["동구", "중구", "서구", "유성구", "대덕구"],
+  울산광역시: ["중구", "남구", "동구", "북구", "울주군"],
+  세종특별자치시: [],
+  경기도: [
+    "수원시",
+    "용인시",
+    "고양시",
+    "화성시",
+    "성남시",
+    "부천시",
+    "남양주시",
+    "안산시",
+    "평택시",
+    "안양시",
+    "시흥시",
+    "파주시",
+    "김포시",
+    "의정부시",
+    "광주시",
+    "하남시",
+    "양주시",
+    "광명시",
+    "군포시",
+    "오산시",
+    "이천시",
+    "안성시",
+    "구리시",
+    "포천시",
+    "의왕시",
+    "양평군",
+    "여주시",
+    "동두천시",
+    "과천시",
+    "가평군",
+    "연천군",
+  ],
+  강원특별자치도: [
+    "춘천시",
+    "원주시",
+    "강릉시",
+    "동해시",
+    "태백시",
+    "속초시",
+    "삼척시",
+    "홍천군",
+    "횡성군",
+    "영월군",
+    "평창군",
+    "정선군",
+    "철원군",
+    "화천군",
+    "양구군",
+    "인제군",
+    "고성군",
+    "양양군",
+  ],
+  충청북도: ["청주시", "충주시", "제천시", "보은군", "옥천군", "영동군", "증평군", "진천군", "괴산군", "음성군", "단양군"],
+  충청남도: ["천안시", "공주시", "보령시", "아산시", "서산시", "논산시", "계룡시", "당진시", "금산군", "부여군", "서천군", "청양군", "홍성군", "예산군", "태안군"],
+  전북특별자치도: ["전주시", "군산시", "익산시", "정읍시", "남원시", "김제시", "완주군", "진안군", "무주군", "장수군", "임실군", "순창군", "고창군", "부안군"],
+  전라남도: [
+    "목포시",
+    "여수시",
+    "순천시",
+    "나주시",
+    "광양시",
+    "담양군",
+    "곡성군",
+    "구례군",
+    "고흥군",
+    "보성군",
+    "화순군",
+    "장흥군",
+    "강진군",
+    "해남군",
+    "영암군",
+    "무안군",
+    "함평군",
+    "영광군",
+    "장성군",
+    "완도군",
+    "진도군",
+    "신안군",
+  ],
+  경상북도: [
+    "포항시",
+    "경주시",
+    "김천시",
+    "안동시",
+    "구미시",
+    "영주시",
+    "영천시",
+    "상주시",
+    "문경시",
+    "경산시",
+    "의성군",
+    "청송군",
+    "영양군",
+    "영덕군",
+    "청도군",
+    "고령군",
+    "성주군",
+    "칠곡군",
+    "예천군",
+    "봉화군",
+    "울진군",
+    "울릉군",
+  ],
+  경상남도: [
+    "창원시",
+    "진주시",
+    "통영시",
+    "사천시",
+    "김해시",
+    "밀양시",
+    "거제시",
+    "양산시",
+    "의령군",
+    "함안군",
+    "창녕군",
+    "고성군",
+    "남해군",
+    "하동군",
+    "산청군",
+    "함양군",
+    "거창군",
+    "합천군",
+  ],
+  제주특별자치도: ["제주시", "서귀포시"],
 }
 
+const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 }
+
 export default function SearchPage() {
-  const router = useRouter()
   const [isRegionOpen, setIsRegionOpen] = useState(false)
   const [isDateOpen, setIsDateOpen] = useState(false)
   const [isFacilityOpen, setIsFacilityOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   // Mock states for filters
-  const [selectedRegion, setSelectedRegion] = useState("지역")
-  const [selectedCity, setSelectedCity] = useState<string | null>(null)
+  const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null)
 
   const [selectedDate, setSelectedDate] = useState("이용날짜/시간")
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [filteredFacilities, setFilteredFacilities] = useState(facilities)
+  const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>(facilities)
 
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedHour, setSelectedHour] = useState(12)
@@ -53,6 +231,13 @@ export default function SearchPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
   const [pageBlock, setPageBlock] = useState(0) // 0 for 1-5, 1 for 6-10
+  const initialCenter =
+    facilities.length > 0 ? { lat: facilities[0].lat, lng: facilities[0].lng } : DEFAULT_CENTER
+  const [mapCenter, setMapCenter] = useState(initialCenter)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [isLocating, setIsLocating] = useState(false)
+  const locationWatchId = useRef<number | null>(null)
+  const hasCenteredOnUser = useRef(false)
 
   useEffect(() => {
     const user = localStorage.getItem("user")
@@ -72,10 +257,10 @@ export default function SearchPage() {
       )
     }
 
-    if (selectedRegion !== "지역") {
-      const regionFilter = selectedDistrict || selectedCity || selectedRegion
-      if (regionFilter && regionFilter !== "지역") {
-        results = results.filter((f) => f.address.includes(regionFilter))
+    if (selectedProvince) {
+      results = results.filter((f) => f.province === selectedProvince)
+      if (selectedDistrict) {
+        results = results.filter((f) => f.district === selectedDistrict)
       }
     }
 
@@ -84,6 +269,12 @@ export default function SearchPage() {
     }
 
     setFilteredFacilities(results)
+    const firstResult = results[0]
+    if (firstResult) {
+      setMapCenter({ lat: firstResult.lat, lng: firstResult.lng })
+    } else {
+      setMapCenter(DEFAULT_CENTER)
+    }
     setCurrentPage(1) // Reset to first page
     setIsRegionOpen(false)
     setIsDateOpen(false)
@@ -127,18 +318,66 @@ export default function SearchPage() {
     return facilityId === "2"
   }
 
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      return
+    }
+
+    setIsLocating(true)
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        }
+        setUserLocation(coords)
+        setIsLocating(false)
+
+        if (!hasCenteredOnUser.current) {
+          setMapCenter(coords)
+          hasCenteredOnUser.current = true
+        }
+      },
+      () => {
+        setIsLocating(false)
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
+    )
+
+    locationWatchId.current = watchId
+
+    return () => {
+      if (locationWatchId.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(locationWatchId.current)
+      }
+    }
+  }, [setMapCenter])
+
   const handleMyLocation = () => {
-    if (navigator.geolocation) {
+    if (userLocation) {
+      setMapCenter(userLocation)
+      return
+    }
+
+    if (navigator.geolocation && !isLocating) {
+      setIsLocating(true)
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          alert(`현재 위치: 위도 ${position.coords.latitude}, 경도 ${position.coords.longitude}`)
-          // In a real app, this would update the map center
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          }
+          setUserLocation(coords)
+          setMapCenter(coords)
+          setIsLocating(false)
         },
-        (error) => {
+        () => {
           alert("위치 정보를 가져올 수 없습니다.")
+          setIsLocating(false)
         },
+        { enableHighAccuracy: true, timeout: 10000 },
       )
-    } else {
+    } else if (!navigator.geolocation) {
       alert("이 브라우저에서는 위치 서비스를 지원하지 않습니다.")
     }
   }
@@ -167,23 +406,20 @@ export default function SearchPage() {
   return (
     <div className="flex flex-col min-h-screen items-center w-full">
       {/* Map Section */}
-      <div className="relative w-full h-[400px] bg-slate-200">
-        <Image src="/map-street-view.jpg" alt="Map" fill className="object-cover" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <div className="relative">
-            <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-            <div className="absolute -top-10 -left-10 bg-white px-3 py-1 rounded-lg shadow-md text-xs font-bold whitespace-nowrap">
-              현재 위치
-            </div>
-          </div>
+      <div className="relative w-full h-[420px] rounded-2xl overflow-hidden shadow-lg bg-slate-100">
+        <FacilityMap facilities={filteredFacilities} center={mapCenter} userLocation={userLocation} />
+        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-md text-sm font-medium text-slate-700">
+          {userLocation ? "내 위치 기준으로 지도를 표시하고 있어요." : "검색 결과를 지도 아이콘으로 확인해보세요."}
         </div>
         <Button
           variant="secondary"
           size="icon"
           className="absolute bottom-4 right-4 rounded-full shadow-lg bg-white hover:bg-slate-100"
           onClick={handleMyLocation}
+          disabled={isLocating}
+          aria-label="현재 위치로 이동"
         >
-          <Crosshair className="w-6 h-6 text-slate-700" />
+          {isLocating ? <Loader2 className="w-5 h-5 animate-spin text-slate-700" /> : <Crosshair className="w-6 h-6 text-slate-700" />}
         </Button>
       </div>
 
@@ -214,7 +450,7 @@ export default function SearchPage() {
               >
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  <span>{selectedDistrict || selectedCity || "지역"}</span>
+                  <span>{selectedDistrict || selectedProvince || "지역"}</span>
                 </div>
                 <ChevronRight className={`w-4 h-4 transition-transform ${isRegionOpen ? "rotate-90" : ""}`} />
               </Button>
@@ -223,56 +459,71 @@ export default function SearchPage() {
                 <div className="absolute top-full left-0 mt-2 w-[600px] bg-white rounded-lg shadow-xl border p-4 z-50 flex gap-4 h-80">
                   <div className="w-1/3 border-r overflow-y-auto">
                     <div className="p-2 font-bold text-sm text-muted-foreground mb-2">시/도 (다중선택 가능)</div>
-                    {Object.keys(regionData).map((city) => (
-                      <div
-                        key={city}
-                        className={`p-2 hover:bg-slate-100 cursor-pointer flex items-center gap-2 ${
-                          selectedCity === city ? "bg-purple-50 text-purple-700 font-medium" : ""
-                        }`}
-                        onClick={() => {
-                          setSelectedCity(city)
-                          setSelectedDistrict(null)
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedCity === city}
-                          readOnly
-                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                        />
-                        {city}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="w-1/3 border-r overflow-y-auto">
-                    <div className="p-2 font-bold text-sm text-muted-foreground mb-2">시/군/구 (다중선택 가능)</div>
-                    {selectedCity &&
-                      regionData[selectedCity]?.map((district) => (
+                    {Object.keys(regionData).map((province) => {
+                      const isSelectedProvince = selectedProvince === province
+                      return (
                         <div
-                          key={district}
+                          key={province}
                           className={`p-2 hover:bg-slate-100 cursor-pointer flex items-center gap-2 ${
-                            selectedDistrict === district ? "bg-purple-50 text-purple-700 font-medium" : ""
+                            isSelectedProvince ? "bg-purple-50 text-purple-700 font-medium" : ""
                           }`}
                           onClick={() => {
-                            setSelectedDistrict(district)
-                            setSelectedRegion(`${selectedCity} ${district}`)
+                            if (isSelectedProvince) {
+                              setSelectedProvince(null)
+                              setSelectedDistrict(null)
+                            } else {
+                              setSelectedProvince(province)
+                              setSelectedDistrict(null)
+                            }
                           }}
                         >
                           <input
                             type="checkbox"
-                            checked={selectedDistrict === district}
+                            checked={isSelectedProvince}
                             readOnly
                             className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                           />
-                          {district}
+                          {province}
                         </div>
-                      ))}
+                      )
+                    })}
+                  </div>
+                  <div className="w-1/3 border-r overflow-y-auto">
+                    <div className="p-2 font-bold text-sm text-muted-foreground mb-2">시/군/구 (다중선택 가능)</div>
+                    {selectedProvince &&
+                      regionData[selectedProvince]?.map((district) => {
+                        const isSelectedDistrict = selectedDistrict === district
+                        return (
+                          <div
+                            key={district}
+                            className={`p-2 hover:bg-slate-100 cursor-pointer flex items-center gap-2 ${
+                              isSelectedDistrict ? "bg-purple-50 text-purple-700 font-medium" : ""
+                            }`}
+                            onClick={() => {
+                              if (isSelectedDistrict) {
+                                setSelectedDistrict(null)
+                              } else {
+                                setSelectedDistrict(district)
+                              }
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelectedDistrict}
+                              readOnly
+                              className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                            />
+                            {district}
+                          </div>
+                        )
+                      })}
                   </div>
                   <div className="w-1/3 overflow-y-auto">
                     <div className="p-2 font-bold text-sm text-muted-foreground mb-2">선택 지역</div>
-                    {selectedCity && selectedDistrict && (
+                    {selectedProvince && (
                       <div className="p-2 text-sm">
-                        ({selectedCity}){selectedDistrict}
+                        {selectedProvince}
+                        {selectedDistrict ? ` ${selectedDistrict}` : ""}
                       </div>
                     )}
                   </div>

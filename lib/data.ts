@@ -11,6 +11,10 @@ export interface Facility {
   congestion: "crowded" | "moderate" | "leisure"
   features: string[]
   description: string
+  lat: number
+  lng: number
+  province: string
+  district: string
 }
 
 export const facilities: Facility[] = [
@@ -25,6 +29,10 @@ export const facilities: Facility[] = [
     congestion: "crowded",
     features: ["주차장", "승강기", "장애인 화장실"],
     description: "다목적 체육관으로 다양한 스포츠 활동이 가능합니다.",
+    lat: 36.9719,
+    lng: 127.9253,
+    province: "충청북도",
+    district: "충주시",
   },
   {
     id: "2",
@@ -37,6 +45,10 @@ export const facilities: Facility[] = [
     congestion: "leisure",
     features: ["수영장", "헬스장", "점자 안내"],
     description: "최신 시설을 갖춘 종합 스포츠 센터입니다.",
+    lat: 37.515,
+    lng: 127.118,
+    province: "서울특별시",
+    district: "송파구",
   },
   {
     id: "3",
@@ -49,6 +61,10 @@ export const facilities: Facility[] = [
     congestion: "moderate",
     features: ["휠체어 대여", "경사로", "음성 안내"],
     description: "장애인을 위한 맞춤형 운동 기구와 프로그램을 제공합니다.",
+    lat: 37.396,
+    lng: 127.111,
+    province: "경기도",
+    district: "성남시",
   },
   {
     id: "4",
@@ -61,6 +77,10 @@ export const facilities: Facility[] = [
     congestion: "crowded",
     features: ["주차장", "장애인 전용 주차장"],
     description: "넓은 트랙과 잔디 구장이 있는 야외 운동장입니다.",
+    lat: 35.163,
+    lng: 129.163,
+    province: "부산광역시",
+    district: "해운대구",
   },
   {
     id: "5",
@@ -73,6 +93,10 @@ export const facilities: Facility[] = [
     congestion: "leisure",
     features: ["재활 운동", "수중 치료", "가족 탈의실"],
     description: "재활 운동에 특화된 전문 스포츠 센터입니다.",
+    lat: 37.568,
+    lng: 126.901,
+    province: "서울특별시",
+    district: "마포구",
   },
   {
     id: "6",
@@ -85,6 +109,10 @@ export const facilities: Facility[] = [
     congestion: "moderate",
     features: ["주차장", "헬스장", "수영장"],
     description: "강남 지역 최대 규모의 복합 체육 시설입니다.",
+    lat: 37.525,
+    lng: 127.049,
+    province: "서울특별시",
+    district: "강남구",
   },
   {
     id: "7",
@@ -97,6 +125,10 @@ export const facilities: Facility[] = [
     congestion: "crowded",
     features: ["주차장", "엘리베이터", "장애인 화장실"],
     description: "다양한 스포츠 프로그램을 운영하는 대형 시설입니다.",
+    lat: 37.512,
+    lng: 127.082,
+    province: "서울특별시",
+    district: "송파구",
   },
   {
     id: "8",
@@ -109,6 +141,10 @@ export const facilities: Facility[] = [
     congestion: "leisure",
     features: ["주차장", "경사로", "음성 안내"],
     description: "접근성이 우수한 수원 지역 대표 체육관입니다.",
+    lat: 37.29,
+    lng: 127.009,
+    province: "경기도",
+    district: "수원시",
   },
   {
     id: "9",
@@ -121,6 +157,10 @@ export const facilities: Facility[] = [
     congestion: "moderate",
     features: ["휠체어 대여", "점자 안내", "장애인 화장실"],
     description: "가족 단위 이용에 적합한 실내 체육 시설입니다.",
+    lat: 37.658,
+    lng: 126.771,
+    province: "경기도",
+    district: "고양시",
   },
   {
     id: "10",
@@ -133,6 +173,10 @@ export const facilities: Facility[] = [
     congestion: "leisure",
     features: ["주차장", "승강기", "경사로", "휠체어 대여"],
     description: "장애인 맞춤형 프로그램이 풍부한 전문 센터입니다.",
+    lat: 37.447,
+    lng: 126.731,
+    province: "인천광역시",
+    district: "남동구",
   },
   {
     id: "11",
@@ -145,6 +189,10 @@ export const facilities: Facility[] = [
     congestion: "crowded",
     features: ["주차장", "헬스장"],
     description: "시민 모두를 위한 개방형 체육 공간입니다.",
+    lat: 37.503,
+    lng: 126.766,
+    province: "경기도",
+    district: "부천시",
   },
   {
     id: "12",
@@ -157,6 +205,10 @@ export const facilities: Facility[] = [
     congestion: "moderate",
     features: ["수영장", "점자 안내", "음성 안내"],
     description: "다양한 클럽 활동이 가능한 스포츠 커뮤니티 공간입니다.",
+    lat: 37.401,
+    lng: 126.922,
+    province: "경기도",
+    district: "안양시",
   },
   {
     id: "13",
@@ -169,6 +221,10 @@ export const facilities: Facility[] = [
     congestion: "leisure",
     features: ["주차장", "경사로"],
     description: "체력 단련에 특화된 시설과 프로그램을 제공합니다.",
+    lat: 37.24,
+    lng: 127.177,
+    province: "경기도",
+    district: "용인시",
   },
   {
     id: "14",
@@ -181,6 +237,10 @@ export const facilities: Facility[] = [
     congestion: "moderate",
     features: ["휠체어 대여", "장애인 화장실", "장애인 전용 주차장"],
     description: "장애인의 건강한 생활을 지원하는 전문 센터입니다.",
+    lat: 37.438,
+    lng: 127.159,
+    province: "경기도",
+    district: "성남시",
   },
   {
     id: "15",
@@ -193,6 +253,10 @@ export const facilities: Facility[] = [
     congestion: "crowded",
     features: ["주차장", "수영장", "헬스장"],
     description: "광명 지역 최고의 종합 스포츠 시설입니다.",
+    lat: 37.478,
+    lng: 126.864,
+    province: "경기도",
+    district: "광명시",
   },
 ]
 

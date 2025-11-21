@@ -81,7 +81,8 @@ export default function SignUpPage() {
       <div className="w-full max-w-xl space-y-8 bg-white p-8 rounded-2xl shadow-lg">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Sign up</h2>
-          <p className="mt-2 text-sm text-muted-foreground">아이디 형식 어쩌구 안내 문구, * 필수 항목</p>
+
+          <p className="mt-2 text-sm text-muted-foreground"> *은 필수 항목이므로 꼭 입력 해주세요.</p>
         </div>
 
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
@@ -174,6 +175,8 @@ export default function SignUpPage() {
                       </SelectItem>
                     ))}
                   </SelectContent>
+                  <p className="mt-2 text-sm text-muted-foreground"> 생년월일 *</p>
+
                 </Select>
               </div>
             </div>
@@ -186,13 +189,14 @@ export default function SignUpPage() {
           {/* Optional Fields for Recommendation */}
           <Select>
             <SelectTrigger>
-              <SelectValue placeholder="장애 유형 선택 (시각, 청각, 지체, 지적 등)" />
+              <SelectValue placeholder="장애 유형 선택 (시각, 청각, 지체, 지적, 언어 등)" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="visual">시각 장애</SelectItem>
               <SelectItem value="hearing">청각 장애</SelectItem>
               <SelectItem value="physical">지체 장애</SelectItem>
               <SelectItem value="intellectual">지적 장애</SelectItem>
+              <SelectItem value="language">언어 장애</SelectItem>
               <SelectItem value="none">해당 없음</SelectItem>
             </SelectContent>
           </Select>
@@ -200,7 +204,7 @@ export default function SignUpPage() {
           <div className="space-y-2">
             <Label>운동 목적 (중복 선택 가능)</Label>
             <div className="grid grid-cols-2 gap-2">
-              {["재활", "유산소", "근력", "수중 운동", "체중 감량", "체력 증진"].map((purpose) => (
+              {["재활", "유산소", "근력", "재활 운동", "체중 감량", "스포츠 운동"].map((purpose) => (
                 <div key={purpose} className="flex items-center space-x-2">
                   <Checkbox
                     id={purpose}

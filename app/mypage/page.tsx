@@ -91,7 +91,9 @@ export default function MyPage() {
     if (newState) {
       // Mock trigger alarm
       setTimeout(() => {
-        alert(`[알림] 현재 16시 노원구 장애인스포츠센터 시설의 혼잡도가 적어 이용이 편리합니다.`)
+        alert(`[알람 기능] 설정되었습니다. 아래와 같이 알람이 전송될 예정입니다.
+
+[예시 알람] 현재 16시 노원구 장애인스포츠센터 시설의 혼잡도가 적어 이용이 편리합니다.`)
       }, 2000)
     }
   }
@@ -150,6 +152,7 @@ export default function MyPage() {
                       <SelectItem value="청각 장애">청각 장애</SelectItem>
                       <SelectItem value="지체 장애">지체 장애</SelectItem>
                       <SelectItem value="지적 장애">지적 장애</SelectItem>
+                      <SelectItem value="해당 사항 없음">해당 사항 없음</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
@@ -171,6 +174,9 @@ export default function MyPage() {
                       <SelectItem value="유산소">유산소</SelectItem>
                       <SelectItem value="근력 운동">근력 운동</SelectItem>
                       <SelectItem value="체중 감량">체중 감량</SelectItem>
+                      <SelectItem value="근력 운동">근력 운동</SelectItem>
+                      <SelectItem value="재활 운동">재활 운동</SelectItem>
+                      <SelectItem value="스포츠 운동">스포츠 운동</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
