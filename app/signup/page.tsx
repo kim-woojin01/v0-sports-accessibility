@@ -1,28 +1,112 @@
 "use client"
 import { Button } from "@/components/ui/button"
+import type React from "react"
+
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Mail, Lock, User, Phone, Calendar } from "lucide-react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function SignUpPage() {
+  const router = useRouter()
+  const [id, setId] = useState("")
+  const [isIdChecked, setIsIdChecked] = useState(false)
+  const [idMessage, setIdMessage] = useState("")
+  const [idAvailable, setIdAvailable] = useState(false)
+
+  const [phone, setPhone] = useState("")
+  const [birthYear, setBirthYear] = useState("")
+  const [birthMonth, setBirthMonth] = useState("")
+  const [birthDay, setBirthDay] = useState("")
+
+  const [exercisePurposes, setExercisePurposes] = useState<string[]>([])
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+
+  // Mock existing IDs
+  const existingIds = ["testuser", "admin", "user123"]
+
+  const handleCheckId = () => {
+    if (!id) {
+      setIdMessage("아이디를 입력해주세요.")
+      setIdAvailable(false)
+      return
+    }
+    if (existingIds.includes(id)) {
+      setIdMessage("중복 아이디입니다.")
+      setIdAvailable(false)
+    } else {
+      setIdMessage("사용 가능한 아이디입니다!")
+      setIdAvailable(true)
+    }
+    setIsIdChecked(true)
+  }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, "")
+    if (value.length <= 11) {
+      setPhone(value.replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`))
+    }
+  }
+
+  const handlePurposeChange = (value: string) => {
+    setExercisePurposes((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]))
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!isIdChecked || !idAvailable) {
+      alert("아이디 중복 확인을 해주세요.")
+      return
+    }
+    setShowSuccessModal(true)
+  }
+
+  const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i)
+  const months = Array.from({ length: 12 }, (_, i) => i + 1)
+  const days = Array.from({ length: 31 }, (_, i) => i + 1)
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 py-12 pt-24">
       <div className="w-full max-w-xl space-y-8 bg-white p-8 rounded-2xl shadow-lg">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Sign up</h2>
           <p className="mt-2 text-sm text-muted-foreground">아이디 형식 어쩌구 안내 문구, * 필수 항목</p>
         </div>
 
-        <form className="mt-8 space-y-4">
+        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           {/* Required Fields */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-              <Input placeholder="ID / email *" className="pl-10" required />
+          <div className="flex flex-col gap-1">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Input
+                  placeholder="ID / email *"
+                  className="pl-10"
+                  required
+                  value={id}
+                  onChange={(e) => {
+                    setId(e.target.value)
+                    setIsIdChecked(false)
+                    setIdMessage("")
+                  }}
+                />
+              </div>
+              <Button type="button" variant="outline" onClick={handleCheckId}>
+                중복확인
+              </Button>
             </div>
-            <Button type="button" variant="outline">
-              중복확인
-            </Button>
+            {idMessage && <p className={`text-xs ${idAvailable ? "text-green-600" : "text-red-600"}`}>{idMessage}</p>}
           </div>
 
           <div className="relative">
@@ -42,12 +126,57 @@ export default function SignUpPage() {
 
           <div className="relative">
             <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-            <Input placeholder="전화번호 *" className="pl-10" required />
+            <Input
+              placeholder="전화번호 (010-0000-0000) *"
+              className="pl-10"
+              required
+              value={phone}
+              onChange={handlePhoneChange}
+            />
           </div>
 
-          <div className="relative">
-            <Calendar className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-            <Input placeholder="생년월일 *" className="pl-10" required />
+          <div className="flex gap-2">
+            <div className="relative w-full">
+              <Calendar className="absolute left-3 top-3 h-5 w-5 text-muted-foreground z-10" />
+              <div className="flex gap-2 pl-10">
+                <Select value={birthYear} onValueChange={setBirthYear} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="년" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map((y) => (
+                      <SelectItem key={y} value={y.toString()}>
+                        {y}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={birthMonth} onValueChange={setBirthMonth} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="월" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((m) => (
+                      <SelectItem key={m} value={m.toString()}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={birthDay} onValueChange={setBirthDay} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="일" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {days.map((d) => (
+                      <SelectItem key={d} value={d.toString()}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
           <div className="border-t my-6"></div>
@@ -68,17 +197,23 @@ export default function SignUpPage() {
             </SelectContent>
           </Select>
 
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder="운동 목적 (재활, 유산소, 근력, 수중 운동 등)" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="rehab">재활</SelectItem>
-              <SelectItem value="cardio">유산소</SelectItem>
-              <SelectItem value="strength">근력</SelectItem>
-              <SelectItem value="water">수중 운동</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <Label>운동 목적 (중복 선택 가능)</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {["재활", "유산소", "근력", "수중 운동", "체중 감량", "체력 증진"].map((purpose) => (
+                <div key={purpose} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={purpose}
+                    checked={exercisePurposes.includes(purpose)}
+                    onCheckedChange={() => handlePurposeChange(purpose)}
+                  />
+                  <Label htmlFor={purpose} className="text-sm font-normal cursor-pointer">
+                    {purpose}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
@@ -106,6 +241,18 @@ export default function SignUpPage() {
           </Button>
         </form>
       </div>
+
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>회원가입 완료</DialogTitle>
+            <DialogDescription>회원가입이 완료되었습니다!</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => router.push("/signin")}>확인</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

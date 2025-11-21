@@ -10,15 +10,22 @@ export function SiteHeader() {
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [userName, setUserName] = useState("홍길동")
 
   // Mock login state check - in real app this would use auth context
   useEffect(() => {
     const user = localStorage.getItem("user")
     setIsLoggedIn(!!user)
+    if (user) {
+      // In a real app, we'd parse the user object. For now, we'll use a mock or stored name if available.
+      const storedName = localStorage.getItem("userName")
+      if (storedName) setUserName(storedName)
+    }
   }, [])
 
   const handleLogout = () => {
     localStorage.removeItem("user")
+    localStorage.removeItem("userName")
     setIsLoggedIn(false)
     window.location.href = "/"
   }
@@ -31,34 +38,38 @@ export function SiteHeader() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-8">
+    <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center justify-between relative max-w-screen-2xl mx-auto">
+        <div className="flex items-center gap-8 pl-6">
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-xl font-bold tracking-tight">
               Sports<span className="text-primary">Access</span>
             </span>
           </Link>
-          <nav className="hidden md:flex gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  pathname === item.href ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
         </div>
+
+        <nav className="hidden md:flex gap-16 absolute left-1/2 transform -translate-x-1/2">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`text-sm font-medium transition-colors hover:text-primary relative py-2 ${
+                pathname === item.href ? "text-purple-600" : "text-muted-foreground"
+              }`}
+            >
+              {item.name}
+              {pathname === item.href && (
+                <span className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-600 rounded-full" />
+              )}
+            </Link>
+          ))}
+        </nav>
 
         <div className="hidden md:flex items-center gap-4">
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
               <Link href="/mypage" className="text-sm font-medium hover:underline">
-                홍길동님 환영합니다!
+                {userName}님 환영합니다!
               </Link>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 Logout
@@ -107,7 +118,7 @@ export function SiteHeader() {
           <div className="pt-4 border-t">
             {isLoggedIn ? (
               <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium">홍길동님 환영합니다!</span>
+                <span className="text-sm font-medium">{userName}님 환영합니다!</span>
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>

@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Search, MapPin, Users, Info, Star, Phone, Clock } from "lucide-react"
+import { Search, Users, Info, Star, Phone, Clock } from "lucide-react"
 
 export default function Home() {
   return (
@@ -17,45 +17,71 @@ export default function Home() {
         </div>
 
         {/* Service Cards Slider (Simplified as Grid for MVP) */}
-        <div className="container mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center mb-4 text-pink-600">
-              <Search className="w-6 h-6" />
+        <div className="container mt-16 overflow-x-auto pb-8 hide-scrollbar">
+          <div className="flex gap-6 min-w-max px-4 lg:justify-center lg:min-w-0">
+            {/* Card 1 */}
+            <div className="w-80 h-80 bg-white p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between">
+              <div>
+                <div className="w-14 h-14 rounded-full bg-pink-50 border border-pink-100 flex items-center justify-center mb-6 text-pink-600">
+                  <Search className="w-7 h-7" />
+                </div>
+                <h3 className="font-bold text-xl mb-4">체육시설 검색 서비스</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  지역, 종목, 시설명을 입력하면
+                  <br />
+                  장애인 편의시설 정보(경사로, 주차장, 화장실)까지 한 번에 확인할 수 있습니다.
+                  <br />
+                  편의시설 필터를 통해 나에게 맞는 시설을 빠르게 찾을 수 있습니다.
+                </p>
+              </div>
             </div>
-            <h3 className="font-bold text-lg mb-2">체육시설 검색 서비스</h3>
-            <p className="text-sm text-muted-foreground">
-              지역, 종목, 시설명을 입력하면 장애인 편의시설 정보(경사로, 주차장, 화장실)까지 한 번에 확인할 수 있습니다.
-            </p>
-          </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4 text-purple-600">
-              <MapPin className="w-6 h-6" />
+            {/* Card 2 - Staggered Down */}
+            <div className="w-80 h-80 bg-white p-8 rounded-2xl shadow-sm border border-pink-200 hover:shadow-md transition-shadow flex flex-col justify-between mt-12">
+              <div>
+                <div className="w-14 h-14 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center mb-6 text-purple-600">
+                  <div className="w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
+                    ★
+                  </div>
+                </div>
+                <h3 className="font-bold text-xl mb-4">접근성 평가 & 점수 제공</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  시설별 장애인 편의시설 여부, 길턱, 이동 동선 등 접근성 요소를 분석해 종합 점수를 제공합니다.
+                  <br />
+                  객관적인 데이터를 기반으로 시설 선택을 더 쉽게 도와줍니다.
+                </p>
+              </div>
             </div>
-            <h3 className="font-bold text-lg mb-2">접근성 평가 & 점수 제공</h3>
-            <p className="text-sm text-muted-foreground">
-              시설별 장애인 편의시설 여부, 길턱, 이동 동선 등 접근성 요소를 분석해 종합 점수를 제공합니다.
-            </p>
-          </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4 text-blue-600">
-              <Users className="w-6 h-6" />
+            {/* Card 3 */}
+            <div className="w-80 h-80 bg-white p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between">
+              <div>
+                <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mb-6 text-blue-600">
+                  <Users className="w-7 h-7" />
+                </div>
+                <h3 className="font-bold text-xl mb-4">혼잡도 분석 서비스</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  공공데이터 기반으로 시간대·요일별 혼잡도 패턴을 분석합니다.
+                  <br />
+                  여유 / 보통 / 혼잡 상태를 색상으로 시각화해 가장 편한 시간에 시설을 이용할 수 있도록 안내합니다.
+                </p>
+              </div>
             </div>
-            <h3 className="font-bold text-lg mb-2">혼잡도 분석 서비스</h3>
-            <p className="text-sm text-muted-foreground">
-              공공데이터 기반으로 시간대/요일별 혼잡도 패턴을 분석합니다. 여유/보통/혼잡 상태를 색상으로 시각화합니다.
-            </p>
-          </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4 text-green-600">
-              <Info className="w-6 h-6" />
+            {/* Card 4 - Staggered Down */}
+            <div className="w-80 h-80 bg-white p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between mt-12">
+              <div>
+                <div className="w-14 h-14 rounded-full bg-green-50 border border-green-100 flex items-center justify-center mb-6 text-purple-800">
+                  <Info className="w-7 h-7" />
+                </div>
+                <h3 className="font-bold text-xl mb-4">시설 상세 정보 제공</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  운영시간, 주차, 이용 요금표, 시설 규모 등 이용에 필요한 모든 정보를 한 화면에 제공합니다.
+                  <br />
+                  장애인 편의시설 체크리스트도 함께 제공합니다.
+                </p>
+              </div>
             </div>
-            <h3 className="font-bold text-lg mb-2">시설 상세 정보 제공</h3>
-            <p className="text-sm text-muted-foreground">
-              운영시간, 주차, 이용 요금표, 시설 규모 등 기본 정보뿐만 아니라 편의시설 체크리스트도 함께 제공합니다.
-            </p>
           </div>
         </div>
       </section>
@@ -72,7 +98,9 @@ export default function Home() {
               <br />
               시간대별 혼잡도를 한눈에 확인!
             </h2>
-            <div className="w-24 h-1 bg-purple-600 rounded-full"></div>
+            <div className="w-32 h-1.5 bg-purple-600 rounded-full flex items-center">
+              <div className="ml-auto -mr-1 w-3 h-3 bg-purple-600 rounded-full animate-pulse" />
+            </div>
             <p className="text-muted-foreground text-lg">
               지도 위에서 내 주변 체육시설을 직관적으로 확인하세요. 현재 위치를 기반으로 가장 가까운 접근성 높은 시설을
               추천해드립니다.

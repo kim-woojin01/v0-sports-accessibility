@@ -3,8 +3,8 @@ import { Facebook, Twitter, Instagram } from "lucide-react"
 
 export function SiteFooter() {
   return (
-    <footer className="bg-background border-t py-12">
-      <div className="container grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-background border-t py-12 w-full">
+      <div className="container grid grid-cols-1 md:grid-cols-4 gap-8 max-w-screen-2xl mx-auto">
         <div className="space-y-4">
           <h3 className="text-lg font-bold">국민체육진흥공단</h3>
           <p className="text-sm text-muted-foreground">
@@ -86,7 +86,7 @@ export function SiteFooter() {
           </ul>
         </div>
       </div>
-      <div className="container mt-12 pt-8 border-t text-center">
+      <div className="container mt-12 pt-8 border-t text-center max-w-screen-2xl mx-auto">
         <div className="w-full h-12 gradient-primary flex items-center justify-center text-white text-sm">
           © Copyright ar-shakir. All right reserved
         </div>
