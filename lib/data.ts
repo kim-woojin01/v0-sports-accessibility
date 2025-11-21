@@ -1,0 +1,123 @@
+// Mock data for the application
+
+export interface Facility {
+  id: string
+  name: string
+  address: string
+  image: string
+  rating: number
+  phone: string
+  hours: string
+  congestion: "crowded" | "moderate" | "leisure"
+  features: string[]
+  description: string
+}
+
+export const facilities: Facility[] = [
+  {
+    id: "1",
+    name: "호암체육관",
+    address: "충북 충주시 중원대로 3306 호암체육관",
+    image: "/gymnasium.jpg",
+    rating: 5.0,
+    phone: "043-830-9225",
+    hours: "09:00 - 22:00",
+    congestion: "crowded",
+    features: ["주차장", "승강기", "장애인 화장실"],
+    description: "다목적 체육관으로 다양한 스포츠 활동이 가능합니다.",
+  },
+  {
+    id: "2",
+    name: "국민체육센터",
+    address: "서울시 송파구 올림픽로 123",
+    image: "/sports-center.jpg",
+    rating: 4.8,
+    phone: "02-123-4567",
+    hours: "06:00 - 23:00",
+    congestion: "leisure",
+    features: ["수영장", "헬스장", "점자 안내"],
+    description: "최신 시설을 갖춘 종합 스포츠 센터입니다.",
+  },
+  {
+    id: "3",
+    name: "장애인 전용 체육관",
+    address: "경기도 성남시 분당구 판교로 55",
+    image: "/accessible-gym.jpg",
+    rating: 4.9,
+    phone: "031-987-6543",
+    hours: "09:00 - 18:00",
+    congestion: "moderate",
+    features: ["휠체어 대여", "경사로", "음성 안내"],
+    description: "장애인을 위한 맞춤형 운동 기구와 프로그램을 제공합니다.",
+  },
+  {
+    id: "4",
+    name: "시민 운동장",
+    address: "부산시 해운대구 해운대로 777",
+    image: "/grand-stadium.png",
+    rating: 4.5,
+    phone: "051-777-8888",
+    hours: "05:00 - 22:00",
+    congestion: "crowded",
+    features: ["주차장", "장애인 전용 주차장"],
+    description: "넓은 트랙과 잔디 구장이 있는 야외 운동장입니다.",
+  },
+  {
+    id: "5",
+    name: "푸르뫼 스포츠센터",
+    address: "서울시 마포구 월드컵북로 100",
+    image: "/rehab-center.jpg",
+    rating: 4.7,
+    phone: "02-333-4444",
+    hours: "08:00 - 20:00",
+    congestion: "leisure",
+    features: ["재활 운동", "수중 치료", "가족 탈의실"],
+    description: "재활 운동에 특화된 전문 스포츠 센터입니다.",
+  },
+]
+
+export const reviews = [
+  {
+    id: "r1",
+    facilityId: "1",
+    userId: "user1",
+    userName: "김철수",
+    rating: 5,
+    date: "2023-11-15",
+    content: "시설이 매우 깨끗하고 직원분들이 친절해서 좋았습니다. 휠체어 이동도 편리했어요.",
+    tags: ["직원들이 친절했어요", "시설이 청결했어요", "진입로 평탄해요"],
+  },
+  {
+    id: "r2",
+    facilityId: "2",
+    userId: "user2",
+    userName: "이영희",
+    rating: 4,
+    date: "2023-11-10",
+    content: "수영장 물이 따뜻해서 좋았는데 주차장이 조금 좁네요.",
+    tags: ["운동 기구 상태가 좋았어요", "이용 요금이 합리적이에요"],
+  },
+]
+
+export const userProfile = {
+  name: "홍길동",
+  email: "hong@example.com",
+  phone: "010-1234-5678",
+  birth: "1990.01.01",
+  disabilityType: "지체 장애",
+  exercisePurpose: ["재활", "근력 운동"],
+  history: [
+    {
+      facilityId: "1",
+      date: "2023-11-20",
+      time: "14:00",
+      hasReview: false,
+    },
+    {
+      facilityId: "2",
+      date: "2023-11-01",
+      time: "10:00",
+      hasReview: true,
+    },
+  ],
+}
