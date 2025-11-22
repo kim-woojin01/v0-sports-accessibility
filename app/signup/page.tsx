@@ -1,7 +1,6 @@
 "use client"
 import { Button } from "@/components/ui/button"
 import type React from "react"
-
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Mail, Lock, User, Phone, Calendar } from "lucide-react"
@@ -18,58 +17,272 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
+// 유효성 검사 함수들
+const isValidIdOrEmail = (value: string): boolean => {
+  if (value.length === 0 || value.length > 50) return false
+  // 이메일 형식 또는 일반 ID 형식 (영문, 숫자, 일부 특수문자)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const idRegex = /^[a-zA-Z0-9._-]+$/
+  return emailRegex.test(value) || idRegex.test(value)
+}
+
+const isValidPhone = (value: string): boolean => {
+  // 010-0000-0000 형식
+  const phoneRegex = /^010-\d{4}-\d{4}$/
+  return phoneRegex.test(value)
+}
+
 export default function SignUpPage() {
   const router = useRouter()
-  const [id, setId] = useState("")
+  
+  // 필수 항목 상태
+  const [idEmail, setIdEmail] = useState("")
   const [isIdChecked, setIsIdChecked] = useState(false)
   const [idMessage, setIdMessage] = useState("")
   const [idAvailable, setIdAvailable] = useState(false)
-
+  
+  const [password, setPassword] = useState("")
+  const [passwordCheck, setPasswordCheck] = useState("")
+  const [passwordMatchMessage, setPasswordMatchMessage] = useState("")
+  const [passwordMatch, setPasswordMatch] = useState(false)
+  
+  const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [birthYear, setBirthYear] = useState("")
   const [birthMonth, setBirthMonth] = useState("")
   const [birthDay, setBirthDay] = useState("")
-
+  
+  // 선택 항목 상태
+  const [disabilityType, setDisabilityType] = useState("")
   const [exercisePurposes, setExercisePurposes] = useState<string[]>([])
+  
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Mock existing IDs
-  const existingIds = ["testuser", "admin", "user123"]
-
-  const handleCheckId = () => {
-    if (!id) {
-      setIdMessage("아이디를 입력해주세요.")
+  // ID/이메일 중복 확인
+  const handleCheckId = async () => {
+    if (!idEmail) {
+      setIdMessage("아이디 또는 이메일을 입력해주세요.")
       setIdAvailable(false)
+      setIsIdChecked(false)
       return
     }
-    if (existingIds.includes(id)) {
-      setIdMessage("중복 아이디입니다.")
+    
+    if (!isValidIdOrEmail(idEmail)) {
+      setIdMessage("올바른 ID 또는 이메일 형식이 아닙니다.")
       setIdAvailable(false)
-    } else {
-      setIdMessage("사용 가능한 아이디입니다!")
-      setIdAvailable(true)
+      setIsIdChecked(false)
+      return
     }
-    setIsIdChecked(true)
+    
+    if (idEmail.length > 50) {
+      setIdMessage("ID 또는 이메일은 최대 50자까지 입력 가능합니다.")
+      setIdAvailable(false)
+      setIsIdChecked(false)
+      return
+    }
+
+    try {
+      const response = await fetch('/api/auth/check-id', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idEmail }),
+      })
+      
+      const data = await response.json()
+      
+      if (data.exists) {
+        setIdMessage("이미 사용 중인 ID 또는 이메일입니다.")
+        setIdAvailable(false)
+      } else {
+        setIdMessage("사용 가능한 ID 또는 이메일입니다!")
+        setIdAvailable(true)
+      }
+      setIsIdChecked(true)
+    } catch (error) {
+      console.error('ID 확인 중 오류:', error)
+      setIdMessage("확인 중 오류가 발생했습니다. 다시 시도해주세요.")
+      setIdAvailable(false)
+      setIsIdChecked(false)
+    }
   }
 
+  // 비밀번호 확인
+  const handlePasswordCheck = (checkValue: string) => {
+    setPasswordCheck(checkValue)
+    if (checkValue && password) {
+      if (checkValue === password) {
+        setPasswordMatchMessage("비밀번호가 일치합니다.")
+        setPasswordMatch(true)
+      } else {
+        setPasswordMatchMessage("비밀번호가 일치하지 않습니다.")
+        setPasswordMatch(false)
+      }
+    } else {
+      setPasswordMatchMessage("")
+      setPasswordMatch(false)
+    }
+  }
+
+  // 비밀번호 변경 시 재확인
+  const handlePasswordChange = (value: string) => {
+    setPassword(value)
+    if (passwordCheck && value !== passwordCheck) {
+      setPasswordMatchMessage("비밀번호가 일치하지 않습니다.")
+      setPasswordMatch(false)
+    } else if (passwordCheck && value === passwordCheck) {
+      setPasswordMatchMessage("비밀번호가 일치합니다.")
+      setPasswordMatch(true)
+    }
+  }
+
+  // 전화번호 입력 처리 (숫자만, 010-0000-0000 형식)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "")
     if (value.length <= 11) {
-      setPhone(value.replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`))
+      let formatted = value
+      if (value.length > 3 && value.startsWith('010')) {
+        formatted = value.replace(/^(\d{3})(\d{4})(\d{4})$/, `$1-$2-$3`)
+      } else if (value.length > 3) {
+        formatted = value.replace(/^(\d{3})(\d{3,4})(\d{0,4})$/, (match, p1, p2, p3) => {
+          if (p3) return `${p1}-${p2}-${p3}`
+          if (p2) return `${p1}-${p2}`
+          return p1
+        })
+      }
+      setPhone(formatted)
     }
   }
 
-  const handlePurposeChange = (value: string) => {
-    setExercisePurposes((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]))
+  // 이름 입력 (최대 30자)
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (value.length <= 30) {
+      setName(value)
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ID/이메일 입력 (최대 50자)
+  const handleIdEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (value.length <= 50) {
+      setIdEmail(value)
+      setIsIdChecked(false)
+      setIdMessage("")
+    }
+  }
+
+  // 비밀번호 입력 (최대 30자)
+  const handlePasswordInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (value.length <= 30) {
+      handlePasswordChange(value)
+    }
+  }
+
+  // 비밀번호 확인 입력 (최대 30자)
+  const handlePasswordCheckInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (value.length <= 30) {
+      handlePasswordCheck(value)
+    }
+  }
+
+  // 운동 목적 변경
+  const handlePurposeChange = (value: string) => {
+    setExercisePurposes((prev) => 
+      prev.includes(value) 
+        ? prev.filter((item) => item !== value) 
+        : [...prev, value]
+    )
+  }
+
+  // 생년월일 유효성 검사
+  const isValidDate = (year: string, month: string, day: string): boolean => {
+    if (!year || !month || !day) return false
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+    return (
+      date.getFullYear() === parseInt(year) &&
+      date.getMonth() === parseInt(month) - 1 &&
+      date.getDate() === parseInt(day)
+    )
+  }
+
+  // 폼 제출
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isIdChecked || !idAvailable) {
-      alert("아이디 중복 확인을 해주세요.")
+    setErrorMessage("")
+
+    // 필수 항목 검증
+    if (!idEmail || !isValidIdOrEmail(idEmail)) {
+      setErrorMessage("필수 항목을 입력해 주세요.")
       return
     }
-    setShowSuccessModal(true)
+
+    if (!isIdChecked || !idAvailable) {
+      setErrorMessage("ID 또는 이메일 중복 확인을 해주세요.")
+      return
+    }
+
+    if (!password || password.length === 0 || password.length > 30) {
+      setErrorMessage("필수 항목을 입력해 주세요.")
+      return
+    }
+
+    if (!passwordCheck || !passwordMatch) {
+      setErrorMessage("비밀번호가 일치하지 않습니다.")
+      return
+    }
+
+    if (!name || name.length === 0 || name.length > 30) {
+      setErrorMessage("필수 항목을 입력해 주세요.")
+      return
+    }
+
+    if (!phone || !isValidPhone(phone)) {
+      setErrorMessage("필수 항목을 입력해 주세요.")
+      return
+    }
+
+    if (!birthYear || !birthMonth || !birthDay || !isValidDate(birthYear, birthMonth, birthDay)) {
+      setErrorMessage("필수 항목을 입력해 주세요.")
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const birthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
+      
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idEmail,
+          password,
+          name,
+          phone,
+          birthDate,
+          disabilityType: disabilityType || null,
+          exercisePurposes: exercisePurposes.length > 0 ? exercisePurposes : null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setErrorMessage(data.message || "회원가입 중 오류가 발생했습니다.")
+        setIsSubmitting(false)
+        return
+      }
+
+      setShowSuccessModal(true)
+    } catch (error) {
+      console.error('회원가입 오류:', error)
+      setErrorMessage("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.")
+      setIsSubmitting(false)
+    }
   }
 
   const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i)
@@ -81,12 +294,17 @@ export default function SignUpPage() {
       <div className="w-full max-w-xl space-y-8 bg-white p-8 rounded-2xl shadow-lg">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Sign up</h2>
-
           <p className="mt-2 text-sm text-muted-foreground"> *은 필수 항목이므로 꼭 입력 해주세요.</p>
         </div>
 
+        {errorMessage && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {errorMessage}
+          </div>
+        )}
+
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          {/* Required Fields */}
+          {/* ID/이메일 */}
           <div className="flex flex-col gap-1">
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -94,100 +312,126 @@ export default function SignUpPage() {
                 <Input
                   placeholder="ID / email *"
                   className="pl-10"
-                  required
-                  value={id}
-                  onChange={(e) => {
-                    setId(e.target.value)
-                    setIsIdChecked(false)
-                    setIdMessage("")
-                  }}
+                  value={idEmail}
+                  onChange={handleIdEmailChange}
+                  maxLength={50}
                 />
               </div>
               <Button type="button" variant="outline" onClick={handleCheckId}>
                 중복확인
               </Button>
             </div>
-            {idMessage && <p className={`text-xs ${idAvailable ? "text-green-600" : "text-red-600"}`}>{idMessage}</p>}
+            {idMessage && (
+              <p className={`text-xs ${idAvailable ? "text-green-600" : "text-red-600"}`}>
+                {idMessage}
+              </p>
+            )}
           </div>
 
+          {/* 비밀번호 */}
           <div className="relative">
             <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-            <Input type="password" placeholder="Password *" className="pl-10" required />
+            <Input
+              type="password"
+              placeholder="Password *"
+              className="pl-10"
+              value={password}
+              onChange={handlePasswordInput}
+              maxLength={30}
+            />
           </div>
 
-          <div className="relative">
+          {/* 비밀번호 확인 */}
+          <div className="relative flex flex-col gap-1">
             <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-            <Input type="password" placeholder="password check *" className="pl-10" required />
+            <Input
+              type="password"
+              placeholder="password check *"
+              className="pl-10"
+              value={passwordCheck}
+              onChange={handlePasswordCheckInput}
+              maxLength={30}
+            />
+            {passwordMatchMessage && (
+              <p className={`text-xs ml-0 ${passwordMatch ? "text-green-600" : "text-red-600"}`}>
+                {passwordMatchMessage}
+              </p>
+            )}
           </div>
 
+          {/* 이름 */}
           <div className="relative">
             <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-            <Input placeholder="이름 *" className="pl-10" required />
+            <Input
+              placeholder="이름 *"
+              className="pl-10"
+              value={name}
+              onChange={handleNameChange}
+              maxLength={30}
+            />
           </div>
 
+          {/* 전화번호 */}
           <div className="relative">
             <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="전화번호 (010-0000-0000) *"
               className="pl-10"
-              required
               value={phone}
               onChange={handlePhoneChange}
+              maxLength={13}
             />
           </div>
 
-          <div className="flex gap-2">
-            <div className="relative w-full">
-              <Calendar className="absolute left-3 top-3 h-5 w-5 text-muted-foreground z-10" />
-              <div className="flex gap-2 pl-10">
-                <Select value={birthYear} onValueChange={setBirthYear} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="년" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((y) => (
-                      <SelectItem key={y} value={y.toString()}>
-                        {y}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={birthMonth} onValueChange={setBirthMonth} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="월" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((m) => (
-                      <SelectItem key={m} value={m.toString()}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={birthDay} onValueChange={setBirthDay} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="일" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {days.map((d) => (
-                      <SelectItem key={d} value={d.toString()}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                  <p className="mt-2 text-sm text-muted-foreground"> 생년월일 *</p>
-
-                </Select>
-              </div>
+          {/* 생년월일 */}
+          <div className="flex flex-col gap-1">
+            <div className="flex gap-2">
+              <Select value={birthYear} onValueChange={setBirthYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="년" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((y) => (
+                    <SelectItem key={y} value={y.toString()}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={birthMonth} onValueChange={setBirthMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="월" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((m) => (
+                    <SelectItem key={m} value={m.toString()}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={birthDay} onValueChange={setBirthDay}>
+                <SelectTrigger>
+                  <SelectValue placeholder="일" />
+                </SelectTrigger>
+                <SelectContent>
+                  {days.map((d) => (
+                    <SelectItem key={d} value={d.toString()}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            <p className="text-sm text-muted-foreground">생년월일 *</p>
           </div>
 
           <div className="border-t my-6"></div>
 
           <h3 className="font-semibold text-sm">추가 사항</h3>
 
-          {/* Optional Fields for Recommendation */}
-          <Select>
+          {/* 장애 유형 선택 */}
+          <Select value={disabilityType} onValueChange={setDisabilityType}>
             <SelectTrigger>
               <SelectValue placeholder="장애 유형 선택 (시각, 청각, 지체, 지적, 언어 등)" />
             </SelectTrigger>
@@ -201,6 +445,7 @@ export default function SignUpPage() {
             </SelectContent>
           </Select>
 
+          {/* 운동 목적 (중복 선택 가능) */}
           <div className="space-y-2">
             <Label>운동 목적 (중복 선택 가능)</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -240,8 +485,9 @@ export default function SignUpPage() {
           <Button
             type="submit"
             className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-700 text-lg font-semibold rounded-lg mt-6"
+            disabled={isSubmitting}
           >
-            Sign up
+            {isSubmitting ? "처리 중..." : "Sign up"}
           </Button>
         </form>
       </div>
