@@ -10,23 +10,61 @@ export function SiteHeader() {
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [userName, setUserName] = useState("홍길동")
+  const [userName, setUserName] = useState("")
 
-  // Mock login state check - in real app this would use auth context
-  useEffect(() => {
-    const user = localStorage.getItem("user")
-    setIsLoggedIn(!!user)
-    if (user) {
-      // In a real app, we'd parse the user object. For now, we'll use a mock or stored name if available.
-      const storedName = localStorage.getItem("userName")
-      if (storedName) setUserName(storedName)
+  // localStorage 변경 감지 및 사용자 정보 로드
+  const loadUserInfo = () => {
+    const userStr = localStorage.getItem("user")
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        setIsLoggedIn(true)
+        // name 필드 확인
+        setUserName(user.name || "")
+        console.log("헤더 - 로드된 사용자:", user.name) // 디버깅
+      } catch (e) {
+        console.error("헤더 - 파싱 오류:", e)
+        const storedName = localStorage.getItem("userName")
+        if (storedName) {
+          setUserName(storedName)
+          setIsLoggedIn(true)
+        } else {
+          setIsLoggedIn(false)
+          setUserName("")
+        }
+      }
+    } else {
+      setIsLoggedIn(false)
+      setUserName("")
     }
-  }, [])
+  }
+
+  useEffect(() => {
+    loadUserInfo()
+
+    // 같은 탭에서 localStorage 변경 감지를 위한 커스텀 이벤트
+    const handleCustomStorageChange = () => {
+      loadUserInfo()
+    }
+    window.addEventListener('storage', handleCustomStorageChange)
+    
+    // 주기적으로 확인 (같은 탭에서는 storage 이벤트가 발생하지 않음)
+    const interval = setInterval(() => {
+      loadUserInfo()
+    }, 1000)
+
+    return () => {
+      window.removeEventListener('storage', handleCustomStorageChange)
+      clearInterval(interval)
+    }
+  }, [pathname])
 
   const handleLogout = () => {
     localStorage.removeItem("user")
     localStorage.removeItem("userName")
+    localStorage.removeItem("userId")
     setIsLoggedIn(false)
+    setUserName("")
     window.location.href = "/"
   }
 
@@ -69,7 +107,7 @@ export function SiteHeader() {
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
               <Link href="/mypage" className="text-sm font-medium hover:underline">
-                {userName}님 환영합니다!
+                {userName || "사용자"}님 환영합니다!
               </Link>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 Logout
@@ -118,7 +156,7 @@ export function SiteHeader() {
           <div className="pt-4 border-t">
             {isLoggedIn ? (
               <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium">{userName}님 환영합니다!</span>
+                <span className="text-sm font-medium">{userName || "사용자"}님 환영합니다!</span>
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>

@@ -54,15 +54,15 @@ connection.connect((err) => {
     });
     process.exit(1);
   }
-  console.log('✅ DB 연결 성공!');
+  console.log('DB 연결 성공!');
 
   connection.query(createTableSQL, (err, results) => {
     if (err) {
-      console.error('❌ 테이블 생성 실패:', err);
+      console.error('테이블 생성 실패:', err);
       connection.end();
       process.exit(1);
     } else {
-      console.log('✅ users 테이블이 성공적으로 생성되었습니다!');
+      console.log('users 테이블이 성공적으로 생성되었습니다!');
       connection.end();
       process.exit(0);
     }
