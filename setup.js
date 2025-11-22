@@ -3,7 +3,7 @@ const mysql = require('mysql2');
 
 // Railway의 공개 연결 문자열 (Variables 탭에서 확인)
 // 예시: mysql://root:password@containers-us-west-xxx.railway.app:3306/railway
-const connectionUrl = 'mysql://root:lRzqwghWSchqdRyErESveHwVyKYUfhME@mysql.railway.internal:3306/railway';
+const connectionUrl = 'mysql://root:lRzqwghWSchqdRyErESveHwVyKYUfhME@nozomi.proxy.rlwy.net:51173/railway';
 
 // 연결 문자열 파싱 함수
 function parseConnectionString(url) {
