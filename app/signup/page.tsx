@@ -277,48 +277,9 @@ export default function SignUpPage() {
         return
       }
 
-      // 회원가입 성공 후 자동 로그인
-      try {
-        const loginResponse = await fetch('/api/auth/signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idEmail, password }),
-        })
-
-        if (loginResponse.ok) {
-          const loginData = await loginResponse.json()
-          console.log("회원가입 - 자동 로그인 응답:", loginData) // 디버깅
-          
-          if (loginData.user) {
-            // 로그인 정보를 localStorage에 저장
-            const userData = {
-              id: loginData.user.id,
-              idEmail: loginData.user.idEmail,
-              name: loginData.user.name,
-              disabilityType: loginData.user.disabilityType,
-              exercisePurposes: loginData.user.exercisePurposes || [],
-            }
-            
-            localStorage.setItem('user', JSON.stringify(userData))
-            localStorage.setItem('userName', loginData.user.name || '')
-            localStorage.setItem('userId', loginData.user.id?.toString() || '')
-            
-            console.log("회원가입 - 저장된 사용자 정보:", userData) // 디버깅
-            console.log("회원가입 - localStorage 확인:", localStorage.getItem('user')) // 디버깅
-          }
-        } else {
-          const errorData = await loginResponse.json()
-          console.error("회원가입 - 자동 로그인 실패:", errorData)
-        }
-      } catch (loginError) {
-        console.error('회원가입 - 자동 로그인 오류:', loginError)
-        // 자동 로그인 실패해도 회원가입은 성공했으므로 계속 진행
-      }
-
+      // 회원가입 성공
       setShowSuccessModal(true)
       setIsSubmitting(false)
-
-      
     } catch (error) {
       console.error('회원가입 오류:', error)
       setErrorMessage("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.")
@@ -538,14 +499,13 @@ export default function SignUpPage() {
           <DialogHeader>
             <DialogTitle>회원가입 완료</DialogTitle>
             <DialogDescription>회원가입이 완료되었습니다!</DialogDescription>
-            </DialogHeader>
-              <DialogFooter>
-              <Button onClick={() => {
-                setShowSuccessModal(false)
-                // 페이지 새로고침하여 헤더 업데이트
-                window.location.href = "/"
-              }}>확인</Button>
-              </DialogFooter>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => {
+              setShowSuccessModal(false)
+              router.push("/signin")
+            }}>확인</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -36,6 +36,11 @@ export default function MyPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
+  
+  // 계정 탈퇴 비밀번호 입력 상태 추가
+  const [deleteAccountPassword, setDeleteAccountPassword] = useState("")
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+
   // 비밀번호 변경 관련 상태 추가
   const [currentPassword, setCurrentPassword] = useState("")
   const [currentPasswordMessage, setCurrentPasswordMessage] = useState("")
@@ -344,15 +349,58 @@ export default function MyPage() {
   }
 
   const handleDeleteAccount = () => {
+    // 비밀번호 입력 모달 표시
     setShowDeleteConfirmModal(true)
   }
 
-  const confirmDeleteAccount = () => {
-    setShowDeleteConfirmModal(false)
-    localStorage.removeItem("user")
-    localStorage.removeItem("userName")
-    localStorage.removeItem("userId")
-    setShowDeleteSuccessModal(true)
+  const confirmDeleteAccount = async () => {
+    if (!deleteAccountPassword) {
+      alert("비밀번호를 입력해주세요.")
+      return
+    }
+
+    setIsDeletingAccount(true)
+    
+    try {
+      const userStr = localStorage.getItem("user")
+      if (!userStr) {
+        alert("로그인이 필요합니다.")
+        setIsDeletingAccount(false)
+        return
+      }
+
+      const user = JSON.parse(userStr)
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          password: deleteAccountPassword,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.message || "계정 탈퇴에 실패했습니다.")
+        setIsDeletingAccount(false)
+        setDeleteAccountPassword("")
+        return
+      }
+
+      // 성공 - localStorage 정리
+      localStorage.removeItem("user")
+      localStorage.removeItem("userName")
+      localStorage.removeItem("userId")
+      setShowDeleteConfirmModal(false)
+      setDeleteAccountPassword("")
+      setShowDeleteSuccessModal(true)
+      setIsDeletingAccount(false)
+    } catch (error) {
+      console.error('계정 탈퇴 오류:', error)
+      alert("계정 탈퇴 중 오류가 발생했습니다.")
+      setIsDeletingAccount(false)
+    }
   }
 
   const toggleAlarm = () => {
@@ -732,18 +780,57 @@ export default function MyPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDeleteConfirmModal} onOpenChange={setShowDeleteConfirmModal}>
+            {/* 계정 탈퇴 확인 모달 */}
+            <Dialog open={showDeleteConfirmModal} onOpenChange={setShowDeleteConfirmModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>계정 탈퇴</DialogTitle>
-            <DialogDescription>정말로 탈퇴 하시겠습니까?</DialogDescription>
+            <DialogDescription>
+              계정 탈퇴를 진행하시겠습니까?
+              <br />
+              <br />
+              <span className="font-semibold text-amber-600">
+                ⚠️ 중요: 7일 내에 다시 로그인하시면 계정이 복구됩니다.
+              </span>
+              <br />
+              <br />
+              계정 탈퇴를 확인하려면 비밀번호를 입력해주세요.
+            </DialogDescription>
           </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">비밀번호</label>
+              <Input
+                type="password"
+                value={deleteAccountPassword}
+                onChange={(e) => setDeleteAccountPassword(e.target.value)}
+                placeholder="비밀번호를 입력하세요"
+                disabled={isDeletingAccount}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && deleteAccountPassword && !isDeletingAccount) {
+                    confirmDeleteAccount()
+                  }
+                }}
+              />
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirmModal(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDeleteConfirmModal(false)
+                setDeleteAccountPassword("")
+              }}
+              disabled={isDeletingAccount}
+            >
               취소
             </Button>
-            <Button variant="destructive" onClick={confirmDeleteAccount}>
-              확인
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteAccount}
+              disabled={isDeletingAccount || !deleteAccountPassword}
+            >
+              {isDeletingAccount ? "처리 중..." : "탈퇴하기"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -753,7 +840,14 @@ export default function MyPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>알림</DialogTitle>
-            <DialogDescription>계정이 탈퇴 되었습니다!</DialogDescription>
+            <DialogDescription>
+              계정 탈퇴 신청이 완료되었습니다.
+              <br />
+              <br />
+              <span className="font-semibold text-blue-600">
+                💡 7일 내에 다시 로그인하시면 계정이 자동으로 복구됩니다.
+              </span>
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button

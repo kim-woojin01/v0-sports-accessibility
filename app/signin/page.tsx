@@ -41,6 +41,11 @@ export default function SignInPage() {
         localStorage.setItem('userName', data.user.name || '')
         localStorage.setItem('userId', data.user.id?.toString() || '')
         
+        // 계정이 복구된 경우 메시지 표시
+        if (data.isAccountRestored) {
+          alert("계정이 복구 되었습니다. 계정 삭제를 원하시면 '계정삭제'를 다시 진행해주세요.")
+        }
+        
         // 페이지 새로고침하여 헤더 업데이트
         window.location.href = '/'
       } else {
