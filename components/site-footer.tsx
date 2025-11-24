@@ -17,7 +17,7 @@ export function SiteFooter() {
           <p className="text-sm text-muted-foreground">
             <Link href="https://www.kspo.or.kr/kspo/main/main.do">https://www.kspo.or.kr/kspo/main/main.do</Link>
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3" role="list" aria-label="소셜 미디어 링크">
             <Link
               href="https://www.youtube.com/channel/UC8dtm6cdDJ0oLpVK9AQoS1Q"
               target="_blank"
@@ -25,7 +25,7 @@ export function SiteFooter() {
               className="text-muted-foreground hover:text-primary transition-colors"
               aria-label="YouTube (스포츠정보채널)"
             >
-              <SiYoutube className="h-5 w-5" />
+              <SiYoutube className="h-5 w-5" aria-hidden="true" />
             </Link>
             <Link
               href="https://www.youtube.com/user/kspo97"
@@ -34,7 +34,7 @@ export function SiteFooter() {
               className="text-muted-foreground hover:text-primary transition-colors"
               aria-label="YouTube (KSPO)"
             >
-              <SiYoutube className="h-5 w-5" />
+              <SiYoutube className="h-5 w-5" aria-hidden="true" />
             </Link>
             <Link
               href="https://www.instagram.com/kspo.tiger/#"
@@ -43,7 +43,7 @@ export function SiteFooter() {
               className="text-muted-foreground hover:text-primary transition-colors"
               aria-label="Instagram"
             >
-              <SiInstagram className="h-5 w-5" />
+              <SiInstagram className="h-5 w-5" aria-hidden="true" />
             </Link>
             <Link
               href="https://blog.naver.com/kspo2011"
@@ -52,7 +52,7 @@ export function SiteFooter() {
               className="text-muted-foreground hover:text-primary transition-colors"
               aria-label="Naver Blog"
             >
-              <SiNaver className="h-5 w-5" />
+              <SiNaver className="h-5 w-5" aria-hidden="true" />
             </Link>
             <Link
               href="https://www.facebook.com/kspof/"
@@ -61,7 +61,7 @@ export function SiteFooter() {
               className="text-muted-foreground hover:text-primary transition-colors"
               aria-label="Facebook"
             >
-              <SiFacebook className="h-5 w-5" />
+              <SiFacebook className="h-5 w-5" aria-hidden="true" />
             </Link>
             <Link
               href="https://www.tiktok.com/@kspo88"
@@ -70,7 +70,7 @@ export function SiteFooter() {
               className="text-muted-foreground hover:text-primary transition-colors"
               aria-label="TikTok"
             >
-              <SiTiktok className="h-5 w-5" />
+              <SiTiktok className="h-5 w-5" aria-hidden="true" />
             </Link>
             <Link
               href="https://pf.kakao.com/_cBusb"
@@ -79,7 +79,7 @@ export function SiteFooter() {
               className="text-muted-foreground hover:text-primary transition-colors"
               aria-label="KakaoTalk"
             >
-              <SiKakaotalk className="h-5 w-5" />
+              <SiKakaotalk className="h-5 w-5" aria-hidden="true" />
             </Link>
           </div>
         </div>

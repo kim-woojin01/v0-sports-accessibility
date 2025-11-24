@@ -79,14 +79,14 @@ export function SiteHeader() {
     <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between relative max-w-screen-2xl mx-auto">
         <div className="flex items-center gap-8 pl-6">
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2" aria-label="SportsAccess 홈으로 이동">
             <span className="text-xl font-bold tracking-tight">
               Sports<span className="text-primary">Access</span>
             </span>
           </Link>
         </div>
 
-        <nav className="hidden md:flex gap-16 absolute left-1/2 transform -translate-x-1/2">
+        <nav className="hidden md:flex gap-16 absolute left-1/2 transform -translate-x-1/2" aria-label="메인 내비게이션">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -94,10 +94,11 @@ export function SiteHeader() {
               className={`text-sm font-medium transition-colors hover:text-primary relative py-2 ${
                 pathname === item.href ? "text-purple-600" : "text-muted-foreground"
               }`}
+              aria-current={pathname === item.href ? "page" : undefined}
             >
               {item.name}
               {pathname === item.href && (
-                <span className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-600 rounded-full" />
+                <span className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-600 rounded-full" aria-hidden="true" />
               )}
             </Link>
           ))}
@@ -133,14 +134,19 @@ export function SiteHeader() {
           )}
         </div>
 
-        <button className="md:hidden" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X /> : <Menu />}
+        <button 
+          className="md:hidden" 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
+          aria-expanded={isMobileMenuOpen}
+        >
+          {isMobileMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
         </button>
       </div>
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t p-4 space-y-4 bg-background">
+        <div className="md:hidden border-t p-4 space-y-4 bg-background" role="menu" aria-label="메인 내비게이션">
           <nav className="flex flex-col gap-4">
             {navItems.map((item) => (
               <Link

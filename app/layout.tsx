@@ -39,10 +39,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body className={`font-sans antialiased flex flex-col min-h-screen`}>
+        {/* Skip to Main Content - 키보드 접근성 */}
+        <a
+          href="#main-content"
+          className="sr-only"
+        >
+          본문으로 건너뛰기
+        </a>
         <SiteHeader />
-        <main className="flex-1 w-full max-w-screen-2xl mx-auto pt-16">{children}</main>
+        <main id="main-content" className="flex-1 w-full max-w-screen-2xl mx-auto pt-16">{children}</main>
         <SiteFooter />
         <Analytics />
       </body>
