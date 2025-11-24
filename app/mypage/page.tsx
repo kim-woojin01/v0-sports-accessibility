@@ -439,7 +439,7 @@ export default function MyPage() {
           <Card className="text-center pt-6">
             <div className="flex justify-center mb-4">
               <Avatar className="w-24 h-24">
-                <AvatarImage src="/placeholder.svg" />
+                <AvatarImage src="/placeholder.svg" alt={`${profile.name} 프로필 사진`} />
                 <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
               </Avatar>
             </div>

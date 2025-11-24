@@ -90,7 +90,7 @@ export default function Home() {
       <section className="py-20 bg-white">
         <div className="container flex flex-col lg:flex-row items-center gap-12">
           <div className="flex-1 relative h-[400px] w-full rounded-2xl overflow-hidden shadow-lg bg-slate-100">
-            <Image src="/map-view.png" alt="Map View" fill className="object-cover" />
+            <Image src="/map-view.png" alt="체육 시설 지도 화면 - 주변 체육 시설 위치를 지도로 표시" fill className="object-cover" />
           </div>
           <div className="flex-1 space-y-6">
             <h2 className="text-3xl font-bold leading-tight">
@@ -108,7 +108,7 @@ export default function Home() {
             <div className="bg-white p-4 rounded-xl border shadow-lg max-w-md mt-8">
               <div className="flex gap-4">
                 <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                  <Image src="/modern-gym-interior.png" alt="Gym" fill className="object-cover" />
+                  <Image src="/modern-gym-interior.png" alt="호암체육관 내부 전경" fill className="object-cover" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <h4 className="font-bold">호암체육관</h4>
@@ -163,10 +163,10 @@ export default function Home() {
           </div>
           <div className="flex-1 flex justify-center gap-8">
             <div className="relative w-64 h-64">
-              <Image src="/analytics-chart-3d.jpg" alt="Analytics" fill className="object-contain" />
+              <Image src="/analytics-chart-3d.jpg" alt="체육 시설 혼잡도 분석 차트 - 시간대별 이용 현황을 시각화한 그래프" fill className="object-contain" />
             </div>
             <div className="relative w-64 h-80 mt-12">
-              <Image src="/mobile-app-review-3d.jpg" alt="Mobile App" fill className="object-contain" />
+              <Image src="/mobile-app-review-3d.jpg" alt="SportsAccess 모바일 앱 화면 - 스마트폰에서 체육 시설 정보를 확인하는 모습" fill className="object-contain" />
             </div>
           </div>
         </div>
