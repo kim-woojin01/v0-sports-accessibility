@@ -1,12 +1,5 @@
 import Link from "next/link"
-import {
-  SiYoutube,
-  SiInstagram,
-  SiNaver,
-  SiFacebook,
-  SiTiktok,
-  SiKakaotalk,
-} from "react-icons/si"
+import { Facebook, Twitter, Instagram } from "lucide-react"
 
 export function SiteFooter() {
   return (
@@ -17,132 +10,75 @@ export function SiteFooter() {
           <p className="text-sm text-muted-foreground">
             <Link href="https://www.kspo.or.kr/kspo/main/main.do">https://www.kspo.or.kr/kspo/main/main.do</Link>
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Link 
-              href="https://www.youtube.com/channel/UC8dtm6cdDJ0oLpVK9AQoS1Q" 
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="YouTube (스포츠정보채널)"
-            >
-              <SiYoutube className="h-5 w-5" />
+          <div className="flex gap-4">
+            <Link href="#" className="text-muted-foreground hover:text-primary">
+              <Facebook className="h-5 w-5" />
             </Link>
-            <Link 
-              href="https://www.youtube.com/user/kspo97" 
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="YouTube (KSPO)"
-            >
-              <SiYoutube className="h-5 w-5" />
+            <Link href="#" className="text-muted-foreground hover:text-primary">
+              <Twitter className="h-5 w-5" />
             </Link>
-            <Link 
-              href="https://www.instagram.com/kspo.tiger/#" 
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="Instagram"
-            >
-              <SiInstagram className="h-5 w-5" />
-            </Link>
-            <Link 
-              href="https://blog.naver.com/kspo2011" 
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="Naver Blog"
-            >
-              <SiNaver className="h-5 w-5" />
-            </Link>
-            <Link 
-              href="https://www.facebook.com/kspof/" 
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="Facebook"
-            >
-              <SiFacebook className="h-5 w-5" />
-            </Link>
-            <Link 
-              href="https://www.tiktok.com/@kspo88" 
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="TikTok"
-            >
-              <SiTiktok className="h-5 w-5" />
-            </Link>
-            <Link 
-              href="https://pf.kakao.com/_cBusb" 
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="KakaoTalk"
-            >
-              <SiKakaotalk className="h-5 w-5" />
+            <Link href="#" className="text-muted-foreground hover:text-primary">
+              <Instagram className="h-5 w-5" />
             </Link>
           </div>
         </div>
 
         <div>
-          <h4 className="font-semibold mb-4">Platform</h4>
+          <h4 className="font-semibold mb-4">서비스</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
-              <Link href="#">How it Works</Link>
+              <Link href="/search">시설 검색</Link>
             </li>
             <li>
-              <Link href="#">Checkout</Link>
+              <Link href="/mypage">찜한 시설</Link>
             </li>
             <li>
-              <Link href="#">Fraud</Link>
+              <Link href="#">접근성 등급 안내</Link>
             </li>
             <li>
-              <Link href="#">Protection</Link>
+              <Link href="#">혼잡도 분석</Link>
             </li>
             <li>
-              <Link href="#">Payments</Link>
-            </li>
-            <li>
-              <Link href="#">Accounts</Link>
+              <Link href="/mypage">작성한 리뷰 관리</Link>
             </li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold mb-4">Learn</h4>
+          <h4 className="font-semibold mb-4">고객 지원</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
-              <Link href="#">Resources</Link>
+              <Link href="#">공지사항</Link>
             </li>
             <li>
-              <Link href="#">Blog</Link>
+              <Link href="#">자주 묻는 질문</Link>
             </li>
             <li>
-              <Link href="#">FAQs</Link>
+              <Link href="#">시설 정보 수정 요청</Link>
             </li>
             <li>
-              <Link href="#">ThinkShop</Link>
+              <Link href="#">이용 가이드</Link>
             </li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold mb-4">About</h4>
+          <h4 className="font-semibold mb-4">서비스 및 정책</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
-              <Link href="#">Careers</Link>
+              <Link href="#">서비스 소개</Link>
             </li>
             <li>
-              <Link href="#">Team</Link>
+              <Link href="#">웹 접근성 정책</Link>
             </li>
             <li>
-              <Link href="#">Partners</Link>
+              <Link href="#">개인정보처리방침</Link>
             </li>
             <li>
-              <Link href="#">Contact Us</Link>
+              <Link href="#">이용약관</Link>
             </li>
             <li>
-              <Link href="#">News & Press</Link>
+              <Link href="#">팀 소개</Link>
             </li>
           </ul>
         </div>
