@@ -11,7 +11,7 @@ export default function AccessibilityPolicyPage() {
             (Web Accessibility Statement)
           </p>
           <p className="text-base text-muted-foreground mt-1">
-            최종 업데이트: 2025년 11월 25일
+            최종 업데이트: 2025년 11월 15일
           </p>
         </CardHeader>
         <CardContent className="space-y-8">
