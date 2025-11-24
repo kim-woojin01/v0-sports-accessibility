@@ -1,6 +1,7 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
+import Link from "next/link"
 
 export default function PrivacyPolicyPage() {
   const [activeSection, setActiveSection] = useState("")
@@ -8,12 +9,18 @@ export default function PrivacyPolicyPage() {
   useEffect(() => {
     const handleScroll = () => {
       const sections = [
-        "chapter1",
-        "chapter2",
-        "chapter3",
-        "chapter4",
-        "chapter5",
-        "supplementary"
+        "article1",
+        "article2",
+        "article3",
+        "article4",
+        "article5",
+        "article6",
+        "article7",
+        "article8",
+        "article9",
+        "article10",
+        "article11",
+        "article12"
       ]
 
       for (const section of sections) {
@@ -44,12 +51,18 @@ export default function PrivacyPolicyPage() {
   }
 
   const tableOfContents = [
-    { id: "chapter1", title: "제1장 총칙" },
-    { id: "chapter2", title: "제2장 이용계약의 체결" },
-    { id: "chapter3", title: "제3장 계약 당사자의 의무" },
-    { id: "chapter4", title: "제4장 서비스의 이용" },
-    { id: "chapter5", title: "제5장 손해배상 및 면책" },
-    { id: "supplementary", title: "부칙" },
+    { id: "article1", title: "제1조 (개인정보의 처리목적)" },
+    { id: "article2", title: "제2조 (개인정보의 처리 및 보유기간)" },
+    { id: "article3", title: "제3조 (처리하는 개인정보 항목)" },
+    { id: "article4", title: "제4조 (개인정보의 제3자 제공)" },
+    { id: "article5", title: "제5조 (개인정보처리의 위탁)" },
+    { id: "article6", title: "제6조 (정보주체와 법정대리인의 권리·의무 및 행사 방법)" },
+    { id: "article7", title: "제7조 (개인정보의 파기)" },
+    { id: "article8", title: "제8조 (개인정보의 안전성 확보조치)" },
+    { id: "article9", title: "제9조 (개인정보 자동 수집 장치의 설치·운영 및 거부에 관한 사항)" },
+    { id: "article10", title: "제10조 (개인정보 보호책임자)" },
+    { id: "article11", title: "제11조 (권익침해 구제 방법)" },
+    { id: "article12", title: "제12조 (개인정보 처리방침의 변경)" },
   ]
 
   return (
@@ -87,204 +100,286 @@ export default function PrivacyPolicyPage() {
         <div className="flex-1 min-w-0">
           <Card>
             <CardHeader>
-              <CardTitle className="text-3xl font-bold">서비스 이용약관</CardTitle>
+              <CardTitle className="text-3xl font-bold">개인정보 처리방침</CardTitle>
               <p className="text-base text-muted-foreground mt-2">
-                (Terms of Service)
+                (Privacy Policy)
               </p>
               <p className="text-base text-muted-foreground mt-1">
                 최종 업데이트: 2025년 11월 18일
               </p>
             </CardHeader>
             <CardContent className="space-y-8">
-              {/* 제1장 총칙 */}
-              <section id="chapter1" className="space-y-6">
-                <h2 className="text-3xl font-bold">제1장 총칙</h2>
-
-                {/* 제1조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제1조 (목적)</h3>
-                  <p className="text-base text-muted-foreground leading-relaxed ml-4">
-                    본 약관은 SportsAccess(이하 "회사"라 함)가 제공하는 체육 시설 정보 제공 및 관련 제반 서비스(이하 "서비스"라 함)의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
-                  </p>
-                </div>
-
-                {/* 제2조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제2조 (정의)</h3>
-                  <p className="text-base text-muted-foreground leading-relaxed ml-4 mb-3">
-                    본 약관에서 사용하는 용어의 정의는 다음과 같습니다.
-                  </p>
-                  <ul className="list-disc list-inside space-y-2 ml-8 text-base text-muted-foreground">
-                    <li>
-                      <strong>"서비스"</strong>라 함은 구현되는 단말기(PC, 휴대형 단말기 등 각종 유무선 장치를 포함)와 상관없이 회원이 이용할 수 있는 SportsAccess의 모든 제반 서비스를 의미합니다.
-                    </li>
-                    <li>
-                      <strong>"회원"</strong>이라 함은 회사의 서비스에 접속하여 본 약관에 따라 회사와 이용계약을 체결하고 회사가 제공하는 서비스를 이용하는 고객을 말합니다.
-                    </li>
-                    <li>
-                      <strong>"게시물"</strong>이라 함은 회원이 서비스를 이용함에 있어 서비스상에 게시한 부호·문자·음성·음향·화상·동영상 등의 정보 형태의 글, 사진, 동영상 및 각종 파일과 링크 등을 의미합니다.
-                    </li>
-                    <li>
-                      <strong>"공공데이터"</strong>라 함은 회사가 국민체육진흥공단 등 공공기관으로부터 제공받아 가공하여 서비스하는 체육 시설 정보를 의미합니다.
-                    </li>
-                  </ul>
-                </div>
-
-                {/* 제3조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제3조 (약관의 게시와 개정)</h3>
-                  <ul className="list-disc list-inside space-y-2 ml-8 text-base text-muted-foreground">
-                    <li>
-                      회사는 본 약관의 내용을 회원이 쉽게 알 수 있도록 서비스 초기 화면 또는 연결 화면에 게시합니다.
-                    </li>
-                    <li>
-                      회사는 「약관의 규제에 관한 법률」, 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」 등 관련 법령을 위배하지 않는 범위에서 본 약관을 개정할 수 있습니다.
-                    </li>
-                  </ul>
-                </div>
-              </section>
-
-              {/* 제2장 이용계약의 체결 */}
-              <section id="chapter2" className="space-y-6">
-                <h2 className="text-3xl font-bold">제2장 이용계약의 체결</h2>
-
-                {/* 제4조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제4조 (이용계약의 성립)</h3>
-                  <ul className="list-disc list-inside space-y-2 ml-8 text-base text-muted-foreground">
-                    <li>
-                      이용계약은 회원이 되고자 하는 자(이하 "가입신청자")가 약관의 내용에 대하여 동의를 한 다음 회원가입 신청을 하고 회사가 이러한 신청에 대하여 승낙함으로써 체결됩니다.
-                    </li>
-                    <li>
-                      회사는 가입신청자의 신청에 대하여 서비스 이용을 승낙함을 원칙으로 합니다. 다만, 실명이 아니거나 타인의 정보를 도용한 경우 승낙을 하지 않거나 사후에 이용계약을 해지할 수 있습니다.
-                    </li>
-                  </ul>
-                </div>
-
-                {/* 제5조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제5조 (개인정보보호 의무)</h3>
-                  <p className="text-base text-muted-foreground leading-relaxed ml-4">
-                    회사는 「개인정보보호법」 등 관계 법령이 정하는 바에 따라 회원의 개인정보를 보호하기 위해 노력합니다. 개인정보의 보호 및 사용에 대해서는 관련 법령 및 회사의 개인정보처리방침이 적용됩니다.
-                  </p>
-                </div>
-              </section>
-
-              {/* 제3장 계약 당사자의 의무 */}
-              <section id="chapter3" className="space-y-6">
-                <h2 className="text-3xl font-bold">제3장 계약 당사자의 의무</h2>
-
-                {/* 제6조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제6조 (회사의 의무)</h3>
-                  <ul className="list-disc list-inside space-y-2 ml-8 text-base text-muted-foreground">
-                    <li>
-                      회사는 관련 법령과 본 약관이 금지하거나 미풍양속에 반하는 행위를 하지 않으며, 계속적이고 안정적으로 서비스를 제공하기 위하여 최선을 다하여 노력합니다.
-                    </li>
-                    <li>
-                      회사는 회원이 안전하게 서비스를 이용할 수 있도록 개인정보 보호를 위한 보안 시스템을 갖추어야 합니다.
-                    </li>
-                    <li>
-                      회사는 서비스 이용과 관련하여 회원으로부터 제기된 의견이나 불만이 정당하다고 인정할 경우에는 이를 처리하여야 합니다.
-                    </li>
-                  </ul>
-                </div>
-
-                {/* 제7조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제7조 (회원의 의무)</h3>
-                  <p className="text-base text-muted-foreground leading-relaxed ml-4 mb-3">
-                    회원은 다음 행위를 하여서는 안 됩니다.
-                  </p>
-                  <ul className="list-disc list-inside space-y-2 ml-8 text-base text-muted-foreground">
-                    <li>신청 또는 변경 시 허위 내용의 등록</li>
-                    <li>타인의 정보 도용</li>
-                    <li>회사가 게시한 정보의 변경</li>
-                    <li>회사가 정한 정보 이외의 정보(컴퓨터 프로그램 등) 등의 송신 또는 게시</li>
-                    <li>회사 및 기타 제3자의 저작권 등 지적재산권에 대한 침해</li>
-                    <li>회사 및 기타 제3자의 명예를 손상시키거나 업무를 방해하는 행위</li>
-                    <li>외설 또는 폭력적인 메시지, 화상, 음성, 기타 공서양속에 반하는 정보를 서비스에 공개 또는 게시하는 행위</li>
-                  </ul>
-                </div>
-              </section>
-
-              {/* 제4장 서비스의 이용 */}
-              <section id="chapter4" className="space-y-6">
-                <h2 className="text-3xl font-bold">제4장 서비스의 이용</h2>
-
-                {/* 제8조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제8조 (서비스의 제공 및 변경)</h3>
-                  <ul className="list-disc list-inside space-y-2 ml-8 text-base text-muted-foreground">
-                    <li>
-                      서비스는 연중무휴, 1일 24시간 제공함을 원칙으로 합니다.
-                    </li>
-                    <li>
-                      회사는 컴퓨터 등 정보통신설비의 보수점검, 교체 및 고장, 통신두절 또는 운영상 상당한 이유가 있는 경우 서비스의 제공을 일시적으로 중단할 수 있습니다.
-                    </li>
-                    <li>
-                      회사가 제공하는 서비스 내의 체육 시설 정보는 국민체육진흥공단의 공공데이터 API를 기반으로 하므로, 원천 데이터의 변경이나 오류로 인해 실제 정보와 차이가 발생할 수 있습니다.
-                    </li>
-                  </ul>
-                </div>
-
-                {/* 제9조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제9조 (위치기반서비스의 내용)</h3>
-                  <ul className="list-disc list-inside space-y-2 ml-8 text-base text-muted-foreground">
-                    <li>
-                      회사는 위치정보사업자로부터 위치정보를 전달받아 회원의 현재 위치를 기반으로 주변 체육 시설 검색 및 길 찾기 서비스를 제공합니다.
-                    </li>
-                    <li>
-                      회원의 위치 정보는 해당 서비스 제공 즉시 파기되며 별도로 저장되지 않습니다.
-                    </li>
-                  </ul>
-                </div>
-
-                {/* 제10조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제10조 (저작권의 귀속 및 이용제한)</h3>
-                  <ul className="list-disc list-inside space-y-2 ml-8 text-base text-muted-foreground">
-                    <li>
-                      회사가 작성한 저작물에 대한 저작권 및 기타 지적재산권은 회사에 귀속됩니다.
-                    </li>
-                    <li>
-                      회원은 서비스를 이용함으로써 얻은 정보 중 회사에 지적재산권이 귀속된 정보를 회사의 사전 승낙 없이 복제, 송신, 출판, 배포, 방송 기타 방법에 의하여 영리 목적으로 이용하거나 제3자에게 이용하게 하여서는 안 됩니다.
-                    </li>
-                    <li>
-                      회원이 서비스 내에 게시한 게시물의 저작권은 해당 게시물의 저작자에게 귀속됩니다.
-                    </li>
-                  </ul>
-                </div>
-              </section>
-
-              {/* 제5장 손해배상 및 면책 */}
-              <section id="chapter5" className="space-y-6">
-                <h2 className="text-3xl font-bold">제5장 손해배상 및 면책</h2>
-
-                {/* 제11조 */}
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">제11조 (책임제한)</h3>
-                  <ul className="list-disc list-inside space-y-2 ml-8 text-base text-muted-foreground">
-                    <li>
-                      회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.
-                    </li>
-                    <li>
-                      회사는 공공기관이 제공하는 데이터 자체의 오류나 누락으로 인해 발생한 손해에 대해서는 책임을 지지 않습니다. (예: 시스템상 영업 중으로 표시되었으나 실제로는 휴관인 경우 등)
-                    </li>
-                    <li>
-                      회사는 회원이 서비스를 이용하여 기대하는 수익을 상실한 것에 대하여 책임을 지지 않으며, 그 밖의 서비스를 통하여 얻은 자료로 인한 손해에 관하여 책임을 지지 않습니다.
-                    </li>
-                  </ul>
-                </div>
-              </section>
-
-              {/* 부칙 */}
-              <section id="supplementary" className="space-y-6">
-                <h2 className="text-3xl font-bold">부칙</h2>
-                <p className="text-base text-muted-foreground leading-relaxed">
-                  본 약관은 2025년 11월 18일부터 시행합니다.
+              {/* 서문 */}
+              <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                <p>
+                  SportsAccess (이하 "회사")는 「개인정보 보호법」 제30조에 따라 정보주체(회원)의 개인정보를 보호하고 이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 하기 위하여 다음과 같이 개인정보 처리방침을 수립·공개합니다.
                 </p>
+              </div>
+
+              {/* 제1조 */}
+              <section id="article1" className="space-y-6">
+                <h2 className="text-3xl font-bold">제1조 (개인정보의 처리목적)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    회사는 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 「개인정보 보호법」 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-8">
+                    <li>
+                      <strong>홈페이지 회원 가입 및 관리</strong>: 회원 가입 의사 확인, 회원제 서비스 제공에 따른 본인 식별·인증, 회원 자격 유지·관리, 서비스 부정이용 방지, 각종 고지·통지
+                    </li>
+                    <li>
+                      <strong>재화 또는 서비스 제공</strong>: 위치 기반 체육 시설 정보 제공, 맞춤형 서비스 제공, 혼잡도 분석 데이터 제공
+                    </li>
+                    <li>
+                      <strong>고충 처리</strong>: 민원인의 신원 확인, 민원사항 확인, 사실조사를 위한 연락·통지, 처리 결과 통보
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+                            {/* 제2조 */}
+                            <section id="article2" className="space-y-6">
+                <h2 className="text-3xl font-bold">제2조 (개인정보의 처리 및 보유기간)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    ① 회사는 법령에 따른 개인정보 보유·이용 기간 또는 정보주체로부터 개인정보를 수집 시에 동의받은 개인정보 보유·이용 기간 내에서 개인정보를 처리·보유합니다.
+                  </p>
+                  <p className="ml-4">
+                    ② 각각의 개인정보 처리 및 보유 기간은 다음과 같습니다.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-8">
+                    <li>
+                      <strong>홈페이지 회원 가입 및 관리</strong>: 회원 탈퇴 신청일로부터 7일 후까지
+                      <ul className="list-none space-y-1 ml-4 mt-2">
+                        <li className="text-sm">
+                          <strong>보유 사유</strong>: 회원의 실수로 인한 탈퇴 방지 및 계정 복구 기회 제공
+                        </li>
+                        <li className="text-sm">
+                          <strong>보존 기간</strong>: 탈퇴 신청일로부터 7일 (해당 기간 내 로그인 시 계정이 복구되며, 기간 경과 시 지체 없이 영구 파기)
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <strong>재화 또는 서비스 제공</strong>: 재화·서비스 공급 완료 및 요금 결제·정산 완료 시까지
+                    </li>
+                  </ul>
+                  <div className="ml-4 mt-4">
+                    <p className="font-semibold text-foreground mb-2">관계 법령에 의한 정보 보유 사유</p>
+                    <ul className="list-disc list-inside space-y-2 ml-4">
+                      <li>통신비밀보호법에 따른 접속 로그, 접속 IP 정보: 3개월</li>
+                      <li>전자상거래 등에서의 소비자 보호에 관한 법률에 따른 표시/광고에 관한 기록: 6개월</li>
+                    </ul>
+                  </div>
+                </div>
+              </section>
+
+              {/* 제3조 */}
+              <section id="article3" className="space-y-6">
+                <h2 className="text-3xl font-bold">제3조 (처리하는 개인정보 항목)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    회사는 다음의 개인정보 항목을 처리하고 있습니다.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-8">
+                    <li>
+                      <strong>회원 가입 및 관리 (필수항목)</strong>: 이메일 주소, 비밀번호, 닉네임
+                    </li>
+                    <li>
+                      <strong>인터넷 서비스 이용 과정에서 자동으로 생성되어 수집되는 항목</strong>: IP주소, 쿠키(Cookie), MAC 주소, 서비스 이용 기록, 방문 기록, 기기 정보
+                    </li>
+                    <li>
+                      <strong>위치기반서비스 이용 시</strong>: GPS 위치 정보 (위도, 경도)
+                    </li>
+                  </ul>
+                  <p className="ml-4 mt-3">
+                    위치 정보는 사용자 단말기에서 1회성으로 활용되며 서버에 영구 저장되지 않습니다.
+                  </p>
+                </div>
+              </section>
+
+              {/* 제4조 */}
+              <section id="article4" className="space-y-6">
+                <h2 className="text-3xl font-bold">제4조 (개인정보의 제3자 제공)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    회사는 정보주체의 개인정보를 제1조(개인정보의 처리 목적)에서 명시한 범위 내에서만 처리하며, 정보주체의 동의, 법률의 특별한 규정 등 「개인정보 보호법」 제17조 및 제18조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다. 회사는 현재 원칙적으로 이용자의 개인정보를 외부에 제공하지 않습니다.
+                  </p>
+                </div>
+              </section>
+
+              {/* 제5조 */}
+              <section id="article5" className="space-y-6">
+                <h2 className="text-3xl font-bold">제5조 (개인정보처리의 위탁)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    ① 회사는 원활한 개인정보 업무처리를 위하여 다음과 같이 개인정보 처리업무를 위탁하고 있습니다.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-8">
+                    <li>
+                      <strong>위탁받는 자 (수탁자)</strong>: Vercel Inc., Railway DB Service, AWS (Amazon Web Services)
+                    </li>
+                    <li>
+                      <strong>위탁하는 업무의 내용</strong>: 클라우드 서버 인프라 운영 및 데이터 보관
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+              {/* 제6조 */}
+              <section id="article6" className="space-y-6">
+                <h2 className="text-3xl font-bold">제6조 (정보주체와 법정대리인의 권리·의무 및 행사 방법)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    ① 정보주체는 회사에 대해 언제든지 개인정보 열람·정정·삭제·처리정지 요구 등의 권리를 행사할 수 있습니다.
+                  </p>
+                  <p className="ml-4">
+                    ② 권리 행사는 회사에 대해 서면, 전자우편 등을 통하여 하실 수 있으며 회사는 이에 대해 지체 없이 조치하겠습니다.
+                  </p>
+                  <p className="ml-4">
+                    ③ 정보주체는 회원 탈퇴 기능을 통하여 언제든지 개인정보 수집 및 이용 동의를 철회할 수 있습니다.
+                  </p>
+                </div>
+              </section>
+
+              {/* 제7조 */}
+              <section id="article7" className="space-y-6">
+                <h2 className="text-3xl font-bold">제7조 (개인정보의 파기)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    ① 회사는 개인정보 보유 기간의 경과, 처리목적 달성 등 개인정보가 불필요하게 되었을 때에는 지체 없이 해당 개인정보를 파기합니다.
+                  </p>
+                  <p className="ml-4">
+                    ② 파기 절차 및 방법은 다음과 같습니다.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-8">
+                    <li>
+                      <strong>파기 절차</strong>: 회사는 파기 사유가 발생한 개인정보를 선정하고, 개인정보 보호책임자의 승인을 받아 개인정보를 파기합니다.
+                    </li>
+                    <li>
+                      <strong>파기 방법</strong>: 전자적 파일 형태로 기록·저장된 개인정보는 기록을 재생할 수 없도록 로우레벨 포맷(Low-Level Format) 등의 기술적 방법을 이용하여 파기합니다.
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+              {/* 제8조 */}
+              <section id="article8" className="space-y-6">
+                <h2 className="text-3xl font-bold">제8조 (개인정보의 안전성 확보조치)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 취하고 있습니다.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-8">
+                    <li>
+                      <strong>관리적 조치</strong>: 내부관리계획 수립·시행, 정기적인 자체 감사 실시
+                    </li>
+                    <li>
+                      <strong>기술적 조치</strong>:
+                      <ul className="list-disc list-inside space-y-2 ml-4 mt-2">
+                        <li>
+                          <strong>비밀번호 암호화</strong>: 회원의 비밀번호는 일방향 암호화(Hashing) 되어 저장 및 관리되고 있어, 본인만이 알 수 있습니다.
+                        </li>
+                        <li>
+                          <strong>해킹 등에 대비한 기술적 대책</strong>: 해킹이나 컴퓨터 바이러스 등에 의한 개인정보 유출 및 훼손을 막기 위하여 보안 프로그램을 설치하고 주기적인 갱신·점검을 하며, SSL(Secure Socket Layer)을 이용하여 데이터를 암호화하여 전송합니다.
+                        </li>
+                        <li>
+                          <strong>접속기록의 보관</strong>: 접속 기록이 위변조 및 도난, 분실되지 않도록 안전하게 보관합니다.
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+              {/* 제9조 */}
+              <section id="article9" className="space-y-6">
+                <h2 className="text-3xl font-bold">제9조 (개인정보 자동 수집 장치의 설치·운영 및 거부에 관한 사항)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    ① 회사는 이용자에게 개별적인 맞춤 서비스를 제공하기 위해 이용 정보를 저장하고 수시로 불러오는 '쿠키(cookie)'를 사용합니다.
+                  </p>
+                  <p className="ml-4">
+                    ② 쿠키는 웹사이트를 운영하는데 이용되는 서버(http)가 이용자의 컴퓨터 브라우저에게 보내는 소량의 정보이며 이용자들의 PC 컴퓨터 내의 하드디스크에 저장되기도 합니다.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-8">
+                    <li>
+                      <strong>쿠키의 사용 목적</strong>: 이용자의 접속 빈도나 방문 시간 등을 분석하여 서비스 개편의 척도로 활용합니다.
+                    </li>
+                    <li>
+                      <strong>쿠키의 설치·운영 및 거부</strong>: 웹 브라우저 상단의 도구&gt;인터넷 옵션&gt;개인정보 메뉴의 옵션 설정을 통해 쿠키 저장을 거부할 수 있습니다.
+                    </li>
+                  </ul>
+                  <p className="ml-4">
+                    쿠키 저장을 거부할 경우 맞춤형 서비스 이용에 어려움이 발생할 수 있습니다.
+                  </p>
+                </div>
+              </section>
+
+              {/* 제10조 */}
+              <section id="article10" className="space-y-6">
+                <h2 className="text-3xl font-bold">제10조 (개인정보 보호책임자)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 개인정보 처리와 관련한 정보주체의 불만 처리 및 피해구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.
+                  </p>
+                  <div className="ml-8 bg-slate-50 p-4 rounded-lg space-y-2">
+                    <p>
+                      <strong className="text-foreground">성명</strong>: [본인 이름 입력]
+                    </p>
+                    <p>
+                      <strong className="text-foreground">직책</strong>: SportsAccess 개발 총괄 / CPO
+                    </p>
+                    <p>
+                      <strong className="text-foreground">연락처</strong>:{" "}
+                      <a href="mailto:privacy@sportsaccess.com" className="text-primary hover:underline">
+                        privacy@sportsaccess.com
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* 제11조 */}
+              <section id="article11" className="space-y-6">
+                <h2 className="text-3xl font-bold">제11조 (권익침해 구제 방법)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    정보주체는 개인정보침해로 인한 구제를 받기 위하여 개인정보분쟁조정위원회, 한국인터넷진흥원 개인정보침해신고센터 등에 분쟁 해결이나 상담을 신청할 수 있습니다.
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 ml-8">
+                  <li>
+                      <strong>개인정보침해신고센터</strong> (
+                      <Link href="https://privacy.kisa.or.kr" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                        privacy.kisa.or.kr
+                      </Link>
+                      {" "}/ 국번없이 118)
+                    </li>
+                    <li>
+                      <strong>대검찰청 사이버수사과</strong> (
+                      <Link href="https://www.spo.go.kr" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                        www.spo.go.kr
+                      </Link>
+                      {" "}/ 국번없이 1301)
+                    </li>
+                    <li>
+                      <strong>경찰청 사이버수사국</strong> (
+                      <Link href="https://police.go.kr" target="_blank" rel="noreferrer" className="text-primary hover-underline">
+                        police.go.kr
+                      </Link>
+                      {" "}/ 국번없이 182)
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+              {/* 제12조 */}
+              <section id="article12" className="space-y-6">
+                <h2 className="text-3xl font-bold">제12조 (개인정보 처리방침의 변경)</h2>
+                <div className="space-y-3 text-base text-muted-foreground leading-relaxed">
+                  <p className="ml-4">
+                    이 개인정보 처리방침은 2025년 11월 18일부터 적용됩니다.
+                  </p>
+                </div>
               </section>
             </CardContent>
           </Card>
