@@ -1,5 +1,12 @@
 import Link from "next/link"
-import { Facebook, Twitter, Instagram } from "lucide-react"
+import {
+  SiYoutube,
+  SiInstagram,
+  SiNaver,
+  SiFacebook,
+  SiTiktok,
+  SiKakaotalk,
+} from "react-icons/si"
 
 export function SiteFooter() {
   return (
@@ -10,15 +17,69 @@ export function SiteFooter() {
           <p className="text-sm text-muted-foreground">
             <Link href="https://www.kspo.or.kr/kspo/main/main.do">https://www.kspo.or.kr/kspo/main/main.do</Link>
           </p>
-          <div className="flex gap-4">
-            <Link href="#" className="text-muted-foreground hover:text-primary">
-              <Facebook className="h-5 w-5" />
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="https://www.youtube.com/channel/UC8dtm6cdDJ0oLpVK9AQoS1Q"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="YouTube (스포츠정보채널)"
+            >
+              <SiYoutube className="h-5 w-5" />
             </Link>
-            <Link href="#" className="text-muted-foreground hover:text-primary">
-              <Twitter className="h-5 w-5" />
+            <Link
+              href="https://www.youtube.com/user/kspo97"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="YouTube (KSPO)"
+            >
+              <SiYoutube className="h-5 w-5" />
             </Link>
-            <Link href="#" className="text-muted-foreground hover:text-primary">
-              <Instagram className="h-5 w-5" />
+            <Link
+              href="https://www.instagram.com/kspo.tiger/#"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="Instagram"
+            >
+              <SiInstagram className="h-5 w-5" />
+            </Link>
+            <Link
+              href="https://blog.naver.com/kspo2011"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="Naver Blog"
+            >
+              <SiNaver className="h-5 w-5" />
+            </Link>
+            <Link
+              href="https://www.facebook.com/kspof/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="Facebook"
+            >
+              <SiFacebook className="h-5 w-5" />
+            </Link>
+            <Link
+              href="https://www.tiktok.com/@kspo88"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="TikTok"
+            >
+              <SiTiktok className="h-5 w-5" />
+            </Link>
+            <Link
+              href="https://pf.kakao.com/_cBusb"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="KakaoTalk"
+            >
+              <SiKakaotalk className="h-5 w-5" />
             </Link>
           </div>
         </div>
