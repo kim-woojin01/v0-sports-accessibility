@@ -130,7 +130,7 @@ export function SiteFooter() {
               <Link href="#">서비스 소개</Link>
             </li>
             <li>
-              <Link href="#">웹 접근성 정책</Link>
+              <Link href="/accessibility-policy">웹 접근성 정책</Link>
             </li>
             <li>
               <Link href="#">개인정보처리방침</Link>
