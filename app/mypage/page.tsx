@@ -106,21 +106,84 @@ export default function MyPage() {
           return
         }
 
-        const profileData = {
-          id: user.id,
-          idEmail: user.idEmail || "",
-          name: user.name || "",
-          disabilityType: user.disabilityType || null,
-          exercisePurposes: Array.isArray(user.exercisePurposes) 
-            ? user.exercisePurposes 
-            : [],
+        // DB에서 최신 사용자 정보 가져오기
+        try {
+          const response = await fetch(`/api/auth/user?userId=${user.id}`, {
+            method: 'GET',
+            headers: {
+              'x-user-id': user.id.toString()
+            }
+          })
+
+          if (response.ok) {
+            const dbUser = await response.json()
+            console.log("마이페이지 - DB에서 가져온 사용자:", dbUser)
+            
+            // DB에서 가져온 최신 정보로 프로필 설정
+            const profileData = {
+              id: dbUser.id,
+              idEmail: dbUser.idEmail || "",
+              name: dbUser.name || "",
+              disabilityType: dbUser.disabilityType || null,
+              exercisePurposes: Array.isArray(dbUser.exercisePurposes) 
+                ? dbUser.exercisePurposes 
+                : [],
+            }
+
+            // localStorage도 최신 정보로 업데이트
+            const updatedUser = {
+              id: profileData.id,
+              idEmail: profileData.idEmail,
+              name: profileData.name,
+              disabilityType: profileData.disabilityType,
+              exercisePurposes: profileData.exercisePurposes,
+            }
+            localStorage.setItem('user', JSON.stringify(updatedUser))
+            localStorage.setItem('userName', profileData.name)
+
+            console.log("마이페이지 - 설정할 프로필:", profileData) // 디버깅
+            console.log("마이페이지 - DB에서 가져온 사용자:", dbUser)
+            console.log("마이페이지 - exercisePurposes:", dbUser.exercisePurposes)
+            console.log("마이페이지 - exercisePurposes 타입:", typeof dbUser.exercisePurposes)
+            console.log("마이페이지 - exercisePurposes isArray:", Array.isArray(dbUser.exercisePurposes))
+            
+            setProfile(profileData)
+            setOriginalProfile(profileData)
+            setIsLoggedIn(true)
+          } else {
+            // API 호출 실패 시 localStorage 데이터 사용 (fallback)
+            console.warn("마이페이지 - API 호출 실패, localStorage 데이터 사용")
+            const profileData = {
+              id: user.id,
+              idEmail: user.idEmail || "",
+              name: user.name || "",
+              disabilityType: user.disabilityType || null,
+              exercisePurposes: Array.isArray(user.exercisePurposes) 
+                ? user.exercisePurposes 
+                : [],
+            }
+
+            setProfile(profileData)
+            setOriginalProfile(profileData)
+            setIsLoggedIn(true)
+          }
+        } catch (apiError) {
+          // API 호출 중 오류 발생 시 localStorage 데이터 사용 (fallback)
+          console.error("마이페이지 - API 호출 오류:", apiError)
+          const profileData = {
+            id: user.id,
+            idEmail: user.idEmail || "",
+            name: user.name || "",
+            disabilityType: user.disabilityType || null,
+            exercisePurposes: Array.isArray(user.exercisePurposes) 
+              ? user.exercisePurposes 
+              : [],
+          }
+
+          setProfile(profileData)
+          setOriginalProfile(profileData)
+          setIsLoggedIn(true)
         }
-
-        console.log("마이페이지 - 설정할 프로필:", profileData) // 디버깅
-
-        setProfile(profileData)
-        setOriginalProfile(profileData)
-        setIsLoggedIn(true)
       } catch (error) {
         console.error("마이페이지 - 사용자 정보 로드 오류:", error)
         console.error("마이페이지 - 파싱 실패한 userStr:", userStr)
