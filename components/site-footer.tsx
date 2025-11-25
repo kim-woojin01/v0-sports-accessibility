@@ -109,7 +109,7 @@ export function SiteFooter() {
           <h4 className="font-semibold mb-4">고객 지원</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
-              <Link href="#">공지사항</Link>
+              <Link href="/notices">공지사항</Link>
             </li>
             <li>
               <Link href="#">자주 묻는 질문</Link>

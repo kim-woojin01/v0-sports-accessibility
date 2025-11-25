@@ -59,7 +59,21 @@ CREATE TABLE IF NOT EXISTS deleted_users (
   INDEX idx_deleted_at (deleted_at),
   INDEX idx_scheduled_deletion_date (scheduled_deletion_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS notices (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  category VARCHAR(20) NOT NULL COMMENT '카테고리 (업데이트/점검/이벤트)',
+  title VARCHAR(200) NOT NULL COMMENT '제목',
+  content TEXT NOT NULL COMMENT '내용',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '작성일',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_important BOOLEAN DEFAULT FALSE COMMENT '중요 공지 여부',
+  INDEX idx_category (category),
+  INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
+
+
 
 // 기존 테이블에 필드가 없는 경우를 위한 ALTER TABLE (에러 무시)
 const alterTableSQLs = [
