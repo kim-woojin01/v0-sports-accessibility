@@ -40,11 +40,11 @@ export default function AboutPage() {
                   <Accessibility className="w-8 h-8 text-purple-600" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold">① 이동 약자 & 휠체어 사용자</h3>
-                <p className="text-sm text-muted-foreground font-semibold mb-2">(Accessible)</p>
+                
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  <p className="font-semibold text-foreground">Pain Point:</p>
+                  <p className="font-semibold text-foreground">현실적인 고민:</p>
                   <p>입구의 턱, 엘리베이터 유무를 몰라 헛걸음하는 경우가 많습니다.</p>
-                  <p className="font-semibold text-foreground mt-3">Solution:</p>
+                  <p className="font-semibold text-foreground mt-3">이렇게 해결합니다:</p>
                   <p>전국 체육 시설의 장애인 편의시설 정보(경사로, 승강기, 장애인 화장실 등)를 사전에 명확하게 시각화하여 제공합니다.</p>
                 </div>
               </CardContent>
@@ -57,11 +57,10 @@ export default function AboutPage() {
                   <Users className="w-8 h-8 text-pink-600" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold">② 액티브 시니어</h3>
-                <p className="text-sm text-muted-foreground font-semibold mb-2">(Active Senior)</p>
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  <p className="font-semibold text-foreground">Pain Point:</p>
+                  <p className="font-semibold text-foreground">현실적인 고민:</p>
                   <p>복잡한 예약 시스템과 작은 글씨 때문에 디지털 정보 접근이 어렵습니다.</p>
-                  <p className="font-semibold text-foreground mt-3">Solution:</p>
+                  <p className="font-semibold text-foreground mt-3">이렇게 해결합니다:</p>
                   <p>직관적인 UI, 큰 텍스트, 그리고 웹 접근성 표준을 준수하여 디지털 기기가 낯선 어르신들도 내 주변 운동 시설을 쉽게 찾을 수 있습니다.</p>
                 </div>
               </CardContent>
@@ -74,11 +73,10 @@ export default function AboutPage() {
                   <Zap className="w-8 h-8 text-blue-600" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold">③ 효율을 추구하는 현대인</h3>
-                <p className="text-sm text-muted-foreground font-semibold mb-2">(Efficient)</p>
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  <p className="font-semibold text-foreground">Pain Point:</p>
+                  <p className="font-semibold text-foreground">현실적인 고민:</p>
                   <p>"지금 헬스장에 사람이 많을까?" 퇴근 후 소중한 시간을 낭비하고 싶지 않습니다.</p>
-                  <p className="font-semibold text-foreground mt-3">Solution:</p>
+                  <p className="font-semibold text-foreground mt-3">이렇게 해결합니다:</p>
                   <p>데이터 기반의 혼잡도 분석 정보를 통해, 가장 쾌적하게 운동할 수 있는 골든타임을 알려드립니다.</p>
                 </div>
               </CardContent>
@@ -104,10 +102,10 @@ export default function AboutPage() {
                   <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
                     <Database className="w-6 h-6 text-purple-600" aria-hidden="true" />
                   </div>
-                  <h3 className="text-xl font-bold">💻 Public Data Pipeline</h3>
+                  <h3 className="text-xl font-bold">💻 공공 데이터 파이프라인</h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  <strong className="text-foreground">(공공 데이터 파이프라인)</strong> 국민체육진흥공단(KSPO) 및 공공데이터포털의 Open API를 활용하여 전국 10,000여 개의 체육 시설 정보를 실시간으로 동기화합니다. 신뢰할 수 있는 공공 데이터를 기반으로 폐업이나 정보 변경 사항을 신속하게 반영합니다.
+                  국민체육진흥공단(KSPO) 및 공공데이터포털의 Open API를 활용하여 전국 10,000여 개의 체육 시설 정보를 실시간으로 동기화합니다. 신뢰할 수 있는 공공 데이터를 기반으로 폐업이나 정보 변경 사항을 신속하게 반영합니다.
                 </p>
               </CardContent>
             </Card>
@@ -119,10 +117,10 @@ export default function AboutPage() {
                   <div className="w-12 h-12 rounded-lg bg-pink-100 flex items-center justify-center">
                     <BarChart3 className="w-6 h-6 text-pink-600" aria-hidden="true" />
                   </div>
-                  <h3 className="text-xl font-bold">📊 Congestion Analysis</h3>
+                  <h3 className="text-xl font-bold">📊 혼잡도 분석 알고리즘</h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  <strong className="text-foreground">(혼잡도 분석 알고리즘)</strong> 단순히 현재 인원을 보여주는 것을 넘어, 과거의 요일별/시간대별 이용객 데이터를 머신러닝 및 통계적 기법으로 분석합니다. 이를 통해 사용자는 '가장 여유로운 시간'을 미리 예측하고 계획할 수 있습니다.
+                   단순히 현재 인원을 보여주는 것을 넘어, 과거의 요일별/시간대별 이용객 데이터를 머신러닝 및 통계적 기법으로 분석합니다. 이를 통해 사용자는 '가장 여유로운 시간'을 미리 예측하고 계획할 수 있습니다.
                 </p>
               </CardContent>
             </Card>
@@ -134,10 +132,10 @@ export default function AboutPage() {
                   <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
                     <Shield className="w-6 h-6 text-blue-600" aria-hidden="true" />
                   </div>
-                  <h3 className="text-xl font-bold">♿ Standardized Accessibility</h3>
+                  <h3 className="text-xl font-bold">♿ 웹 표준 접근성 구현</h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  <strong className="text-foreground">(웹 표준 접근성 구현)</strong> '기술로 허무는 디지털 장벽'을 실천합니다. KWCAG(한국형 웹 콘텐츠 접근성 지침)을 준수하여 시맨틱 마크업으로 개발되었으며, 스크린 리더 사용자를 위한 대체 텍스트 제공과 완벽한 키보드 네비게이션을 지원합니다.
+                '기술로 허무는 디지털 장벽'을 실천합니다. KWCAG(한국형 웹 콘텐츠 접근성 지침)을 준수하여 시맨틱 마크업으로 개발되었으며, 스크린 리더 사용자를 위한 대체 텍스트 제공과 완벽한 키보드 네비게이션을 지원합니다.
                 </p>
               </CardContent>
             </Card>
@@ -149,10 +147,10 @@ export default function AboutPage() {
                   <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
                     <Cloud className="w-6 h-6 text-green-600" aria-hidden="true" />
                   </div>
-                  <h3 className="text-xl font-bold">☁️ Secure Cloud Infra</h3>
+                  <h3 className="text-xl font-bold">☁️ 보안 클라우드 인프라</h3>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  <strong className="text-foreground">(클라우드 인프라)</strong> Railway DB 기반의 클라우드 환경에서 운영됩니다. HTTPS 암호화 통신을 통해 사용자의 위치 정보와 데이터를 안전하게 보호하며, 트래픽 변화에도 유연하게 대응합니다.
+                  Railway DB 기반의 클라우드 환경에서 운영됩니다. HTTPS 암호화 통신을 통해 사용자의 위치 정보와 데이터를 안전하게 보호하며, 트래픽 변화에도 유연하게 대응합니다.
                 </p>
               </CardContent>
             </Card>
@@ -181,8 +179,8 @@ export default function AboutPage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3 mb-2">
                     <MapPin className="w-5 h-5 text-purple-600" aria-hidden="true" />
-                    <h3 className="text-xl font-bold">Phase 1. 정보의 시각화</h3>
-                    <span className="text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded">Current</span>
+                    <h3 className="text-xl font-bold">과정 1. 정보의 시각화</h3>
+                    <span className="text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded">여기까지 진행했습니다</span>
                   </div>
                   <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4">
                     <li>전국 체육 시설 위치 기반 검색 서비스 런칭</li>
@@ -200,8 +198,8 @@ export default function AboutPage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3 mb-2">
                     <MessageSquare className="w-5 h-5 text-pink-600" aria-hidden="true" />
-                    <h3 className="text-xl font-bold">Phase 2. 참여와 공유</h3>
-                    <span className="text-sm bg-pink-100 text-pink-700 px-2 py-1 rounded">Coming Soon</span>
+                    <h3 className="text-xl font-bold">과정 2. 참여와 공유</h3>
+                    <span className="text-sm bg-pink-100 text-pink-700 px-2 py-1 rounded">곧 찾아옵니다</span>
                   </div>
                   <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4">
                     <li>사용자 제보 기능: "엘리베이터가 고장 났어요", "새로 생겼어요"</li>
@@ -219,8 +217,8 @@ export default function AboutPage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3 mb-2">
                     <Sparkles className="w-5 h-5 text-blue-600" aria-hidden="true" />
-                    <h3 className="text-xl font-bold">Phase 3. 개인화 및 지능화</h3>
-                    <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">Future</span>
+                    <h3 className="text-xl font-bold">과정 3. 개인화 및 지능화</h3>
+                    <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">장기적인 목표입니다</span>
                   </div>
                   <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4">
                     <li>AI 기반 맞춤형 시설 추천 (사용자 신체 조건 및 선호 종목 분석)</li>
