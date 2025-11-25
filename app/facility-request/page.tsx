@@ -475,7 +475,8 @@ export default function FacilityRequestPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground text-center">
-                    시설 정보를 정확하게 업데이트하고 매력을 어필하세요
+                    시설 정보를 정확하게 업데이트하여<br />
+                    이용자들에게 알리세요
                   </p>
                 </CardContent>
               </Card>
@@ -711,8 +712,8 @@ export default function FacilityRequestPage() {
 
   // 시설관리자용 위자드 폼
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-purple-50 via-purple-100 to-pink-100">
-      <div className="min-h-screen pt-24 pb-12 px-4 overflow-y-auto">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100 to-pink-100">
+      <div className="pt-24 pb-12 px-4">
         <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">공식 정보 등록 & 비즈니스 인증</h1>
