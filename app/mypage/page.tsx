@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { facilities } from "@/lib/data"
-import { Calendar, Clock, Settings, LogOut, Save, X, Bell, BellOff, Edit2, Check } from "lucide-react"
+import { Calendar, Clock, Settings, LogOut, Save, X, Bell, BellOff, Edit2, Check, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -28,6 +28,7 @@ interface UserProfile {
   name: string
   disabilityType: string | null
   exercisePurposes: string[]
+  profileImageUrl: string | null
 }
 
 export default function MyPage() {
@@ -64,12 +65,19 @@ export default function MyPage() {
     endTime: "16:00",
   })
 
+  // 프로필 사진 상태
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [profileImagePreview, setProfileImagePreview] = useState<string>("")
+  const [profileImageUrl, setProfileImageUrl] = useState<string>("")
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+
   const [profile, setProfile] = useState<UserProfile>({
     id: 0,
     idEmail: "",
     name: "",
     disabilityType: null,
     exercisePurposes: [],
+    profileImageUrl: null,
   })
 
   const [originalProfile, setOriginalProfile] = useState<UserProfile>({
@@ -78,6 +86,7 @@ export default function MyPage() {
     name: "",
     disabilityType: null,
     exercisePurposes: [],
+    profileImageUrl: null,
   })
 
   // 사용자 정보 로드
@@ -128,7 +137,11 @@ export default function MyPage() {
               exercisePurposes: Array.isArray(dbUser.exercisePurposes) 
                 ? dbUser.exercisePurposes 
                 : [],
+              profileImageUrl: dbUser.profileImageUrl || null,
             }
+
+            // 프로필 이미지 미리보기 설정
+            setProfileImagePreview(dbUser.profileImageUrl || "")
 
             // localStorage도 최신 정보로 업데이트
             const updatedUser = {
@@ -137,6 +150,7 @@ export default function MyPage() {
               name: profileData.name,
               disabilityType: profileData.disabilityType,
               exercisePurposes: profileData.exercisePurposes,
+              profileImageUrl: profileData.profileImageUrl,
             }
             localStorage.setItem('user', JSON.stringify(updatedUser))
             localStorage.setItem('userName', profileData.name)
@@ -161,7 +175,9 @@ export default function MyPage() {
               exercisePurposes: Array.isArray(user.exercisePurposes) 
                 ? user.exercisePurposes 
                 : [],
+              profileImageUrl: user.profileImageUrl || null,
             }
+            setProfileImagePreview(user.profileImageUrl || "")
 
             setProfile(profileData)
             setOriginalProfile(profileData)
@@ -178,7 +194,9 @@ export default function MyPage() {
             exercisePurposes: Array.isArray(user.exercisePurposes) 
               ? user.exercisePurposes 
               : [],
+            profileImageUrl: user.profileImageUrl || null,
           }
+          setProfileImagePreview(user.profileImageUrl || "")
 
           setProfile(profileData)
           setOriginalProfile(profileData)
@@ -217,6 +235,7 @@ export default function MyPage() {
           name: profile.name,
           disabilityType: profile.disabilityType,
           exercisePurposes: profile.exercisePurposes,
+          profileImageUrl: profileImageUrl || profile.profileImageUrl || null,
         }),
       })
 
@@ -228,17 +247,23 @@ export default function MyPage() {
       }
 
       // 로컬 스토리지 업데이트
+      const finalProfileImageUrl = profileImageUrl || profile.profileImageUrl || null
       const updatedUser = {
         id: profile.id,
         idEmail: profile.idEmail,
         name: profile.name,
         disabilityType: profile.disabilityType,
         exercisePurposes: profile.exercisePurposes,
+        profileImageUrl: finalProfileImageUrl,
       }
       localStorage.setItem('user', JSON.stringify(updatedUser))
       localStorage.setItem('userName', profile.name)
 
-      setOriginalProfile({ ...profile })
+      // 프로필 상태 업데이트
+      setProfile((prev) => ({ ...prev, profileImageUrl: finalProfileImageUrl }))
+      setOriginalProfile({ ...profile, profileImageUrl: finalProfileImageUrl })
+      setProfileImageUrl("")
+      setProfileImage(null)
       setIsEditing(false)
       alert("프로필이 수정되었습니다.")
       window.location.reload()
@@ -345,6 +370,67 @@ export default function MyPage() {
         ? prev.exercisePurposes.filter((p) => p !== value)
         : [...prev.exercisePurposes, value],
     }))
+  }
+
+  // 이미지 선택 핸들러
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드 가능합니다.')
+      return
+    }
+
+    // 파일 크기 제한 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('파일 크기는 5MB 이하여야 합니다.')
+      return
+    }
+
+    setProfileImage(file)
+
+    // 미리보기 생성
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setProfileImagePreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    // 서버에 업로드
+    setIsUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload/profile', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.message || '이미지 업로드에 실패했습니다.')
+        setProfileImage(null)
+        setProfileImagePreview(profile.profileImageUrl || "")
+        return
+      }
+
+      setProfileImageUrl(data.url)
+      setProfile((prev) => ({
+        ...prev,
+        profileImageUrl: data.url,
+      }))
+    } catch (error) {
+      console.error('이미지 업로드 오류:', error)
+      alert('이미지 업로드 중 오류가 발생했습니다.')
+      setProfileImage(null)
+      setProfileImagePreview(profile.profileImageUrl || "")
+    } finally {
+      setIsUploadingImage(false)
+    }
   }
 
   const handleChangePassword = async () => {
@@ -502,7 +588,10 @@ export default function MyPage() {
           <Card className="text-center pt-6">
             <div className="flex justify-center mb-4">
               <Avatar className="w-24 h-24">
-                <AvatarImage src="/placeholder.svg" alt={`${profile.name} 프로필 사진`} />
+                <AvatarImage 
+                  src={profileImagePreview || profile.profileImageUrl || "/placeholder.svg"} 
+                  alt={`${profile.name} 프로필 사진`} 
+                />
                 <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
               </Avatar>
             </div>
@@ -521,6 +610,33 @@ export default function MyPage() {
                     placeholder="ID / email"
                     maxLength={50}
                   />
+                  <div className="space-y-2 mt-4">
+                    <Label>프로필 사진 변경</Label>
+                    <div className="flex items-center gap-4">
+                      {profileImagePreview ? (
+                        <img 
+                          src={profileImagePreview} 
+                          alt="프로필 미리보기" 
+                          className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+                          <User className="w-10 h-10 text-gray-400" aria-hidden="true" />
+                        </div>
+                      )}
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        disabled={isUploadingImage}
+                        className="cursor-pointer"
+                        aria-label="프로필 사진 선택"
+                      />
+                    </div>
+                    {isUploadingImage && (
+                      <p className="text-xs text-muted-foreground">업로드 중...</p>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <>

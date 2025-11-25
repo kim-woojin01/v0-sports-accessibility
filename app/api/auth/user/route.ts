@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     const users = await query(
-      'SELECT id, user_id_email, name, disability_type, exercise_purposes FROM users WHERE id = ?',
+      'SELECT id, user_id_email, name, disability_type, exercise_purposes, profile_image_url FROM users WHERE id = ?',
       [userId]
     )
 
@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
       name: user.name,
       disabilityType: user.disability_type || null,
       exercisePurposes: exercisePurposes,
+      profileImageUrl: user.profile_image_url || null,
     })
   } catch (error) {
     console.error('사용자 정보 조회 오류:', error)

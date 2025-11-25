@@ -48,3 +48,6 @@ Thumbs.db
 
 # Misc
 *.log
+
+# Uploads
+public/uploads/

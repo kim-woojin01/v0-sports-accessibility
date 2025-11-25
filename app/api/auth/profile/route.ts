@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 
 export async function PUT(request: NextRequest) {
   try {
-    const { userId, idEmail, name, disabilityType, exercisePurposes } = await request.json()
+    const { userId, idEmail, name, disabilityType, exercisePurposes, profileImageUrl } = await request.json()
 
     if (!userId) {
       return NextResponse.json(
@@ -36,13 +36,14 @@ export async function PUT(request: NextRequest) {
     // 프로필 업데이트
     await query(
       `UPDATE users 
-       SET user_id_email = ?, name = ?, disability_type = ?, exercise_purposes = ?
+       SET user_id_email = ?, name = ?, disability_type = ?, exercise_purposes = ?, profile_image_url = ?
        WHERE id = ?`,
       [
         idEmail,
         name,
         disabilityType || null,
         exercisePurposesJson,
+        profileImageUrl || null,
         userId,
       ]
     )

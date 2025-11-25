@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
   try {
-    const { idEmail, password, name, phone, birthDate, disabilityType, exercisePurposes } = await request.json()
+    const { idEmail, password, name, phone, birthDate, disabilityType, exercisePurposes, profileImageUrl } = await request.json()
 
     // 필수 항목 검증
     if (!idEmail || !password || !name || !phone || !birthDate) {
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
 
     // 사용자 생성
     const result = await query(
-      `INSERT INTO users (user_id_email, password, name, phone, birth_date, disability_type, exercise_purposes)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (user_id_email, password, name, phone, birth_date, disability_type, exercise_purposes, profile_image_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         idEmail,
         hashedPassword,
@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
         phone,
         birthDate,
         disabilityType || null,
-        exercisePurposesJson
+        exercisePurposesJson,
+        profileImageUrl || null
       ]
     )
 

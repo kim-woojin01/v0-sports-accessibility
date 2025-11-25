@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import type React from "react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mail, Lock, User, Phone, Calendar } from "lucide-react"
+import { Mail, Lock, User, Phone, Calendar, Check } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -55,6 +55,21 @@ export default function SignUpPage() {
   // 선택 항목 상태
   const [disabilityType, setDisabilityType] = useState("")
   const [exercisePurposes, setExercisePurposes] = useState<string[]>([])
+  
+  // 프로필 사진 상태
+  const [profileImage, setProfileImage] = useState<File | null>(null)
+  const [profileImagePreview, setProfileImagePreview] = useState<string>("")
+  const [profileImageUrl, setProfileImageUrl] = useState<string>("")
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [imageSelectionMode, setImageSelectionMode] = useState<"upload" | "sample">("upload")
+  const [selectedSampleImage, setSelectedSampleImage] = useState<string>("")
+  
+  // 샘플 이미지 목록
+  const sampleImages = [
+    "/placeholder-user.jpg",
+    "/placeholder.jpg",
+    "/placeholder.svg",
+  ]
   
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
@@ -198,6 +213,71 @@ export default function SignUpPage() {
     )
   }
 
+  // 샘플 이미지 선택 핸들러
+  const handleSampleImageSelect = (imageUrl: string) => {
+    setSelectedSampleImage(imageUrl)
+    setProfileImageUrl(imageUrl)
+    setProfileImage(null)
+    setProfileImagePreview("")
+  }
+
+  // 이미지 선택 핸들러
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드 가능합니다.')
+      return
+    }
+
+    // 파일 크기 제한 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('파일 크기는 5MB 이하여야 합니다.')
+      return
+    }
+
+    setProfileImage(file)
+
+    // 미리보기 생성
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setProfileImagePreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    // 서버에 업로드
+    setIsUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload/profile', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.message || '이미지 업로드에 실패했습니다.')
+        setProfileImage(null)
+        setProfileImagePreview("")
+        return
+      }
+
+      setProfileImageUrl(data.url)
+    } catch (error) {
+      console.error('이미지 업로드 오류:', error)
+      alert('이미지 업로드 중 오류가 발생했습니다.')
+      setProfileImage(null)
+      setProfileImagePreview("")
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
   // 생년월일 유효성 검사
   const isValidDate = (year: string, month: string, day: string): boolean => {
     if (!year || !month || !day) return false
@@ -250,6 +330,12 @@ export default function SignUpPage() {
       return
     }
 
+    // 프로필 이미지가 선택되었지만 업로드가 완료되지 않은 경우 (업로드 모드일 때만)
+    if (imageSelectionMode === "upload" && profileImage && !profileImageUrl) {
+      setErrorMessage("프로필 이미지 업로드를 완료해주세요.")
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -266,6 +352,7 @@ export default function SignUpPage() {
           birthDate,
           disabilityType: disabilityType || null,
           exercisePurposes: exercisePurposes.length > 0 ? exercisePurposes : null,
+          profileImageUrl: profileImageUrl || null,
         }),
       })
 
@@ -431,6 +518,114 @@ export default function SignUpPage() {
               </Select>
             </div>
             <p className="text-sm text-muted-foreground">생년월일 *</p>
+          </div>
+
+          {/* 프로필 사진 */}
+          <div className="flex flex-col gap-2">
+            <Label>프로필 사진 (선택사항)</Label>
+            
+            {/* 업로드/샘플 선택 모드 토글 */}
+            <div className="flex gap-2 mb-2">
+              <Button
+                type="button"
+                variant={imageSelectionMode === "upload" ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setImageSelectionMode("upload")
+                  setSelectedSampleImage("")
+                  setProfileImageUrl("")
+                  setProfileImage(null)
+                  setProfileImagePreview("")
+                }}
+              >
+                파일 업로드
+              </Button>
+              <Button
+                type="button"
+                variant={imageSelectionMode === "sample" ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setImageSelectionMode("sample")
+                  setProfileImage(null)
+                  setProfileImagePreview("")
+                  setProfileImageUrl("")
+                }}
+              >
+                샘플 선택
+              </Button>
+            </div>
+
+            {imageSelectionMode === "upload" ? (
+              // 파일 업로드 UI
+              <div className="flex items-center gap-4">
+                {profileImagePreview ? (
+                  <div className="relative">
+                    <img 
+                      src={profileImagePreview} 
+                      alt="프로필 미리보기" 
+                      className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
+                    />
+                    {isUploadingImage && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                        <span className="text-white text-xs">업로드 중...</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                    <User className="w-12 h-12 text-gray-400" aria-hidden="true" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    disabled={isUploadingImage}
+                    className="cursor-pointer"
+                    aria-label="프로필 사진 선택"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    이미지 파일만 가능 (최대 5MB)
+                  </p>
+                </div>
+              </div>
+            ) : (
+              // 샘플 이미지 선택 UI
+              <div>
+                <div className="grid grid-cols-3 gap-3">
+                  {sampleImages.map((imageUrl) => (
+                    <button
+                      key={imageUrl}
+                      type="button"
+                      onClick={() => handleSampleImageSelect(imageUrl)}
+                      className={`relative w-full aspect-square rounded-full overflow-hidden border-2 transition-all ${
+                        selectedSampleImage === imageUrl
+                          ? "border-purple-600 ring-2 ring-purple-300"
+                          : "border-gray-300 hover:border-gray-400"
+                      }`}
+                      aria-label={`프로필 샘플 이미지 선택: ${imageUrl}`}
+                    >
+                      <img
+                        src={imageUrl}
+                        alt="프로필 샘플"
+                        className="w-full h-full object-cover"
+                      />
+                      {selectedSampleImage === imageUrl && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-purple-600 bg-opacity-30">
+                          <Check className="w-6 h-6 text-white" aria-hidden="true" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                {selectedSampleImage && (
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    선택된 샘플 이미지
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="border-t my-6"></div>

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     // 사용자 조회 (먼저 users 테이블에서 확인)
     let users = await query(
-      'SELECT id, user_id_email, password, name, disability_type, exercise_purposes FROM users WHERE user_id_email = ?',
+      'SELECT id, user_id_email, password, name, disability_type, exercise_purposes, profile_image_url FROM users WHERE user_id_email = ?',
       [idEmail]
     )
 
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
           // 복구된 사용자 정보 조회
           users = await query(
-            'SELECT id, user_id_email, password, name, disability_type, exercise_purposes FROM users WHERE user_id_email = ?',
+            'SELECT id, user_id_email, password, name, disability_type, exercise_purposes, profile_image_url FROM users WHERE user_id_email = ?',
             [idEmail]
           )
           
@@ -95,6 +95,7 @@ export async function POST(request: NextRequest) {
         idEmail: userWithoutPassword.user_id_email,
         name: userWithoutPassword.name,
         disabilityType: userWithoutPassword.disability_type,
+        profileImageUrl: userWithoutPassword.profile_image_url || null,
         exercisePurposes: (() => {
           if (!userWithoutPassword.exercise_purposes) {
             return []

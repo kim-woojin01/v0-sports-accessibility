@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS users (
   birth_date DATE NOT NULL COMMENT '생년월일',
   disability_type VARCHAR(50) DEFAULT NULL COMMENT '장애 유형 (선택사항)',
   exercise_purposes JSON DEFAULT NULL COMMENT '운동 목적 (중복 선택 가능, JSON 배열)',
+  profile_image_url VARCHAR(255) DEFAULT NULL COMMENT '프로필 사진 URL',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_user_id_email (user_id_email),
@@ -61,12 +62,15 @@ CREATE TABLE IF NOT EXISTS deleted_users (
 `;
 
 // 기존 테이블에 필드가 없는 경우를 위한 ALTER TABLE (에러 무시)
-const alterTableSQL = `
-ALTER TABLE deleted_users 
-ADD COLUMN scheduled_deletion_date DATETIME NOT NULL 
-DEFAULT (DATE_ADD(NOW(), INTERVAL 7 DAY))
-COMMENT '실제 삭제 예정 일시 (7일 후)';
-`;
+const alterTableSQLs = [
+  `ALTER TABLE deleted_users 
+   ADD COLUMN scheduled_deletion_date DATETIME NOT NULL 
+   DEFAULT (DATE_ADD(NOW(), INTERVAL 7 DAY))
+   COMMENT '실제 삭제 예정 일시 (7일 후)'`,
+  `ALTER TABLE users 
+   ADD COLUMN profile_image_url VARCHAR(255) DEFAULT NULL 
+   COMMENT '프로필 사진 URL'`
+];
 
 // 실행
 connection.connect((err) => {
@@ -104,26 +108,39 @@ connection.connect((err) => {
 
       // 모든 쿼리가 완료되면 ALTER TABLE 시도 (필드가 이미 있으면 에러 무시)
       if (completedQueries === queries.length) {
-        // ALTER TABLE 시도 (필드가 이미 있으면 에러 무시)
-        connection.query(alterTableSQL.trim(), (alterErr, alterResults) => {
-          if (alterErr) {
-            // 필드가 이미 존재하는 경우는 정상 (에러 무시)
-            if (alterErr.code === 'ER_DUP_FIELDNAME') {
-              console.log('ℹ️  scheduled_deletion_date 필드가 이미 존재합니다.');
+        let alterCompleted = 0;
+        alterTableSQLs.forEach((alterSQL, index) => {
+          connection.query(alterSQL.trim(), (alterErr, alterResults) => {
+            if (alterErr) {
+              // 필드가 이미 존재하는 경우는 정상 (에러 무시)
+              if (alterErr.code === 'ER_DUP_FIELDNAME') {
+                if (index === 0) {
+                  console.log('ℹ️  scheduled_deletion_date 필드가 이미 존재합니다.');
+                } else if (index === 1) {
+                  console.log('ℹ️  profile_image_url 필드가 이미 존재합니다.');
+                }
+              } else {
+                console.warn(`⚠️  ALTER TABLE 경고 (쿼리 ${index + 1}):`, alterErr.message);
+              }
             } else {
-              console.warn('⚠️  ALTER TABLE 경고:', alterErr.message);
+              if (index === 0) {
+                console.log('✅ scheduled_deletion_date 필드가 추가되었습니다!');
+              } else if (index === 1) {
+                console.log('✅ profile_image_url 필드가 추가되었습니다!');
+              }
             }
-          } else {
-            console.log('✅ scheduled_deletion_date 필드가 추가되었습니다!');
-          }
-          
-          connection.end();
-          if (hasError) {
-            process.exit(1);
-          } else {
-            console.log('✅ 모든 테이블 생성이 완료되었습니다!');
-            process.exit(0);
-          }
+            
+            alterCompleted++;
+            if (alterCompleted === alterTableSQLs.length) {
+              connection.end();
+              if (hasError) {
+                process.exit(1);
+              } else {
+                console.log('✅ 모든 테이블 생성이 완료되었습니다!');
+                process.exit(0);
+              }
+            }
+          });
         });
       } else if (hasError && completedQueries === queries.length) {
         connection.end();
