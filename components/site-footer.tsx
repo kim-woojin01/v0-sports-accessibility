@@ -118,7 +118,7 @@ export function SiteFooter() {
               <Link href="#">시설 정보 수정 요청</Link>
             </li>
             <li>
-              <Link href="#">이용 가이드</Link>
+              <Link href="/guide">이용 가이드</Link>
             </li>
           </ul>
         </div>
