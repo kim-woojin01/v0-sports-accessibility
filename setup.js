@@ -71,6 +71,32 @@ CREATE TABLE IF NOT EXISTS notices (
   INDEX idx_category (category),
   INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS facility_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  request_type ENUM('user', 'facility_manager') NOT NULL COMMENT '요청자 유형',
+  facility_name VARCHAR(200) NOT NULL COMMENT '시설명',
+  request_category VARCHAR(20) DEFAULT NULL COMMENT '요청 유형 (정보오류/폐업신고/신규등록/기타) - 사용자용',
+  content TEXT NOT NULL COMMENT '상세 내용',
+  attachment_url VARCHAR(255) DEFAULT NULL COMMENT '첨부 사진 URL - 사용자용',
+  business_registration_url VARCHAR(255) DEFAULT NULL COMMENT '사업자 등록증 URL',
+  representative_name VARCHAR(50) DEFAULT NULL COMMENT '대표자명',
+  phone VARCHAR(13) DEFAULT NULL COMMENT '전화번호',
+  operating_hours JSON DEFAULT NULL COMMENT '운영 시간 (요일별)',
+  accessibility_features JSON DEFAULT NULL COMMENT '접근성 정보 (체크리스트)',
+  facility_images JSON DEFAULT NULL COMMENT '시설 사진 URL 배열',
+  introduction TEXT DEFAULT NULL COMMENT '시설 소개글',
+  status VARCHAR(20) DEFAULT '대기중' COMMENT '상태 (대기중/승인/반려)',
+  user_id INT NOT NULL COMMENT '작성자 ID',
+  admin_comment TEXT DEFAULT NULL COMMENT '관리자 코멘트',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '작성일',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_status (status),
+  INDEX idx_user_id (user_id),
+  INDEX idx_request_type (request_type),
+  INDEX idx_created_at (created_at),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
 
 
@@ -117,6 +143,10 @@ connection.connect((err) => {
           console.log('✅ users 테이블이 성공적으로 생성되었습니다!');
         } else if (index === 1) {
           console.log('✅ deleted_users 테이블이 성공적으로 생성되었습니다!');
+        } else if (index === 2) {
+          console.log('✅ notices 테이블이 성공적으로 생성되었습니다!');
+        } else if (index === 3) {
+          console.log('✅ facility_requests 테이블이 성공적으로 생성되었습니다!');
         }
       }
 

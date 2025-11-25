@@ -167,14 +167,14 @@ export default function MyPage() {
           } else {
             // API 호출 실패 시 localStorage 데이터 사용 (fallback)
             console.warn("마이페이지 - API 호출 실패, localStorage 데이터 사용")
-            const profileData = {
-              id: user.id,
-              idEmail: user.idEmail || "",
-              name: user.name || "",
-              disabilityType: user.disabilityType || null,
-              exercisePurposes: Array.isArray(user.exercisePurposes) 
-                ? user.exercisePurposes 
-                : [],
+        const profileData = {
+          id: user.id,
+          idEmail: user.idEmail || "",
+          name: user.name || "",
+          disabilityType: user.disabilityType || null,
+          exercisePurposes: Array.isArray(user.exercisePurposes) 
+            ? user.exercisePurposes 
+            : [],
               profileImageUrl: user.profileImageUrl || null,
             }
             setProfileImagePreview(user.profileImageUrl || "")
@@ -198,9 +198,9 @@ export default function MyPage() {
           }
           setProfileImagePreview(user.profileImageUrl || "")
 
-          setProfile(profileData)
-          setOriginalProfile(profileData)
-          setIsLoggedIn(true)
+        setProfile(profileData)
+        setOriginalProfile(profileData)
+        setIsLoggedIn(true)
         }
       } catch (error) {
         console.error("마이페이지 - 사용자 정보 로드 오류:", error)
@@ -538,12 +538,12 @@ export default function MyPage() {
       }
 
       // 성공 - localStorage 정리
-      localStorage.removeItem("user")
-      localStorage.removeItem("userName")
-      localStorage.removeItem("userId")
+    localStorage.removeItem("user")
+    localStorage.removeItem("userName")
+    localStorage.removeItem("userId")
       setShowDeleteConfirmModal(false)
       setDeleteAccountPassword("")
-      setShowDeleteSuccessModal(true)
+    setShowDeleteSuccessModal(true)
       setIsDeletingAccount(false)
     } catch (error) {
       console.error('계정 탈퇴 오류:', error)
@@ -960,7 +960,7 @@ export default function MyPage() {
       </Dialog>
 
             {/* 계정 탈퇴 확인 모달 */}
-            <Dialog open={showDeleteConfirmModal} onOpenChange={setShowDeleteConfirmModal}>
+      <Dialog open={showDeleteConfirmModal} onOpenChange={setShowDeleteConfirmModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>계정 탈퇴</DialogTitle>

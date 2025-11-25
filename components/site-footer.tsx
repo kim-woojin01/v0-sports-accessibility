@@ -115,7 +115,7 @@ export function SiteFooter() {
               <Link href="/faq">자주 묻는 질문</Link>
             </li>
             <li>
-              <Link href="#">시설 정보 수정 요청</Link>
+              <Link href="/facility-request">시설 정보 수정 요청</Link>
             </li>
             <li>
               <Link href="/guide">이용 가이드</Link>
