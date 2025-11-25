@@ -139,7 +139,7 @@ export function SiteFooter() {
               <Link href="/terms-of-service">이용약관</Link>
             </li>
             <li>
-              <Link href="#">팀 소개</Link>
+              <Link href="/team">팀 소개</Link>
             </li>
           </ul>
         </div>
