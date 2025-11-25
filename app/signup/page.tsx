@@ -295,7 +295,7 @@ export default function SignUpPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 py-12 pt-24">
       <div className="w-full max-w-xl space-y-8 bg-white p-8 rounded-2xl shadow-lg">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Sign up</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">회원가입</h2>
           <p className="mt-2 text-sm text-muted-foreground"> *은 필수 항목이므로 꼭 입력 해주세요.</p>
         </div>
 
@@ -310,13 +310,14 @@ export default function SignUpPage() {
           <div className="flex flex-col gap-1">
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 <Input
-                  placeholder="ID / email *"
+                  placeholder="아이디 / 이메일 *"
                   className="pl-10"
                   value={idEmail}
                   onChange={handleIdEmailChange}
                   maxLength={50}
+                  aria-label="아이디 또는 이메일 입력"
                 />
               </div>
               <Button type="button" variant="outline" onClick={handleCheckId}>
@@ -332,27 +333,29 @@ export default function SignUpPage() {
 
           {/* 비밀번호 */}
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" aria-hidden="true" />
             <Input
               type="password"
-              placeholder="Password *"
+              placeholder="비밀번호 *"
               className="pl-10"
               value={password}
               onChange={handlePasswordInput}
               maxLength={30}
+              aria-label="비밀번호 입력"
             />
           </div>
 
           {/* 비밀번호 확인 */}
           <div className="relative flex flex-col gap-1">
-            <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" aria-hidden="true" />
             <Input
               type="password"
-              placeholder="password check *"
+              placeholder="비밀번호 확인 *"
               className="pl-10"
               value={passwordCheck}
               onChange={handlePasswordCheckInput}
               maxLength={30}
+              aria-label="비밀번호 확인 입력"
             />
             {passwordMatchMessage && (
               <p className={`text-xs ml-0 ${passwordMatch ? "text-green-600" : "text-red-600"}`}>
@@ -363,25 +366,27 @@ export default function SignUpPage() {
 
           {/* 이름 */}
           <div className="relative">
-            <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" aria-hidden="true" />
             <Input
               placeholder="이름 *"
               className="pl-10"
               value={name}
               onChange={handleNameChange}
               maxLength={30}
+              aria-label="이름 입력"
             />
           </div>
 
           {/* 전화번호 */}
           <div className="relative">
-            <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" aria-hidden="true" />
             <Input
               placeholder="전화번호 (010-0000-0000) *"
               className="pl-10"
               value={phone}
               onChange={handlePhoneChange}
               maxLength={13}
+              aria-label="전화번호 입력"
             />
           </div>
 
@@ -471,16 +476,16 @@ export default function SignUpPage() {
               <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-muted-foreground">or</span>
+              <span className="bg-white px-2 text-muted-foreground">또는</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Button variant="outline" type="button">
-              Google
+              구글
             </Button>
             <Button variant="outline" type="button">
-              Facebook
+              페이스북
             </Button>
           </div>
 
@@ -489,7 +494,7 @@ export default function SignUpPage() {
             className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-700 text-lg font-semibold rounded-lg mt-6"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "처리 중..." : "Sign up"}
+            {isSubmitting ? "처리 중..." : "회원가입"}
           </Button>
         </form>
       </div>
