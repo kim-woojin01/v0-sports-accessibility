@@ -69,10 +69,10 @@ export function SiteHeader() {
   }
 
   const navItems = [
-    { name: "Home", href: "/" },
-    { name: "Search", href: "/search" },
-    { name: "Reviews", href: "/reviews" },
-    { name: "Mypage", href: "/mypage" },
+    { name: "Home", label: "홈", href: "/" },
+    { name: "Search", label: "검색", href: "/search" },
+    { name: "Reviews", label: "리뷰", href: "/reviews" },
+    { name: "Mypage", label: "마이페이지", href: "/mypage" },
   ]
 
   return (
@@ -96,7 +96,7 @@ export function SiteHeader() {
               }`}
               aria-current={pathname === item.href ? "page" : undefined}
             >
-              {item.name}
+              {item.label}
               {pathname === item.href && (
                 <span className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-600 rounded-full" aria-hidden="true" />
               )}
@@ -111,7 +111,7 @@ export function SiteHeader() {
                 {userName || "사용자"}님 환영합니다!
               </Link>
               <Button variant="outline" size="sm" onClick={handleLogout}>
-                Logout
+                로그아웃
               </Button>
             </div>
           ) : (
@@ -122,12 +122,12 @@ export function SiteHeader() {
                   size="sm"
                   className="bg-purple-700 text-white hover:bg-purple-800 hover:text-white"
                 >
-                  Sign in
+                  로그인
                 </Button>
               </Link>
               <Link href="/signup">
                 <Button size="sm" className="bg-pink-500 hover:bg-pink-600 text-white">
-                  Sign up
+                  회원 가입
                 </Button>
               </Link>
             </div>
@@ -155,7 +155,7 @@ export function SiteHeader() {
                 className="text-sm font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                {item.name}
+                {item.label}
               </Link>
             ))}
           </nav>
@@ -164,16 +164,16 @@ export function SiteHeader() {
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-medium">{userName || "사용자"}님 환영합니다!</span>
                 <Button variant="outline" size="sm" onClick={handleLogout}>
-                  Logout
+                  로그아웃
                 </Button>
               </div>
             ) : (
               <div className="flex flex-col gap-2">
                 <Link href="/signin" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full bg-purple-700">Sign in</Button>
+                  <Button className="w-full bg-purple-700">로그인</Button>
                 </Link>
                 <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full bg-pink-500">Sign up</Button>
+                  <Button className="w-full bg-pink-500">회원 가입</Button>
                 </Link>
               </div>
             )}
