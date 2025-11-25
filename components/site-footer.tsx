@@ -127,7 +127,7 @@ export function SiteFooter() {
           <h4 className="font-semibold mb-4">서비스 및 정책</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
-              <Link href="#">서비스 소개</Link>
+              <Link href="/about">서비스 소개</Link>
             </li>
             <li>
               <Link href="/accessibility-policy">웹 접근성 정책</Link>
