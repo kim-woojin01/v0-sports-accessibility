@@ -63,8 +63,8 @@ export default function SignInPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 py-12">
       <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-2xl shadow-lg">
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Sign In</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Welcome back! Please enter your details.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">로그인</h2>
+          <p className="mt-2 text-sm text-muted-foreground">다시 오신 것을 환영합니다! 정보를 입력해주세요.</p>
         </div>
 
         {errorMessage && (
@@ -76,25 +76,27 @@ export default function SignInPage() {
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4">
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+              <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <Input
                 type="text"
-                placeholder="ID / email"
+                placeholder="아이디 / 이메일"
                 className="pl-10 h-12"
                 required
                 value={idEmail}
                 onChange={(e) => setIdEmail(e.target.value)}
+                aria-label="아이디 또는 이메일 입력"
               />
             </div>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+              <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <Input
                 type="password"
-                placeholder="Password"
+                placeholder="비밀번호"
                 className="pl-10 h-12"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                aria-label="비밀번호 입력"
               />
             </div>
           </div>
@@ -104,12 +106,12 @@ export default function SignInPage() {
             className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-700 text-lg font-semibold rounded-lg"
             disabled={isLoading}
           >
-            {isLoading ? '로그인 중...' : 'Sign In'}
+            {isLoading ? '로그인 중...' : '로그인'}
           </Button>
 
           <div className="flex justify-end">
             <Link href="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-              Forgot password?
+              비밀번호를 잊으셨나요?
             </Link>
           </div>
 
@@ -118,24 +120,24 @@ export default function SignInPage() {
               <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-muted-foreground">or</span>
+              <span className="bg-white px-2 text-muted-foreground">또는</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Button variant="outline" type="button" className="h-12 bg-transparent">
-              <span className="mr-2">G</span> Google
+              <span className="mr-2">G</span> 구글
             </Button>
             <Button variant="outline" type="button" className="h-12 bg-transparent">
-              <span className="mr-2">f</span> Facebook
+              <span className="mr-2">f</span> 페이스북
             </Button>
           </div>
         </form>
 
         <div className="text-center text-sm">
-          <span className="text-muted-foreground">Don't have an account? </span>
+          <span className="text-muted-foreground">계정이 없으신가요? </span>
           <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign Up
+            회원가입
           </Link>
         </div>
       </div>
