@@ -324,15 +324,15 @@ export default function PrivacyPolicyPage() {
                   </p>
                   <div className="ml-8 bg-slate-50 p-4 rounded-lg space-y-2">
                     <p>
-                      <strong className="text-foreground">성명</strong>: [본인 이름 입력]
+                      <strong className="text-foreground">성명</strong>: 김우진
                     </p>
                     <p>
                       <strong className="text-foreground">직책</strong>: SportsAccess 개발 총괄 / CPO
                     </p>
                     <p>
                       <strong className="text-foreground">연락처</strong>:{" "}
-                      <a href="mailto:privacy@sportsaccess.com" className="text-primary hover:underline">
-                        privacy@sportsaccess.com
+                      <a href="mailto:kjwelf@naver.com" className="text-primary hover:underline">
+                        kjwelf@naver.com
                       </a>
                     </p>
                   </div>

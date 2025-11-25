@@ -146,7 +146,7 @@ export function SiteFooter() {
       </div>
       <div className="container mt-12 pt-8 border-t text-center max-w-screen-2xl mx-auto">
         <div className="w-full h-12 gradient-primary flex items-center justify-center text-white text-sm">
-          © Copyright ar-shakir. All right reserved
+          © Copyright 2025 SportsAccess. All rights reserved
         </div>
       </div>
     </footer>
