@@ -4,13 +4,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
-import { Menu, X } from "lucide-react"
+import { Menu, X, Shield } from "lucide-react"
 
 export function SiteHeader() {
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [userName, setUserName] = useState("")
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // localStorage 변경 감지 및 사용자 정보 로드
   const loadUserInfo = () => {
@@ -21,6 +22,8 @@ export function SiteHeader() {
         setIsLoggedIn(true)
         // name 필드 확인
         setUserName(user.name || "")
+        // 관리자 여부 확인
+        setIsAdmin(user.idEmail === "admin")
         console.log("헤더 - 로드된 사용자:", user.name) // 디버깅
       } catch (e) {
         console.error("헤더 - 파싱 오류:", e)
@@ -32,10 +35,12 @@ export function SiteHeader() {
           setIsLoggedIn(false)
           setUserName("")
         }
+        setIsAdmin(false)
       }
     } else {
       setIsLoggedIn(false)
       setUserName("")
+      setIsAdmin(false)
     }
   }
 
@@ -65,6 +70,7 @@ export function SiteHeader() {
     localStorage.removeItem("userId")
     setIsLoggedIn(false)
     setUserName("")
+    setIsAdmin(false)
     window.location.href = "/"
   }
 
@@ -107,6 +113,19 @@ export function SiteHeader() {
         <div className="hidden md:flex items-center gap-4">
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
+              {/* 관리자 버튼 - "관리자님 환영합니다!" 왼쪽에 배치 */}
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-purple-600 text-purple-600 hover:bg-purple-50 flex items-center gap-2"
+                  >
+                    <Shield className="w-4 h-4" />
+                    관리자
+                  </Button>
+                </Link>
+              )}
               <Link href="/mypage" className="text-sm font-medium hover:underline">
                 {userName || "사용자"}님 환영합니다!
               </Link>
@@ -162,6 +181,19 @@ export function SiteHeader() {
           <div className="pt-4 border-t">
             {isLoggedIn ? (
               <div className="flex flex-col gap-2">
+                {/* 모바일에서도 관리자 버튼 표시 */}
+                {isAdmin && (
+                  <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-purple-600 text-purple-600 hover:bg-purple-50 flex items-center justify-center gap-2"
+                    >
+                      <Shield className="w-4 h-4" />
+                      관리자
+                    </Button>
+                  </Link>
+                )}
                 <span className="text-sm font-medium">{userName || "사용자"}님 환영합니다!</span>
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   로그아웃
