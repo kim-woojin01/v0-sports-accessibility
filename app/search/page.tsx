@@ -406,7 +406,7 @@ export default function SearchPage() {
   return (
     <div className="flex flex-col min-h-screen items-center w-full">
       {/* Map Section */}
-      <div className="relative w-full h-[420px] rounded-2xl overflow-hidden shadow-lg bg-slate-100">
+      <div className="relative w-full h-[420px] rounded-2xl overflow-hidden shadow-lg bg-slate-100 mt-16">
         <FacilityMap facilities={filteredFacilities} center={mapCenter} userLocation={userLocation} />
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-md text-sm font-medium text-slate-700">
           {userLocation ? "내 위치 기준으로 지도를 표시하고 있어요." : "검색 결과를 지도 아이콘으로 확인해보세요."}
@@ -422,6 +422,8 @@ export default function SearchPage() {
           {isLocating ? <Loader2 className="w-5 h-5 animate-spin text-slate-700" /> : <Crosshair className="w-6 h-6 text-slate-700" />}
         </Button>
       </div>
+
+      <div className="h-12"></div> {/* 여백 추가 */}
 
       {/* Search Filter Bar */}
       <div className="sticky top-16 z-40 bg-white border-b shadow-sm w-full">

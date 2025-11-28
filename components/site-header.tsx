@@ -83,21 +83,21 @@ export function SiteHeader() {
 
   return (
     <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between relative max-w-screen-2xl mx-auto">
+      <div className="container flex h-20 items-center justify-between relative max-w-screen-2xl mx-auto">
         <div className="flex items-center gap-8 pl-6">
           <Link href="/" className="flex items-center space-x-2" aria-label="SportsAccess 홈으로 이동">
-            <span className="text-xl font-bold tracking-tight">
+            <span className="text-3xl font-bold tracking-tight">
               Sports<span className="text-primary">Access</span>
             </span>
           </Link>
         </div>
 
-        <nav className="hidden md:flex gap-16 absolute left-1/2 transform -translate-x-1/2" aria-label="메인 내비게이션">
+        <nav className="hidden md:flex gap-30 absolute left-1/2 transform -translate-x-1/2" aria-label="메인 내비게이션">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`text-sm font-medium transition-colors hover:text-primary relative py-2 ${
+              className={`text-lg font-medium transition-colors hover:text-primary relative py-2 ${
                 pathname === item.href ? "text-purple-600" : "text-muted-foreground"
               }`}
               aria-current={pathname === item.href ? "page" : undefined}

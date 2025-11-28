@@ -27,11 +27,12 @@ export default function Home() {
                 </div>
                 <h3 className="font-bold text-lg md:text-xl mb-3 md:mb-4">체육시설 검색 서비스</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  지역, 종목, 시설명을 입력하면
+                  지역, 시설명 등을 입력하면 장애인 편의시설 정보 (경사로, 주차장, 화장실)까지 여러 조건을 어렵지 않게 한 번에 확인할 수 있습니다.
                   <br />
-                  장애인 편의시설 정보(경사로, 주차장, 화장실)까지 한 번에 확인할 수 있습니다.
                   <br />
-                  편의시설 필터를 통해 나에게 맞는 시설을 빠르게 찾을 수 있습니다.
+                  이러한 편의시설 필터 기능을 통해
+                  <br />
+                  나에게 맞는 시설을 빠르게 찾아보세요!
                 </p>
               </div>
             </div>
@@ -46,9 +47,10 @@ export default function Home() {
                 </div>
                 <h3 className="font-bold text-lg md:text-xl mb-3 md:mb-4">접근성 평가 & 점수 제공</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  시설별 장애인 편의시설 여부, 길턱, 이동 동선 등 접근성 요소를 분석해 종합 점수를 제공합니다.
+                  시설별 장애인 편의시설 여부, 길턱, 이동 동선 등 접근성 요소를 분석해 종합 점수와 리뷰를 제공합니다.
                   <br />
-                  객관적인 데이터를 기반으로 시설 선택을 더 쉽게 도와줍니다.
+                  <br />
+                  객관적인 데이터를 기반으로 더 쉬운 시설 선택을 도와드리겠습니다!
                 </p>
               </div>
             </div>
@@ -61,9 +63,10 @@ export default function Home() {
                 </div>
                 <h3 className="font-bold text-lg md:text-xl mb-3 md:mb-4">혼잡도 분석 서비스</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  공공데이터 기반으로 시간대·요일별 혼잡도 패턴을 분석합니다.
+                  공공데이터 기반으로 시간대·요일별 과거의 혼잡도 데이터를 적용시켜 분석합니다.
                   <br />
-                  여유 / 보통 / 혼잡 상태를 색상으로 시각화해 가장 편한 시간에 시설을 이용할 수 있도록 안내합니다.
+                  <br />
+                  실시간 혼잡도를 반영한 여유 / 보통 / 혼잡 상태를 색상으로 시각화해 쾌적한 시설 이용에 도움을 드리겠습니다!
                 </p>
               </div>
             </div>
@@ -76,9 +79,10 @@ export default function Home() {
                 </div>
                 <h3 className="font-bold text-lg md:text-xl mb-3 md:mb-4">시설 상세 정보 제공</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  운영시간, 주차, 이용 요금표, 시설 규모 등 이용에 필요한 모든 정보를 한 화면에 제공합니다.
+                  운영 시간, 이용 요금, 시설 규모 등 이용에 필요한 모든 정보를 한 화면에 제공합니다.
                   <br />
-                  장애인 편의시설 체크리스트도 함께 제공합니다.
+                  <br />
+                  장애인 편의시설, 공공 편의시설 체크리스트도 함께 모두 다 제공합니다.
                 </p>
               </div>
             </div>
@@ -98,10 +102,11 @@ export default function Home() {
               <br />
               시간대별 혼잡도를 한눈에 확인!
             </h2>
-            <div className="w-full h-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full max-w-[300px]"></div>
+            <div className="w-full h-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full max-w-[430px]"></div>
             <p className="text-muted-foreground text-base md:text-lg">
-              지도 위에서 내 주변 체육시설을 직관적으로 확인하세요. 현재 위치를 기반으로 가장 가까운 접근성 높은 시설을
-              추천해드립니다.
+              지도 위에서 내 주변 체육시설을 직관적으로 확인하세요.              
+              <br />
+              현재 위치를 기반으로 가장 가까운 접근성 높은 시설을 추천해드립니다.
             </p>
 
             {/* Example Card */}
@@ -149,7 +154,7 @@ export default function Home() {
               <br />
               검색해보세요!
             </h2>
-            <div className="w-full h-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full max-w-[300px]"></div>
+            <div className="w-full h-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full max-w-[325px]"></div>
             <p className="text-muted-foreground text-sm md:text-base">
               지역·접근성·혼잡도 정보를 바탕으로 나에게 꼭 맞는
               <br />
@@ -163,10 +168,10 @@ export default function Home() {
           </div>
           <div className="flex-1 flex flex-col md:flex-row justify-center gap-4 md:gap-8 order-1 lg:order-2 w-full">
             <div className="relative w-full md:w-64 h-48 md:h-64 mx-auto md:mx-0">
-              <Image src="/analytics-chart-3d.jpg" alt="체육 시설 혼잡도 분석 차트 - 시간대별 이용 현황을 시각화한 그래프" fill className="object-contain" />
+              <Image src="/image1.png" alt="체육 시설 혼잡도 분석 차트 - 시간대별 이용 현황을 시각화한 그래프" fill className="object-contain" />
             </div>
             <div className="relative w-full md:w-64 h-60 md:h-80 mx-auto md:mx-0 md:mt-12">
-              <Image src="/mobile-app-review-3d.jpg" alt="SportsAccess 모바일 앱 화면 - 스마트폰에서 체육 시설 정보를 확인하는 모습" fill className="object-contain" />
+              <Image src="/image2.png" alt="SportsAccess 모바일 앱 화면 - 스마트폰에서 체육 시설 정보를 확인하는 모습" fill className="object-contain" />
             </div>
           </div>
         </div>
