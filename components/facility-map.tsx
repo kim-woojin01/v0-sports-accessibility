@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo } from "react"
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from "react-leaflet"
-import type { Facility } from "@/lib/data"
 import L from "leaflet"
 
 type LatLng = {
@@ -11,7 +10,7 @@ type LatLng = {
 }
 
 interface FacilityMapProps {
-  facilities: Facility[]
+  facilities: any[]
   center: LatLng
   userLocation?: LatLng | null
 }
@@ -40,10 +39,16 @@ export function FacilityMap({ facilities, center, userLocation }: FacilityMapPro
   const markerData = useMemo(
     () =>
       facilities
-        .filter((facility) => typeof facility.lat === "number" && typeof facility.lng === "number")
+        .filter(
+          (facility) =>
+            typeof facility.lat === "number" &&
+            !Number.isNaN(facility.lat) &&
+            typeof facility.lng === "number" &&
+            !Number.isNaN(facility.lng),
+        )
         .map((facility) => ({
           ...facility,
-          position: [facility.lat, facility.lng] as [number, number],
+          position: [facility.lat as number, facility.lng as number] as [number, number],
         })),
     [facilities],
   )

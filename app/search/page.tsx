@@ -18,7 +18,6 @@ import {
   Crosshair,
   Loader2,
 } from "lucide-react"
-import { facilities, type Facility } from "@/lib/data"
 import Link from "next/link"
 
 const FacilityMap = dynamic(() => import("@/components/facility-map"), {
@@ -205,22 +204,69 @@ const regionData: Record<string, string[]> = {
   제주특별자치도: ["제주시", "서귀포시"],
 }
 
+// ✅ API 응답 + 기존 UI에 맞춘 Facility 타입
+type CongestionCode = "crowded" | "moderate" | "leisure"
+
+interface Facility {
+  id: number | string
+  name: string
+  address?: string
+  image?: string
+  rating?: number
+  phone?: string
+  hours?: string
+  congestion?: CongestionCode
+  features?: string[]
+  description?: string
+  lat?: number
+  lng?: number
+  province?: string
+  district?: string
+  capacity?: number
+  real_time_level?: "여유" | "보통" | "혼잡"
+  real_time_percent?: number
+  current_people?: number
+}
+
 const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 }
+
+// 주소에서 시/도, 시/군/구를 유추하는 헬퍼
+function detectRegionFromAddress(address?: string): { province?: string; district?: string } {
+  if (!address) return {}
+
+  for (const [province, districts] of Object.entries(regionData)) {
+    if (address.includes(province)) {
+      let detectedDistrict: string | undefined
+      for (const district of districts) {
+        if (address.includes(district)) {
+          detectedDistrict = district
+          break
+        }
+      }
+      return { province, district: detectedDistrict }
+    }
+  }
+
+  return {}
+}
 
 export default function SearchPage() {
   const [isRegionOpen, setIsRegionOpen] = useState(false)
   const [isDateOpen, setIsDateOpen] = useState(false)
   const [isFacilityOpen, setIsFacilityOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  // ✅ DB에서 가져온 전체 시설 리스트
+  const [facilitiesData, setFacilitiesData] = useState<Facility[]>([])
+  // ✅ 현재 필터/검색 결과
+  const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Mock states for filters
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null)
 
   const [selectedDate, setSelectedDate] = useState("이용날짜/시간")
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>(facilities)
 
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedHour, setSelectedHour] = useState(12)
@@ -231,9 +277,8 @@ export default function SearchPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
   const [pageBlock, setPageBlock] = useState(0) // 0 for 1-5, 1 for 6-10
-  const initialCenter =
-    facilities.length > 0 ? { lat: facilities[0].lat, lng: facilities[0].lng } : DEFAULT_CENTER
-  const [mapCenter, setMapCenter] = useState(initialCenter)
+  // ✅ 초기 지도 중심: 기본값 → 데이터 로드 후 useEffect에서 첫 시설로 이동
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [isLocating, setIsLocating] = useState(false)
   const locationWatchId = useRef<number | null>(null)
@@ -242,19 +287,98 @@ export default function SearchPage() {
   useEffect(() => {
     const user = localStorage.getItem("user")
     setIsLoggedIn(!!user)
+
+    async function loadData() {
+      setIsLoading(true)
+      try {
+        const res = await fetch("/api/facilities")
+        if (!res.ok) {
+          console.error("시설 데이터 요청 실패:", res.status, res.statusText)
+          setFacilitiesData([])
+          setFilteredFacilities([])
+          return
+        }
+
+        const data = await res.json()
+
+        // ✅ API 응답을 화면에서 쓰기 좋은 형태로 매핑
+        const mapped: Facility[] = data.map((item: any) => {
+          const { province, district } = detectRegionFromAddress(item.address ?? "")
+          let congestion: CongestionCode | undefined
+          if (item.real_time_level === "혼잡") congestion = "crowded"
+          else if (item.real_time_level === "보통") congestion = "moderate"
+          else if (item.real_time_level === "여유") congestion = "leisure"
+
+          const rawLat = item.lat ?? item.latitude
+          const rawLng = item.lng ?? item.longitude
+          const latNum =
+            rawLat !== null && rawLat !== undefined && !Number.isNaN(Number(rawLat))
+              ? Number(rawLat)
+              : undefined
+          const lngNum =
+            rawLng !== null && rawLng !== undefined && !Number.isNaN(Number(rawLng))
+              ? Number(rawLng)
+              : undefined
+
+          // 위치 디버그 로그
+          console.debug("시설 위치 디버그:", item.name, rawLat, rawLng, latNum, lngNum)
+
+          return {
+            id: item.id,
+            name: item.name,
+            address: item.address ?? "",
+            image: item.image ?? "/placeholder.svg",
+            rating: item.rating ?? 0,
+            phone: item.phone ?? "",
+            hours: item.hours ?? "",
+            features: item.features ?? [],
+            description: item.description ?? "",
+            lat: latNum,
+            lng: lngNum,
+            province,
+            district,
+            capacity: item.capacity,
+            real_time_level: item.real_time_level,
+            real_time_percent: item.real_time_percent,
+            current_people: item.current_people,
+            congestion,
+          }
+        })
+
+        setFacilitiesData(mapped)
+        setFilteredFacilities(mapped)
+
+        if (mapped.length > 0 && mapped[0].lat && mapped[0].lng) {
+          setMapCenter({ lat: mapped[0].lat, lng: mapped[0].lng })
+        }
+      } catch (e) {
+        console.error("데이터 로드 오류:", e)
+        setFacilitiesData([])
+        setFilteredFacilities([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
   }, [])
 
   const handleSearch = () => {
-    let results = facilities
+    let results = facilitiesData
 
-    if (searchQuery) {
+    if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase().replace(/\s+/g, "")
-      results = results.filter(
-        (f) =>
-          f.name.toLowerCase().replace(/\s+/g, "").includes(query) ||
-          f.address.toLowerCase().replace(/\s+/g, "").includes(query) ||
-          f.features.some((feat) => feat.toLowerCase().includes(query)),
-      )
+      results = results.filter((f) => {
+        const name = f.name.toLowerCase().replace(/\s+/g, "")
+        const address = (f.address ?? "").toLowerCase().replace(/\s+/g, "")
+        const features = (f.features ?? []).map((feat) => feat.toLowerCase())
+
+        return (
+          name.includes(query) ||
+          address.includes(query) ||
+          features.some((feat) => feat.includes(query))
+        )
+      })
     }
 
     if (selectedProvince) {
@@ -265,17 +389,20 @@ export default function SearchPage() {
     }
 
     if (selectedFacilities.length > 0) {
-      results = results.filter((f) => selectedFacilities.every((sf) => f.features.includes(sf)))
+      results = results.filter((f) =>
+        selectedFacilities.every((sf) => (f.features ?? []).includes(sf)),
+      )
     }
 
     setFilteredFacilities(results)
     const firstResult = results[0]
-    if (firstResult) {
+
+    if (firstResult?.lat && firstResult?.lng) {
       setMapCenter({ lat: firstResult.lat, lng: firstResult.lng })
     } else {
       setMapCenter(DEFAULT_CENTER)
     }
-    setCurrentPage(1) // Reset to first page
+    setCurrentPage(1)
     setIsRegionOpen(false)
     setIsDateOpen(false)
     setIsFacilityOpen(false)
@@ -314,8 +441,8 @@ export default function SearchPage() {
     }
   }
 
-  const hasVisited = (facilityId: string) => {
-    return facilityId === "2"
+  const hasVisited = (facilityId: string | number) => {
+    return String(facilityId) === "2"
   }
 
   useEffect(() => {
@@ -407,7 +534,7 @@ export default function SearchPage() {
     <div className="flex flex-col min-h-screen items-center w-full">
       {/* Map Section */}
       <div className="relative w-full h-[420px] rounded-2xl overflow-hidden shadow-lg bg-slate-100 mt-16">
-        <FacilityMap facilities={filteredFacilities} center={mapCenter} userLocation={userLocation} />
+        <FacilityMap facilities={currentFacilities} center={mapCenter} userLocation={userLocation} />
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-md text-sm font-medium text-slate-700">
           {userLocation ? "내 위치 기준으로 지도를 표시하고 있어요." : "검색 결과를 지도 아이콘으로 확인해보세요."}
         </div>
@@ -748,12 +875,12 @@ export default function SearchPage() {
                   </div>
 
                   <div className="flex justify-between items-end mt-6">
-                    <div className="flex gap-2">
-                      {facility.features.slice(0, 3).map((feature) => (
-                        <span key={feature} className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600">
-                          {feature}
-                        </span>
-                      ))}
+                      <div className="flex gap-2">
+                        {(facility.features ?? []).slice(0, 3).map((feature) => (
+                          <span key={feature} className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600">
+                            {feature}
+                          </span>
+                        ))}
                     </div>
                     <div className="flex items-center gap-2">
                       {/* Congestion Indicator */}
