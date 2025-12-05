@@ -97,8 +97,56 @@ CREATE TABLE IF NOT EXISTS facility_requests (
   INDEX idx_created_at (created_at),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-`;
 
+CREATE TABLE IF NOT EXISTS facility_reviews (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  facility_id INT NOT NULL,
+  user_id INT NOT NULL,
+  user_name VARCHAR(100) NOT NULL,
+  rating INT NOT NULL,
+  content TEXT NOT NULL,
+  tags JSON NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_facility (facility_id),
+  INDEX idx_user (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS facility_usage (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  facility_id INT NOT NULL,
+  used_at DATETIME NOT NULL,
+  INDEX idx_user (user_id),
+  INDEX idx_facility (facility_id)
+);
+-- facility_reviews 테이블 생성
+CREATE TABLE IF NOT EXISTS facility_reviews (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  facility_id INT NOT NULL,
+  user_id INT NOT NULL,
+  user_name VARCHAR(100) NOT NULL,
+  rating INT NOT NULL,
+  content TEXT NOT NULL,
+  tags TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_facility (facility_id),
+  INDEX idx_user (user_id),
+  INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- facility_usage 테이블 생성
+CREATE TABLE IF NOT EXISTS facility_usage (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  facility_id INT NOT NULL,
+  used_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_user (user_id),
+  INDEX idx_facility (facility_id),
+  INDEX idx_used_at (used_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+`;
 
 
 // 기존 테이블에 필드가 없는 경우를 위한 ALTER TABLE (에러 무시)

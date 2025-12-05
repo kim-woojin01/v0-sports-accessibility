@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { facilities } from "@/lib/data"
-import { Calendar, Clock, Settings, LogOut, Save, X, Bell, BellOff, Edit2, Check, User } from "lucide-react"
+import { Calendar, Clock, Settings, LogOut, Save, X, Bell, BellOff, Edit2, Check, User, Star, MapPin } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -29,6 +29,17 @@ interface UserProfile {
   disabilityType: string | null
   exercisePurposes: string[]
   profileImageUrl: string | null
+}
+
+type MyReview = {
+  id: number
+  facilityId: number
+  facilityName: string
+  facilityAddress: string
+  rating: number
+  content: string
+  date: string
+  tags: string[]
 }
 
 export default function MyPage() {
@@ -64,6 +75,16 @@ export default function MyPage() {
     startTime: "14:00",
     endTime: "16:00",
   })
+
+  // 이용 내역 상태
+  const [usageHistory, setUsageHistory] = useState<any[]>([])
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false)
+
+  // 작성한 리뷰 상태
+  const [myReviews, setMyReviews] = useState<MyReview[]>([])
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
+  const [deleteReviewId, setDeleteReviewId] = useState<number | null>(null)
+  const [showDeleteReviewModal, setShowDeleteReviewModal] = useState(false)
 
   // 프로필 사진 상태
   const [profileImage, setProfileImage] = useState<File | null>(null)
@@ -164,6 +185,9 @@ export default function MyPage() {
             setProfile(profileData)
             setOriginalProfile(profileData)
             setIsLoggedIn(true)
+
+            // 내 리뷰 로드
+            loadUserReviews(profileData.id)
           } else {
             // API 호출 실패 시 localStorage 데이터 사용 (fallback)
             console.warn("마이페이지 - API 호출 실패, localStorage 데이터 사용")
@@ -182,6 +206,7 @@ export default function MyPage() {
             setProfile(profileData)
             setOriginalProfile(profileData)
             setIsLoggedIn(true)
+            loadUserReviews(profileData.id)
           }
         } catch (apiError) {
           // API 호출 중 오류 발생 시 localStorage 데이터 사용 (fallback)
@@ -201,6 +226,7 @@ export default function MyPage() {
         setProfile(profileData)
         setOriginalProfile(profileData)
         setIsLoggedIn(true)
+        loadUserReviews(profileData.id)
         }
       } catch (error) {
         console.error("마이페이지 - 사용자 정보 로드 오류:", error)
@@ -213,6 +239,134 @@ export default function MyPage() {
 
     loadUserProfile()
   }, [router])
+
+  // 이용 내역 로드
+  useEffect(() => {
+    const loadUsageHistory = async () => {
+      if (!isLoggedIn || !profile.id) {
+        console.log("이용 내역 로드 스킵 - isLoggedIn:", isLoggedIn, "profile.id:", profile.id)
+        return
+      }
+
+      const userId = Number(profile.id)
+      if (!userId || isNaN(userId)) {
+        console.error("유효하지 않은 사용자 ID:", profile.id)
+        return
+      }
+
+      console.log("이용 내역 로드 시작 - userId:", userId)
+      setIsLoadingUsage(true)
+      try {
+        const res = await fetch(`/api/usage?userId=${userId}`)
+        console.log("이용 내역 API 응답 상태:", res.status, res.statusText)
+        const data = await res.json()
+        console.log("이용 내역 API 응답 데이터:", data)
+        
+        // API가 빈 배열을 반환하거나 에러 객체를 반환할 수 있음
+        if (Array.isArray(data)) {
+          console.log("이용 내역 개수:", data.length)
+          setUsageHistory(data)
+        } else {
+          console.error("이용 내역 조회 실패:", data)
+          setUsageHistory([])
+        }
+      } catch (e) {
+        console.error("이용 내역 로드 오류:", e)
+        setUsageHistory([])
+      } finally {
+        setIsLoadingUsage(false)
+      }
+    }
+
+    if (isLoggedIn && profile.id) {
+      loadUsageHistory()
+    }
+  }, [isLoggedIn, profile.id])
+
+  // 작성한 리뷰 로드 함수
+  const loadMyReviews = async () => {
+    if (!isLoggedIn || !profile.id) return
+
+    setIsLoadingReviews(true)
+    try {
+      const res = await fetch(`/api/reviews?userId=${profile.id}`)
+      const data = await res.json()
+      // API가 빈 배열을 반환하거나 에러 객체를 반환할 수 있음
+      if (Array.isArray(data)) {
+        setMyReviews(data)
+      } else {
+        console.error("리뷰 조회 실패:", data)
+        setMyReviews([])
+      }
+    } catch (e) {
+      console.error("작성한 리뷰 로드 오류:", e)
+      setMyReviews([])
+    } finally {
+      setIsLoadingReviews(false)
+    }
+  }
+
+  // 작성한 리뷰 로드
+  useEffect(() => {
+    if (isLoggedIn && profile.id) {
+      loadMyReviews()
+    }
+  }, [isLoggedIn, profile.id])
+
+  // 리뷰 삭제
+  const handleDeleteReview = async () => {
+    if (!deleteReviewId) return
+
+    try {
+      const res = await fetch(`/api/reviews/${deleteReviewId}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) {
+        alert("리뷰 삭제에 실패했습니다.")
+        return
+      }
+
+      setMyReviews(myReviews.filter((r) => r.id !== deleteReviewId))
+      setShowDeleteReviewModal(false)
+      setDeleteReviewId(null)
+      alert("리뷰가 삭제되었습니다.")
+    } catch (e) {
+      console.error("리뷰 삭제 오류:", e)
+      alert("리뷰 삭제 중 오류가 발생했습니다.")
+    }
+  }
+
+  const loadUserReviews = async (userId: number) => {
+    setIsLoadingReviews(true)
+    try {
+      const res = await fetch(`/api/reviews?userId=${userId}`)
+      const data = await res.json()
+      // API가 빈 배열을 반환하거나 에러 객체를 반환할 수 있음
+      if (Array.isArray(data)) {
+        setMyReviews(
+          data.map((r: any) => ({
+            id: r.id,
+            facilityId: r.facilityId,
+            facilityName: r.facilityName,
+            facilityAddress: r.facilityAddress,
+            rating: r.rating,
+            content: r.content,
+            date: r.date,
+            tags: r.tags ?? [],
+          })),
+        )
+      } else {
+        console.error("리뷰 조회 실패:", data)
+        setMyReviews([])
+      }
+    } catch (e) {
+      console.error("내 리뷰 로드 오류:", e)
+      setMyReviews([])
+    } finally {
+      setIsLoadingReviews(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -734,9 +888,39 @@ export default function MyPage() {
 
             <TabsContent value="history" className="space-y-4">
               <h2 className="text-xl font-bold mb-4">최근 이용한 시설</h2>
-              <div className="text-center py-12 text-muted-foreground">
-                이용 내역이 없습니다.
-              </div>
+              {isLoadingUsage ? (
+                <div className="text-center py-12 text-muted-foreground">이용 내역을 불러오는 중입니다...</div>
+              ) : usageHistory.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">이용 내역이 없습니다.</div>
+              ) : (
+                <div className="space-y-4">
+                  {usageHistory.map((usage: any) => (
+                    <Card key={usage.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg mb-1">{usage.name}</h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                              <MapPin className="w-4 h-4" />
+                              {usage.address}
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {usage.used_date || "날짜 정보 없음"}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {usage.used_time || "시간 정보 없음"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="alarm" className="space-y-4">
@@ -859,8 +1043,83 @@ export default function MyPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews">
-              <div className="text-center py-12 text-muted-foreground">작성한 리뷰가 없습니다.</div>
+            <TabsContent value="reviews" className="space-y-4">
+              <h2 className="text-xl font-bold mb-4">작성한 리뷰</h2>
+              {isLoadingReviews ? (
+                <div className="text-center py-8 text-muted-foreground">리뷰를 불러오는 중입니다...</div>
+              ) : myReviews.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">작성한 리뷰가 없습니다.</div>
+              ) : (
+                <div className="space-y-4">
+                  {myReviews.map((review) => (
+                    <Card key={review.id}>
+                      <CardContent className="pt-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold">{review.facilityName}</span>
+                              <span className="text-xs text-muted-foreground">{review.date}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <MapPin className="w-3 h-3" />
+                              <span className="truncate">{review.facilityAddress}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 text-amber-500 text-sm">
+                            <Star className="w-4 h-4 fill-current" />
+                            <span className="font-semibold">{review.rating}</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-slate-700 line-clamp-2">{review.content}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {review.tags.map((tag) => (
+                            <span key={tag} className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2 border-t">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-transparent text-xs"
+                            onClick={() =>
+                              router.push(`/reviews/write/${review.facilityId}?reviewId=${review.id}`)
+                            }
+                          >
+                            수정
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-transparent text-xs text-red-600 border-red-200"
+                            onClick={async () => {
+                              if (!confirm("이 리뷰를 삭제하시겠습니까?")) return
+                              try {
+                                const res = await fetch(`/api/reviews/${review.id}`, {
+                                  method: "DELETE",
+                                })
+                                if (!res.ok) {
+                                  const err = await res.json().catch(() => ({}))
+                                  throw new Error(err.error || "삭제 실패")
+                                }
+                                // DB에서 삭제 후 목록 다시 로드
+                                await loadMyReviews()
+                                alert("리뷰가 삭제되었습니다.")
+                              } catch (e) {
+                                console.error("리뷰 삭제 오류:", e)
+                                alert("리뷰 삭제 중 오류가 발생했습니다.")
+                              }
+                            }}
+                          >
+                            삭제
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="settings">
@@ -1035,6 +1294,24 @@ export default function MyPage() {
                 router.push("/")
               }}
             >
+              확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 리뷰 삭제 확인 모달 */}
+      <Dialog open={showDeleteReviewModal} onOpenChange={setShowDeleteReviewModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>리뷰 삭제</DialogTitle>
+            <DialogDescription>정말 이 리뷰를 삭제하시겠습니까?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteReviewModal(false)}>
+              취소
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteReview}>
               확인
             </Button>
           </DialogFooter>

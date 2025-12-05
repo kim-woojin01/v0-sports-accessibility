@@ -3,50 +3,236 @@ import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, MapPin, Star, PenSquare, ChevronLeft, ChevronRight } from "lucide-react"
-import { facilities, reviews } from "@/lib/data"
 import Image from "next/image"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
+type Facility = {
+  id: number | string
+  name: string
+  address?: string
+  image?: string
+  rating?: number
+  description?: string
+  features?: string[]
+  reviewCount?: number // 리뷰 수 추가
+}
+
+type Review = {
+  id: number
+  facilityId: number
+  userId: number
+  userName: string
+  rating: number
+  content: string
+  date: string
+  tags: string[]
+}
+
 export default function ReviewsPage() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [filteredFacilities, setFilteredFacilities] = useState(facilities)
+  const [facilities, setFacilities] = useState<Facility[]>([])
+  const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>([])
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [showWriteableOnly, setShowWriteableOnly] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
   const [pageBlock, setPageBlock] = useState(0)
 
-  const [selectedFacilityId, setSelectedFacilityId] = useState<string | null>(null)
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(null)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [selectedFacilityReviews, setSelectedFacilityReviews] = useState<Review[]>([])
+  const [isReviewsLoading, setIsReviewsLoading] = useState(false)
+  const [usageHistory, setUsageHistory] = useState<any[]>([]) // 이용 내역 저장
 
   useEffect(() => {
     const user = localStorage.getItem("user")
     setIsLoggedIn(!!user)
+
+    const loadFacilities = async () => {
+      setIsLoading(true)
+      try {
+        // 시설 목록 조회
+        const res = await fetch("/api/facilities")
+        if (!res.ok) throw new Error("시설 조회 실패")
+        const facilitiesData = await res.json()
+
+        // 전체 리뷰 조회 (시설별 평점 계산용)
+        const reviewsRes = await fetch("/api/reviews")
+        const allReviews = reviewsRes.ok ? await reviewsRes.json() : []
+
+        // 시설별 리뷰 통계 계산
+        const reviewStats = new Map<number, { count: number; avgRating: number }>()
+        allReviews.forEach((review: any) => {
+          const facilityId = Number(review.facilityId)
+          if (!reviewStats.has(facilityId)) {
+            reviewStats.set(facilityId, { count: 0, avgRating: 0, sum: 0 })
+          }
+          const stats = reviewStats.get(facilityId)!
+          stats.count++
+          stats.sum = (stats.sum || 0) + review.rating
+          stats.avgRating = stats.sum / stats.count
+        })
+
+        const mapped: Facility[] = facilitiesData.map((item: any) => {
+          const stats = reviewStats.get(Number(item.id))
+          return {
+            id: item.id,
+            name: item.name,
+            address: item.address ?? "",
+            image: item.image ?? "/placeholder.svg",
+            rating: stats ? Number(stats.avgRating.toFixed(1)) : 0,
+            description: item.description ?? "",
+            features: item.features ?? [],
+            reviewCount: stats?.count || 0, // 리뷰 수 추가
+          }
+        })
+
+        setFacilities(mapped)
+        setFilteredFacilities(mapped)
+      } catch (e) {
+        console.error("리뷰 페이지 시설 로드 오류:", e)
+        setFacilities([])
+        setFilteredFacilities([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadFacilities()
   }, [])
 
   const handleSearch = () => {
-    let results = facilities
-    if (searchQuery) {
-      results = results.filter((f) => f.name.includes(searchQuery) || f.address.includes(searchQuery))
+    // showWriteableOnly가 true이면 현재 필터링된 시설 기준으로 검색
+    let baseResults = showWriteableOnly ? filteredFacilities : facilities
+    
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.trim().toLowerCase()
+      baseResults = baseResults.filter((f) => {
+        const name = f.name.toLowerCase()
+        const address = (f.address ?? "").toLowerCase()
+        return name.includes(q) || address.includes(q)
+      })
     }
-    setFilteredFacilities(results)
+    setFilteredFacilities(baseResults)
     setCurrentPage(1)
+    setPageBlock(0)
   }
 
-  const handleWriteReviewFilter = () => {
+  const handleWriteReviewFilter = async () => {
     if (!isLoggedIn) {
       alert("로그인이 필요한 서비스입니다.")
       return
     }
-    setShowWriteableOnly(!showWriteableOnly)
-    if (!showWriteableOnly) {
-      setFilteredFacilities(facilities.filter((f) => f.id === "2"))
-    } else {
-      setFilteredFacilities(facilities)
+
+    const userStr = localStorage.getItem("user")
+    if (!userStr) {
+      alert("로그인 정보를 찾을 수 없습니다.")
+      return
     }
-    setCurrentPage(1)
+
+    let user
+    try {
+      user = JSON.parse(userStr)
+    } catch (e) {
+      console.error("사용자 정보 파싱 오류:", e)
+      alert("사용자 정보를 불러올 수 없습니다.")
+      return
+    }
+
+    if (!user || !user.id) {
+      console.error("사용자 ID가 없습니다:", user)
+      alert("사용자 정보가 올바르지 않습니다.")
+      return
+    }
+
+    const userId = Number(user.id)
+    if (!userId || isNaN(userId)) {
+      console.error("유효하지 않은 사용자 ID:", user.id)
+      alert("사용자 ID가 올바르지 않습니다.")
+      return
+    }
+
+    if (!showWriteableOnly) {
+      // 켜는 경우: 내가 이용한 시설만 조회
+      console.log("이용 내역 조회 시작 - userId:", userId)
+      try {
+        const res = await fetch(`/api/usage?userId=${userId}`)
+        console.log("이용 내역 API 응답 상태:", res.status, res.statusText)
+        const data = await res.json()
+        console.log("이용 내역 API 응답 데이터:", data)
+
+        // API가 빈 배열을 반환하거나 에러 객체를 반환할 수 있음
+        if (Array.isArray(data)) {
+          if (data.length === 0) {
+            alert("이용한 시설이 없습니다. 먼저 시설을 이용해주세요.")
+            return
+          }
+
+          console.log("이용한 시설 개수:", data.length)
+          
+          if (data.length === 0) {
+            alert("리뷰를 작성할 수 있는 이용 내역이 없습니다.")
+            setShowWriteableOnly(false)
+            setFilteredFacilities(facilities)
+            return
+          }
+
+          // 이용 내역 저장
+          setUsageHistory(data)
+
+          // 이용한 시설 ID 목록 (중복 제거, 숫자로 변환)
+          const facilityIds = new Set(data.map((f: any) => Number(f.id)))
+          console.log("이용한 시설 ID 목록:", Array.from(facilityIds))
+          console.log("전체 시설 개수:", facilities.length)
+          console.log("전체 시설 ID 샘플:", facilities.slice(0, 5).map(f => f.id))
+          
+          // 전체 시설 목록에서 이용한 시설만 필터링
+          const results = facilities.filter((f) => {
+            const facilityId = Number(f.id)
+            const isIncluded = facilityIds.has(facilityId)
+            if (!isIncluded) {
+              console.log(`시설 ID ${facilityId} (${f.name})는 이용 내역에 없음`)
+            }
+            return isIncluded
+          })
+          console.log("필터링된 시설 개수:", results.length)
+          console.log("필터링된 시설 목록:", results.map(f => `${f.id}: ${f.name}`))
+
+          if (results.length === 0) {
+            alert("이용한 시설이 목록에 없습니다.")
+            setShowWriteableOnly(false)
+            setFilteredFacilities(facilities)
+            return
+          }
+
+          // 필터링된 시설로 설정
+          setFilteredFacilities(results)
+          setShowWriteableOnly(true)
+          setCurrentPage(1)
+          setPageBlock(0)
+          
+          // 검색어 초기화 (필터 모드에서는 검색어를 초기화)
+          setSearchQuery("")
+        } else {
+          console.error("이용 내역 조회 실패:", data)
+          alert("이용 내역을 불러오는 중 오류가 발생했습니다.")
+        }
+      } catch (e) {
+        console.error("이용 내역 기반 시설 조회 오류:", e)
+        alert("이용 내역을 불러오는 중 오류가 발생했습니다.")
+      }
+    } else {
+      // 끄는 경우: 전체 시설로 복원
+      setFilteredFacilities(facilities)
+      setShowWriteableOnly(false)
+      setUsageHistory([]) // 이용 내역 초기화
+      setCurrentPage(1)
+      setPageBlock(0)
+      setSearchQuery("") // 검색어 초기화
+    }
   }
 
   const totalPages = Math.ceil(filteredFacilities.length / itemsPerPage)
@@ -70,13 +256,35 @@ export default function ReviewsPage() {
     }
   }
 
-  const openReviewModal = (facilityId: string) => {
-    setSelectedFacilityId(facilityId)
+  const openReviewModal = async (facilityId: number | string) => {
+    const numericId = Number(facilityId)
+    setSelectedFacilityId(numericId)
     setIsReviewModalOpen(true)
+    setIsReviewsLoading(true)
+
+    try {
+      const res = await fetch(`/api/reviews?facilityId=${numericId}`)
+      const data = await res.json()
+      
+      // API가 빈 배열을 반환하거나 에러 객체를 반환할 수 있음
+      if (Array.isArray(data)) {
+        setSelectedFacilityReviews(data)
+        if (data.length === 0) {
+          console.log(`시설 ID ${numericId}에 대한 리뷰가 없습니다.`)
+        }
+      } else {
+        console.error("리뷰 조회 실패:", data)
+        setSelectedFacilityReviews([])
+      }
+    } catch (e) {
+      console.error("시설 리뷰 로드 오류:", e)
+      setSelectedFacilityReviews([])
+    } finally {
+      setIsReviewsLoading(false)
+    }
   }
 
-  const selectedFacilityReviews = reviews.filter((r) => r.facilityId === selectedFacilityId)
-  const selectedFacility = facilities.find((f) => f.id === selectedFacilityId)
+  const selectedFacility = facilities.find((f) => String(f.id) === String(selectedFacilityId))
 
   return (
     <div className="flex flex-col min-h-screen items-center w-full">
@@ -131,10 +339,17 @@ export default function ReviewsPage() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-3 py-1 rounded-full">
-                      <Star className="w-4 h-4 fill-current" />
-                      <span className="font-bold">{facility.rating}</span>
-                    </div>
+                    {facility.rating && facility.rating > 0 ? (
+                      <div className="flex items-center gap-1 text-amber-500 bg-amber-50 px-3 py-1 rounded-full">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span className="font-bold">{facility.rating}</span>
+                        {facility.reviewCount !== undefined && facility.reviewCount > 0 && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({facility.reviewCount}개 후기)
+                          </span>
+                        )}
+                      </div>
+                    ) : null}
                     <Button
                       size="sm"
                       variant="outline"
@@ -143,13 +358,18 @@ export default function ReviewsPage() {
                     >
                       리뷰 보기
                     </Button>
-                    {showWriteableOnly && (
-                      <Link href={`/reviews/write/${facility.id}`}>
-                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                          리뷰 작성
-                        </Button>
-                      </Link>
-                    )}
+                    {showWriteableOnly && (() => {
+                      // 해당 시설의 이용 내역 찾기
+                      const usage = usageHistory.find((u: any) => u.id === facility.id)
+                      const usageId = usage?.usage_id
+                      return (
+                        <Link href={`/reviews/write/${facility.id}${usageId ? `?usageId=${usageId}` : ''}`}>
+                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                            리뷰 작성
+                          </Button>
+                        </Link>
+                      )
+                    })()}
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{facility.description}</p>
