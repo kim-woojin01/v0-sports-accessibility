@@ -72,7 +72,6 @@ export default function AdminPage() {
       icon: <FileText className="w-8 h-8" />,
       href: "/admin/facility-requests",
       color: "from-green-500 to-green-700",
-      comingSoon: true,
     },
     {
       id: "analytics",

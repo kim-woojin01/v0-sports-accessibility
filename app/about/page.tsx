@@ -18,7 +18,17 @@ export default function AboutPage() {
             SportsAccess는 장벽 없는 스포츠 환경을 만들어갑니다.
           </p>
           <p className="text-base md:text-lg mt-6 leading-relaxed max-w-3xl mx-auto opacity-90">
-            우리는 건강을 위해 운동을 하려 할 때, 종종 보이지 않는 장벽에 부딪힙니다. "휠체어로 들어갈 수 있을까?", "지금 사람이 너무 많아서 위험하진 않을까?" SportsAccess는 이러한 정보의 비대칭을 해결하기 위해 시작되었습니다. 신체적 조건이나 환경에 구애받지 않고 누구나 자신에게 맞는 체육 시설을 찾을 수 있도록 돕는 것, 그것이 우리가 기술로 풀고자 하는 문제입니다.
+          <br/> 
+            우리는 건강을 위해 운동을 하려 할 때, 종종 보이지 않는 장벽에 부딪힙니다.
+          <br/>
+            "휠체어로 들어갈 수 있을까?", "지금 사람이 너무 많아서 위험하진 않을까?"
+          <br/>  
+            SportsAccess는 이러한 정보의 비대칭을 해결하기 위해 시작되었습니다.
+          <br/>
+          <br/>
+            신체적 조건이나 환경에 구애받지 않고 누구나 자신에게 맞는 체육 시설을 찾을 수 있도록 돕는 것,
+          <br/>
+            그것이 우리가 기술로 풀고자 하는 문제입니다.
           </p>
         </div>
       </section>
@@ -180,7 +190,7 @@ export default function AboutPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <MapPin className="w-5 h-5 text-purple-600" aria-hidden="true" />
                     <h3 className="text-xl font-bold">과정 1. 정보의 시각화</h3>
-                    <span className="text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded">여기까지 진행했습니다</span>
+                    <span className="text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded"> 기본적인 기능 입니다 </span>
                   </div>
                   <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4">
                     <li>전국 체육 시설 위치 기반 검색 서비스 런칭</li>
@@ -199,7 +209,7 @@ export default function AboutPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <MessageSquare className="w-5 h-5 text-pink-600" aria-hidden="true" />
                     <h3 className="text-xl font-bold">과정 2. 참여와 공유</h3>
-                    <span className="text-sm bg-pink-100 text-pink-700 px-2 py-1 rounded">곧 찾아옵니다</span>
+                    <span className="text-sm bg-pink-100 text-pink-700 px-2 py-1 rounded"> 진행 중인 서비스입니다 </span>
                   </div>
                   <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4">
                     <li>사용자 제보 기능: "엘리베이터가 고장 났어요", "새로 생겼어요"</li>
@@ -218,7 +228,7 @@ export default function AboutPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <Sparkles className="w-5 h-5 text-blue-600" aria-hidden="true" />
                     <h3 className="text-xl font-bold">과정 3. 개인화 및 지능화</h3>
-                    <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">장기적인 목표입니다</span>
+                    <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded"> 장기적인 목표입니다</span>
                   </div>
                   <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4">
                     <li>AI 기반 맞춤형 시설 추천 (사용자 신체 조건 및 선호 종목 분석)</li>
