@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import dynamic from "next/dynamic"
@@ -230,6 +230,8 @@ interface Facility {
   real_time_level?: "여유" | "보통" | "혼잡"
   real_time_percent?: number
   current_people?: number
+  predicted_level?: "crowded" | "moderate" | "leisure"
+  homepage?: string
 }
 
 const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 }
@@ -324,6 +326,7 @@ export default function SearchPage() {
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null)
 
   const [selectedDate, setSelectedDate] = useState("이용날짜/시간")
+  const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null)
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -551,116 +554,125 @@ export default function SearchPage() {
     }
   }
 
+  const loadData = useCallback(async (targetDateTime: Date | null = null) => {
+    setIsLoading(true)
+    try {
+      // 시설 목록 조회 (datetime 파라미터 포함)
+      const params = targetDateTime ? `?datetime=${encodeURIComponent(targetDateTime.toISOString())}` : ""
+      const res = await fetch(`/api/facilities${params}`)
+      if (!res.ok) {
+        console.error("시설 데이터 요청 실패:", res.status, res.statusText)
+        setFacilitiesData([])
+        setFilteredFacilities([])
+        return
+      }
+
+      const data = await res.json()
+
+      // 전체 리뷰 조회 (시설별 평점 계산용)
+      const reviewsRes = await fetch("/api/reviews")
+      const allReviews = reviewsRes.ok ? await reviewsRes.json() : []
+
+      // 시설별 리뷰 통계 계산
+      const reviewStats = new Map<number, { count: number; avgRating: number; sum: number }>()
+      allReviews.forEach((review: any) => {
+        const facilityId = Number(review.facilityId)
+        if (!reviewStats.has(facilityId)) {
+          reviewStats.set(facilityId, { count: 0, avgRating: 0, sum: 0 })
+        }
+        const stats = reviewStats.get(facilityId)!
+        stats.count++
+        stats.sum = (stats.sum || 0) + review.rating
+        stats.avgRating = stats.sum / stats.count
+      })
+
+      // ✅ API 응답을 화면에서 쓰기 좋은 형태로 매핑
+      const mapped: Facility[] = data.map((item: any) => {
+        const { province, district } = detectRegionFromAddress(item.address ?? "")
+        let congestion: CongestionCode | undefined
+        if (item.real_time_level === "혼잡") congestion = "crowded"
+        else if (item.real_time_level === "보통") congestion = "moderate"
+        else if (item.real_time_level === "여유") congestion = "leisure"
+
+        const rawLat = item.lat ?? item.latitude
+        const rawLng = item.lng ?? item.longitude
+        const latNum =
+          rawLat !== null && rawLat !== undefined && !Number.isNaN(Number(rawLat))
+            ? Number(rawLat)
+            : undefined
+        const lngNum =
+          rawLng !== null && rawLng !== undefined && !Number.isNaN(Number(rawLng))
+            ? Number(rawLng)
+            : undefined
+
+        // 위치 디버그 로그
+        console.debug("시설 위치 디버그:", item.name, rawLat, rawLng, latNum, lngNum)
+
+        // 리뷰 통계에서 평점 가져오기
+        const stats = reviewStats.get(Number(item.id))
+
+        // 시설 이미지 결정: DB에 이미지가 있으면 사용, 없으면 유형에 맞는 이미지 할당
+        const facilityImage = item.image && item.image !== '/placeholder.svg' && item.image !== ''
+          ? item.image
+          : getFacilityImage(item.name, item.features || [])
+
+        return {
+          id: item.id,
+          name: item.name,
+          address: item.address ?? "",
+          image: facilityImage,
+          rating: stats ? Number(stats.avgRating.toFixed(1)) : 0,
+          phone: item.phone ?? "",
+          hours: item.hours ?? "",
+          features: item.features ?? [],
+          description: item.description ?? "",
+          lat: latNum,
+          lng: lngNum,
+          province,
+          district,
+          capacity: item.capacity,
+          real_time_level: item.real_time_level,
+          real_time_percent: item.real_time_percent,
+          current_people: item.current_people,
+          congestion,
+          predicted_level: item.predicted_level,
+          homepage: item.homepage,
+        }
+      })
+
+      setFacilitiesData(mapped)
+      setFilteredFacilities(mapped)
+
+      // 초기 로드가 아닐 때만 지도 중심 변경 (초기 로드 시에는 사용자 위치 유지)
+      if (!isInitialLoad.current && mapped.length > 0 && mapped[0].lat && mapped[0].lng) {
+        setMapCenter({ lat: mapped[0].lat, lng: mapped[0].lng })
+      }
+      
+      // 초기 로드 완료 표시
+      if (isInitialLoad.current) {
+        isInitialLoad.current = false
+      }
+    } catch (e) {
+      console.error("데이터 로드 오류:", e)
+      setFacilitiesData([])
+      setFilteredFacilities([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     const user = localStorage.getItem("user")
     setIsLoggedIn(!!user)
+    loadData(selectedDateTime)
+  }, [loadData])
 
-    async function loadData() {
-      setIsLoading(true)
-      try {
-        // 시설 목록 조회
-        const res = await fetch("/api/facilities")
-        if (!res.ok) {
-          console.error("시설 데이터 요청 실패:", res.status, res.statusText)
-          setFacilitiesData([])
-          setFilteredFacilities([])
-          return
-        }
-
-        const data = await res.json()
-
-        // 전체 리뷰 조회 (시설별 평점 계산용)
-        const reviewsRes = await fetch("/api/reviews")
-        const allReviews = reviewsRes.ok ? await reviewsRes.json() : []
-
-        // 시설별 리뷰 통계 계산
-        const reviewStats = new Map<number, { count: number; avgRating: number; sum: number }>()
-        allReviews.forEach((review: any) => {
-          const facilityId = Number(review.facilityId)
-          if (!reviewStats.has(facilityId)) {
-            reviewStats.set(facilityId, { count: 0, avgRating: 0, sum: 0 })
-          }
-          const stats = reviewStats.get(facilityId)!
-          stats.count++
-          stats.sum = (stats.sum || 0) + review.rating
-          stats.avgRating = stats.sum / stats.count
-        })
-
-        // ✅ API 응답을 화면에서 쓰기 좋은 형태로 매핑
-        const mapped: Facility[] = data.map((item: any) => {
-          const { province, district } = detectRegionFromAddress(item.address ?? "")
-          let congestion: CongestionCode | undefined
-          if (item.real_time_level === "혼잡") congestion = "crowded"
-          else if (item.real_time_level === "보통") congestion = "moderate"
-          else if (item.real_time_level === "여유") congestion = "leisure"
-
-          const rawLat = item.lat ?? item.latitude
-          const rawLng = item.lng ?? item.longitude
-          const latNum =
-            rawLat !== null && rawLat !== undefined && !Number.isNaN(Number(rawLat))
-              ? Number(rawLat)
-              : undefined
-          const lngNum =
-            rawLng !== null && rawLng !== undefined && !Number.isNaN(Number(rawLng))
-              ? Number(rawLng)
-              : undefined
-
-          // 위치 디버그 로그
-          console.debug("시설 위치 디버그:", item.name, rawLat, rawLng, latNum, lngNum)
-
-          // 리뷰 통계에서 평점 가져오기
-          const stats = reviewStats.get(Number(item.id))
-
-          // 시설 이미지 결정: DB에 이미지가 있으면 사용, 없으면 유형에 맞는 이미지 할당
-          const facilityImage = item.image && item.image !== '/placeholder.svg' && item.image !== ''
-            ? item.image
-            : getFacilityImage(item.name, item.features || [])
-
-          return {
-            id: item.id,
-            name: item.name,
-            address: item.address ?? "",
-            image: facilityImage,
-            rating: stats ? Number(stats.avgRating.toFixed(1)) : 0,
-            phone: item.phone ?? "",
-            hours: item.hours ?? "",
-            features: item.features ?? [],
-            description: item.description ?? "",
-            lat: latNum,
-            lng: lngNum,
-            province,
-            district,
-            capacity: item.capacity,
-            real_time_level: item.real_time_level,
-            real_time_percent: item.real_time_percent,
-            current_people: item.current_people,
-            congestion,
-          }
-        })
-
-        setFacilitiesData(mapped)
-        setFilteredFacilities(mapped)
-
-        // 초기 로드가 아닐 때만 지도 중심 변경 (초기 로드 시에는 사용자 위치 유지)
-        if (!isInitialLoad.current && mapped.length > 0 && mapped[0].lat && mapped[0].lng) {
-          setMapCenter({ lat: mapped[0].lat, lng: mapped[0].lng })
-        }
-        
-        // 초기 로드 완료 표시
-        if (isInitialLoad.current) {
-          isInitialLoad.current = false
-        }
-      } catch (e) {
-        console.error("데이터 로드 오류:", e)
-        setFacilitiesData([])
-        setFilteredFacilities([])
-      } finally {
-        setIsLoading(false)
-      }
+  // selectedDateTime 변경 시 데이터 다시 로드
+  useEffect(() => {
+    if (selectedDateTime !== null) {
+      loadData(selectedDateTime)
     }
-
-    loadData()
-  }, [])
+  }, [selectedDateTime, loadData])
 
   const handleSearch = () => {
     let results = facilitiesData
@@ -720,8 +732,13 @@ export default function SearchPage() {
 
   const confirmDateSelection = () => {
     if (tempSelectedDate) {
-      const formattedDate = `${tempSelectedDate.getFullYear()}년 ${tempSelectedDate.getMonth() + 1}월 ${tempSelectedDate.getDate()}일 ${selectedHour}:${selectedMinute.toString().padStart(2, "0")} ${selectedAmPm}`
+      const selected = new Date(tempSelectedDate)
+      const normalizedHour = selectedHour % 12
+      const hour24 = normalizedHour + (selectedAmPm === "PM" ? 12 : 0)
+      selected.setHours(hour24, selectedMinute, 0, 0)
+      const formattedDate = `${selected.getFullYear()}년 ${selected.getMonth() + 1}월 ${selected.getDate()}일 ${selectedHour}:${selectedMinute.toString().padStart(2, "0")} ${selectedAmPm}`
       setSelectedDate(formattedDate)
+      setSelectedDateTime(selected)
       setIsDateOpen(false)
     }
   }

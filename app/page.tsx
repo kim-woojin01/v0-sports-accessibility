@@ -274,7 +274,7 @@ export default function Home() {
           >
             {/* Card 1 */}
             <motion.div 
-              className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between"
+              className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-pink-300 hover:shadow-md transition-shadow flex flex-col justify-between"
               variants={createCardVariants(scrollDirection)}
               style={{ y: card1Y }}
             >
@@ -296,7 +296,7 @@ export default function Home() {
 
             {/* Card 2 */}
             <motion.div 
-              className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-pink-200 hover:shadow-md transition-shadow flex flex-col justify-between lg:mt-12"
+              className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-purple-300 hover:shadow-md transition-shadow flex flex-col justify-between lg:mt-12"
               variants={createCardVariants(scrollDirection)}
               style={{ y: card2Y }}
             >
@@ -318,7 +318,7 @@ export default function Home() {
 
             {/* Card 3 */}
             <motion.div 
-              className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between"
+              className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-blue-300 hover:shadow-md transition-shadow flex flex-col justify-between"
               variants={createCardVariants(scrollDirection)}
               style={{ y: card3Y }}
             >
@@ -338,7 +338,7 @@ export default function Home() {
 
             {/* Card 4 */}
             <motion.div 
-              className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between lg:mt-12"
+              className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-green-300 hover:shadow-md transition-shadow flex flex-col justify-between lg:mt-12"
               variants={createCardVariants(scrollDirection)}
               style={{ y: card4Y }}
             >
