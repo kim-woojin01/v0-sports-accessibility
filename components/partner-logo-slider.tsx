@@ -37,13 +37,13 @@ export function PartnerLogoSlider() {
           {duplicatedLogos.map((logo, index) => (
             <div
               key={`logo-${index}`}
-              className="flex-shrink-0 mx-8 flex items-center justify-center"
+              className="flex-shrink-0 mx-8 flex items-center justify-center py-4"
             >
-              <div className="relative w-32 h-16 md:w-40 md:h-20 transition-transform duration-300 hover:scale-110">
+              <div className="relative w-32 h-16 md:w-40 md:h-20 transition-all duration-300 hover:scale-125 bg-transparent z-10">
                 <img
                   src={logo.src}
                   alt={logo.alt}
-                  className="w-full h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
+                  className="w-full h-full object-contain opacity-50 hover:opacity-100 transition-all duration-300"
                   loading="lazy"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement
