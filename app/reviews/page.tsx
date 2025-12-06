@@ -112,7 +112,7 @@ export default function ReviewsPage() {
         const allReviews = reviewsRes.ok ? await reviewsRes.json() : []
 
         // 시설별 리뷰 통계 계산
-        const reviewStats = new Map<number, { count: number; avgRating: number }>()
+        const reviewStats = new Map<number, { count: number; avgRating: number; sum: number }>()
         allReviews.forEach((review: any) => {
           const facilityId = Number(review.facilityId)
           if (!reviewStats.has(facilityId)) {
@@ -422,9 +422,9 @@ export default function ReviewsPage() {
             {currentFacilities.map((facility) => (
             <div
               key={facility.id}
-              className="bg-white rounded-xl border shadow-sm p-6 flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl border shadow-sm p-7 flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow min-h-[180px]"
             >
-              <div className="relative w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0">
+              <div className="relative w-full md:w-48 h-36 rounded-lg overflow-hidden flex-shrink-0">
                 <Image src={facility.image || "/placeholder.svg"} alt={facility.name} fill className="object-cover" />
               </div>
               <div className="flex-1">
@@ -472,7 +472,7 @@ export default function ReviewsPage() {
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{facility.description}</p>
                 <div className="flex gap-2">
-                  {facility.features.slice(0, 4).map((f) => (
+                  {(facility.features || []).slice(0, 4).map((f) => (
                     <span key={f} className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600">
                       {f}
                     </span>
