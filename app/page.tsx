@@ -100,31 +100,81 @@ export default function Home() {
     offset: ["start start", "end end"]
   })
 
-  // Hero 섹션 배경 패럴랙스 (더 강한 효과)
-  const heroY = useTransform(
-    useSpring(scrollYProgress, { stiffness: 50, damping: 20, mass: 1 }),
-    [0, 0.5],
-    [0, -120]
+  // Hero 섹션용 스크롤 추적
+  const heroSectionRef = useRef<HTMLElement>(null)
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroSectionRef,
+    offset: ["start end", "end start"]
+  })
+  
+  const heroCardY = useTransform(
+    useSpring(heroScrollProgress, { stiffness: 50, damping: 20, mass: 1 }),
+    [0, 1],
+    [60, -80]
+  )
+
+  // 서비스 카드 섹션용 스크롤 추적
+  const cardsSectionRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress: cardsScrollProgress } = useScroll({
+    target: cardsSectionRef,
+    offset: ["start end", "end start"]
+  })
+  
+  const card1Y = useTransform(
+    useSpring(cardsScrollProgress, { stiffness: 50, damping: 20, mass: 1 }),
+    [0, 1],
+    [40, -60]
+  )
+  
+  const card2Y = useTransform(
+    useSpring(cardsScrollProgress, { stiffness: 50, damping: 20, mass: 1 }),
+    [0, 1],
+    [60, -40]
+  )
+  
+  const card3Y = useTransform(
+    useSpring(cardsScrollProgress, { stiffness: 50, damping: 20, mass: 1 }),
+    [0, 1],
+    [50, -50]
+  )
+  
+  const card4Y = useTransform(
+    useSpring(cardsScrollProgress, { stiffness: 50, damping: 20, mass: 1 }),
+    [0, 1],
+    [70, -30]
   )
 
   // Map 섹션용 스크롤 추적
-  const mapSectionRef = useRef<HTMLDivElement>(null)
+  const mapSectionRef = useRef<HTMLElement>(null)
   const { scrollYProgress: mapScrollProgress } = useScroll({
     target: mapSectionRef,
     offset: ["start end", "end start"]
   })
+  
   const mapY = useTransform(
     useSpring(mapScrollProgress, { stiffness: 50, damping: 20, mass: 1 }),
     [0, 1],
     [80, -120]
   )
+  
+  const mapTextY = useTransform(
+    useSpring(mapScrollProgress, { stiffness: 50, damping: 20, mass: 1 }),
+    [0, 1],
+    [40, -40]
+  )
 
   // CTA 섹션용 스크롤 추적
-  const ctaSectionRef = useRef<HTMLDivElement>(null)
+  const ctaSectionRef = useRef<HTMLElement>(null)
   const { scrollYProgress: ctaScrollProgress } = useScroll({
     target: ctaSectionRef,
     offset: ["start end", "end start"]
   })
+  
+  const ctaTextY = useTransform(
+    useSpring(ctaScrollProgress, { stiffness: 50, damping: 20, mass: 1 }),
+    [0, 1],
+    [50, -50]
+  )
   
   const ctaImage1Y = useTransform(
     useSpring(ctaScrollProgress, { stiffness: 50, damping: 20, mass: 1 }),
@@ -141,7 +191,7 @@ export default function Home() {
   return (
     <div ref={containerRef} className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="py-12 md:py-20 bg-gradient-to-b from-white to-pink-50/50">
+      <section ref={heroSectionRef} className="py-12 md:py-20 bg-gradient-to-b from-white to-pink-50/50">
         {/* 서비스 소개 섹션 */}
         <div className="container px-4">
           <motion.div 
@@ -150,11 +200,9 @@ export default function Home() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.3 }}
             variants={fadeInUp}
+            style={{ y: heroCardY }}
           >
-            <motion.div 
-              className="absolute inset-0 bg-black/20"
-              style={{ y: heroY }}
-            ></motion.div>
+            <div className="absolute inset-0 bg-black/20"></div>
             <div className="container relative z-10 text-center max-w-4xl mx-auto px-4">
               <motion.h2 
                 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 leading-tight"
@@ -194,7 +242,7 @@ export default function Home() {
         </div>
 
         {/* Service Cards - 모바일 1열, 태블릿 2열, 데스크톱 가로 스크롤 */}
-        <div className="container mt-8 md:mt-16 px-4">
+        <div ref={cardsSectionRef} className="container mt-8 md:mt-16 px-4">
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:gap-6 lg:overflow-x-auto lg:pb-8 lg:min-w-max lg:justify-center gap-4 md:gap-6"
             initial="hidden"
@@ -206,6 +254,7 @@ export default function Home() {
             <motion.div 
               className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between"
               variants={cardVariants}
+              style={{ y: card1Y }}
             >
               <div>
                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-pink-50 border border-pink-100 flex items-center justify-center mb-4 md:mb-6 text-pink-600">
@@ -227,6 +276,7 @@ export default function Home() {
             <motion.div 
               className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-pink-200 hover:shadow-md transition-shadow flex flex-col justify-between lg:mt-12"
               variants={cardVariants}
+              style={{ y: card2Y }}
             >
               <div>
                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center mb-4 md:mb-6 text-purple-600">
@@ -248,6 +298,7 @@ export default function Home() {
             <motion.div 
               className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between"
               variants={cardVariants}
+              style={{ y: card3Y }}
             >
               <div>
                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center mb-4 md:mb-6 text-blue-600">
@@ -267,6 +318,7 @@ export default function Home() {
             <motion.div 
               className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between lg:mt-12"
               variants={cardVariants}
+              style={{ y: card4Y }}
             >
               <div>
                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-green-50 border border-green-100 flex items-center justify-center mb-4 md:mb-6 text-purple-800">
@@ -300,6 +352,7 @@ export default function Home() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.3 }}
             variants={staggerContainer}
+            style={{ y: mapTextY }}
           >
             <motion.h2 
               className="text-2xl md:text-3xl font-bold leading-tight"
@@ -370,6 +423,7 @@ export default function Home() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.3 }}
             variants={staggerContainer}
+            style={{ y: ctaTextY }}
           >
             <motion.h2 
               className="text-3xl md:text-4xl font-bold"
