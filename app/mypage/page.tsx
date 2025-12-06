@@ -75,6 +75,11 @@ export default function MyPage() {
     startTime: "14:00",
     endTime: "16:00",
   })
+  
+  // 페이지네이션 상태
+  const [usageCurrentPage, setUsageCurrentPage] = useState(1)
+  const [reviewsCurrentPage, setReviewsCurrentPage] = useState(1)
+  const itemsPerPage = 5
 
   // 프로필 사진 상태
   const [profileImage, setProfileImage] = useState<File | null>(null)
@@ -1053,44 +1058,79 @@ export default function MyPage() {
                   이용 내역이 없습니다.
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {usageHistory.map((usage) => (
-                    <Card key={usage.usage_id || usage.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-1">{usage.name}</h3>
-                            <p className="text-sm text-muted-foreground mb-2">{usage.address}</p>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                {usage.used_date}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                {usage.used_time}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            {usage.has_review && (
-                              <>
-                                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">
-                                  리뷰 작성됨
-                                </span>
-                                {usage.review_count > 0 && (
-                                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                                    총 {usage.review_count}개 작성
+                <>
+                  <div className="space-y-3">
+                    {usageHistory
+                      .slice((usageCurrentPage - 1) * itemsPerPage, usageCurrentPage * itemsPerPage)
+                      .map((usage) => (
+                        <Card key={usage.usage_id || usage.id}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-lg mb-1">{usage.name}</h3>
+                                <p className="text-sm text-muted-foreground mb-2">{usage.address}</p>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="w-4 h-4" />
+                                    {usage.used_date}
                                   </span>
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4" />
+                                    {usage.used_time}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                {usage.has_review && (
+                                  <>
+                                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">
+                                      리뷰 작성됨
+                                    </span>
+                                    {usage.review_count > 0 && (
+                                      <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                        총 {usage.review_count}개 작성
+                                      </span>
+                                    )}
+                                  </>
                                 )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                  {usageHistory.length > itemsPerPage && (
+                    <div className="flex justify-center items-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setUsageCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={usageCurrentPage === 1}
+                      >
+                        이전
+                      </Button>
+                      {Array.from({ length: Math.ceil(usageHistory.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={usageCurrentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setUsageCurrentPage(page)}
+                          className={usageCurrentPage === page ? "bg-purple-600 hover:bg-purple-700" : ""}
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setUsageCurrentPage(prev => Math.min(Math.ceil(usageHistory.length / itemsPerPage), prev + 1))}
+                        disabled={usageCurrentPage === Math.ceil(usageHistory.length / itemsPerPage)}
+                      >
+                        다음
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
 
@@ -1222,7 +1262,7 @@ export default function MyPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews" className="space-y-4">
+            <TabsContent value="reviews" className="space-y-4" id="my-reviews">
               <h2 className="text-xl font-bold mb-4">작성한 리뷰</h2>
               {isLoadingReviews ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -1233,8 +1273,11 @@ export default function MyPage() {
                   작성한 리뷰가 없습니다.
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {myReviews.map((review) => (
+                <>
+                  <div className="space-y-3">
+                    {myReviews
+                      .slice((reviewsCurrentPage - 1) * itemsPerPage, reviewsCurrentPage * itemsPerPage)
+                      .map((review) => (
                     <Card key={review.id}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2">
@@ -1291,8 +1334,40 @@ export default function MyPage() {
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
-                </div>
+                      ))}
+                  </div>
+                  {myReviews.length > itemsPerPage && (
+                    <div className="flex justify-center items-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReviewsCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={reviewsCurrentPage === 1}
+                      >
+                        이전
+                      </Button>
+                      {Array.from({ length: Math.ceil(myReviews.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
+                        <Button
+                          key={page}
+                          variant={reviewsCurrentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setReviewsCurrentPage(page)}
+                          className={reviewsCurrentPage === page ? "bg-purple-600 hover:bg-purple-700" : ""}
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReviewsCurrentPage(prev => Math.min(Math.ceil(myReviews.length / itemsPerPage), prev + 1))}
+                        disabled={reviewsCurrentPage === Math.ceil(myReviews.length / itemsPerPage)}
+                      >
+                        다음
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
 

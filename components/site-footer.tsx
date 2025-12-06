@@ -22,7 +22,7 @@ export function SiteFooter() {
               href="https://www.youtube.com/channel/UC8dtm6cdDJ0oLpVK9AQoS1Q"
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="text-[#FF0000] hover:text-[#CC0000] transition-colors"
               aria-label="YouTube (스포츠정보채널)"
             >
               <SiYoutube className="h-5 w-5" aria-hidden="true" />
@@ -31,7 +31,7 @@ export function SiteFooter() {
               href="https://www.youtube.com/user/kspo97"
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="text-[#FF0000] hover:text-[#CC0000] transition-colors"
               aria-label="YouTube (KSPO)"
             >
               <SiYoutube className="h-5 w-5" aria-hidden="true" />
@@ -40,7 +40,7 @@ export function SiteFooter() {
               href="https://www.instagram.com/kspo.tiger/#"
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="text-[#E4405F] hover:text-[#C13584] transition-colors"
               aria-label="Instagram"
             >
               <SiInstagram className="h-5 w-5" aria-hidden="true" />
@@ -49,7 +49,7 @@ export function SiteFooter() {
               href="https://blog.naver.com/kspo2011"
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="text-[#03C75A] hover:text-[#02B350] transition-colors"
               aria-label="Naver Blog"
             >
               <SiNaver className="h-5 w-5" aria-hidden="true" />
@@ -58,7 +58,7 @@ export function SiteFooter() {
               href="https://www.facebook.com/kspof/"
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="text-[#1877F2] hover:text-[#166FE5] transition-colors"
               aria-label="Facebook"
             >
               <SiFacebook className="h-5 w-5" aria-hidden="true" />
@@ -67,7 +67,7 @@ export function SiteFooter() {
               href="https://www.tiktok.com/@kspo88"
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="text-[#000000] hover:text-[#333333] transition-colors"
               aria-label="TikTok"
             >
               <SiTiktok className="h-5 w-5" aria-hidden="true" />
@@ -76,7 +76,7 @@ export function SiteFooter() {
               href="https://pf.kakao.com/_cBusb"
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="text-[#FEE500] hover:text-[#FDD835] transition-colors"
               aria-label="KakaoTalk"
             >
               <SiKakaotalk className="h-5 w-5" aria-hidden="true" />

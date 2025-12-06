@@ -86,7 +86,17 @@ export function SiteHeader() {
     <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-20 items-center justify-between relative max-w-screen-2xl mx-auto px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center space-x-2" aria-label="SportsAccess 홈으로 이동">
+          <Link 
+            href="/" 
+            className="flex items-center space-x-2" 
+            aria-label="SportsAccess 홈으로 이동"
+            onClick={(e) => {
+              if (pathname === "/") {
+                e.preventDefault()
+                window.location.reload()
+              }
+            }}
+          >
             <span className="text-3xl font-bold tracking-tight">
               Sports<span className="text-primary">Access</span>
             </span>

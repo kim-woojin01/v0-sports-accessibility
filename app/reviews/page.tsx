@@ -387,7 +387,11 @@ export default function ReviewsPage() {
           <div className="max-w-2xl mx-auto flex gap-2 mt-8">
             <Button
               variant={showWriteableOnly ? "default" : "outline"}
-              className="h-12 px-4 gap-2"
+              className={`h-12 px-4 gap-2 ${
+                showWriteableOnly 
+                  ? 'bg-purple-400 hover:bg-purple-500 text-white' 
+                  : 'border-purple-300 text-purple-400 hover:bg-purple-50'
+              }`}
               onClick={handleWriteReviewFilter}
             >
               <PenSquare className="w-4 h-4" />
@@ -458,7 +462,7 @@ export default function ReviewsPage() {
                       const usageId = usage?.usage_id
                       return (
                         <Link href={`/reviews/write/${facility.id}${usageId ? `?usageId=${usageId}` : ''}`}>
-                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                          <Button size="sm" className="bg-purple-400 hover:bg-purple-500 text-white">
                             리뷰 작성
                           </Button>
                         </Link>

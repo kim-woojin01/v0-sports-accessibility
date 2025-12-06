@@ -1208,8 +1208,8 @@ export default function SearchPage() {
                     onClick={() => toggleFavorite(Number(facility.id))}
                     className={`p-2 rounded-full transition-colors ${
                       isFavorite 
-                        ? 'bg-yellow-400/90 text-red-600' 
-                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                        ? 'bg-yellow-400/50 text-red-600/70' 
+                        : 'bg-gray-100/50 text-gray-400/70 hover:bg-gray-200/50'
                     }`}
                     aria-label={isFavorite ? '즐겨찾기 제거' : '즐겨찾기 추가'}
                   >
