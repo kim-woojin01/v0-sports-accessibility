@@ -333,9 +333,11 @@ export default function SearchPage() {
   const [selectedAmPm, setSelectedAmPm] = useState("PM")
   const [tempSelectedDate, setTempSelectedDate] = useState<Date | null>(null)
 
-  const [currentPage, setCurrentPage] = useState(1)
+  // URL에서 페이지 번호 읽기
+  const pageFromUrl = searchParams.get('page') ? Number(searchParams.get('page')) : 1
+  const [currentPage, setCurrentPage] = useState(pageFromUrl)
   const itemsPerPage = 5
-  const [pageBlock, setPageBlock] = useState(0) // 0 for 1-5, 1 for 6-10
+  const [pageBlock, setPageBlock] = useState(Math.floor((pageFromUrl - 1) / 5)) // 0 for 1-5, 1 for 6-10
   // ✅ 초기 지도 중심: 기본값 → 데이터 로드 후 useEffect에서 첫 시설로 이동
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -358,7 +360,14 @@ export default function SearchPage() {
     } else {
       setHighlightSearch(false)
     }
-  }, [searchParams])
+    
+    // URL에서 페이지 번호 읽기
+    const pageFromUrl = searchParams.get('page') ? Number(searchParams.get('page')) : 1
+    if (pageFromUrl !== currentPage) {
+      setCurrentPage(pageFromUrl)
+      setPageBlock(Math.floor((pageFromUrl - 1) / 5))
+    }
+  }, [searchParams, currentPage])
 
   // 즐겨찾기 목록 로드 함수
   const loadFavorites = async () => {
@@ -692,7 +701,12 @@ export default function SearchPage() {
     } else {
       setMapCenter(DEFAULT_CENTER)
     }
+    // 검색 시 첫 페이지로 이동하고 URL 업데이트
     setCurrentPage(1)
+    setPageBlock(0)
+    const newParams = new URLSearchParams(searchParams.toString())
+    newParams.set('page', '1')
+    router.replace(`/search?${newParams.toString()}`, { scroll: false })
     setIsRegionOpen(false)
     setIsDateOpen(false)
     setIsFacilityOpen(false)
@@ -817,19 +831,33 @@ export default function SearchPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
+    // URL에 페이지 번호 저장
+    const newParams = new URLSearchParams(searchParams.toString())
+    newParams.set('page', page.toString())
+    router.replace(`/search?${newParams.toString()}`, { scroll: false })
   }
 
   const handleNextBlock = () => {
     if ((pageBlock + 1) * 5 < totalPages) {
+      const newPage = (pageBlock + 1) * 5 + 1
       setPageBlock(pageBlock + 1)
-      setCurrentPage((pageBlock + 1) * 5 + 1)
+      setCurrentPage(newPage)
+      // URL에 페이지 번호 저장
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.set('page', newPage.toString())
+      router.replace(`/search?${newParams.toString()}`, { scroll: false })
     }
   }
 
   const handlePrevBlock = () => {
     if (pageBlock > 0) {
+      const newPage = (pageBlock - 1) * 5 + 1
       setPageBlock(pageBlock - 1)
-      setCurrentPage((pageBlock - 1) * 5 + 1)
+      setCurrentPage(newPage)
+      // URL에 페이지 번호 저장
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.set('page', newPage.toString())
+      router.replace(`/search?${newParams.toString()}`, { scroll: false })
     }
   }
 
@@ -867,8 +895,8 @@ export default function SearchPage() {
   return (
     <div className={`flex flex-col min-h-screen items-center w-full relative ${isReviewModalOpen ? 'overflow-hidden' : ''}`}>
       {/* Map Section */}
-      <div className={`relative w-full h-[420px] rounded-2xl overflow-hidden shadow-lg bg-slate-100 mt-16 transition-all duration-300 ${
-        isReviewModalOpen ? 'opacity-50 z-0' : 'opacity-100 z-auto'
+      <div className={`relative w-full h-[500px] rounded-2xl overflow-hidden shadow-lg bg-slate-100 mt-20 transition-all duration-300 ${
+        isReviewModalOpen ? 'opacity-50 z-0' : 'opacity-100 z-10'
       }`}>
         <FacilityMap facilities={currentFacilities} center={mapCenter} userLocation={userLocation} />
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-md text-sm font-medium text-slate-700">
@@ -886,10 +914,10 @@ export default function SearchPage() {
         </Button>
       </div>
 
-      <div className="h-12"></div> {/* 여백 추가 */}
+      <div className="h-12"></div> {/* 지도와 검색 필터 사이 여백 */}
 
       {/* Search Filter Bar */}
-      <div className={`sticky top-16 z-40 bg-white border-b shadow-sm w-full transition-all duration-300 ${
+      <div className={`sticky top-20 z-40 bg-white border-b shadow-sm w-full transition-all duration-300 ${
         isReviewModalOpen ? 'opacity-50' : 'opacity-100'
       }`}>
         <div className="container py-4 mx-auto max-w-screen-2xl">
@@ -1188,8 +1216,8 @@ export default function SearchPage() {
                     <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
                   </button>
                 </div>
-                <div className="flex flex-col md:flex-row">
-                  <div className="relative w-full md:w-72 h-48 md:h-auto">
+                <div className="flex flex-col md:flex-row overflow-hidden">
+                  <div className="relative w-full md:w-72 h-48 md:h-auto overflow-hidden rounded-t-xl md:rounded-t-none md:rounded-l-xl">
                     <Image src={facility.image || "/placeholder.svg"} alt={facility.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1 p-6 flex flex-col justify-between">

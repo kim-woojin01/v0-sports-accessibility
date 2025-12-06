@@ -1,13 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 import { Menu, X, Shield } from "lucide-react"
 
 export function SiteHeader() {
   const pathname = usePathname()
+  const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [userName, setUserName] = useState("")
@@ -93,21 +94,33 @@ export function SiteHeader() {
         </div>
 
         <nav className="hidden md:flex gap-30 absolute left-1/2 transform -translate-x-1/2" aria-label="메인 내비게이션">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`text-lg font-medium transition-colors hover:text-primary relative py-2 ${
-                pathname === item.href ? "text-purple-600" : "text-muted-foreground"
-              }`}
-              aria-current={pathname === item.href ? "page" : undefined}
-            >
-              {item.label}
-              {pathname === item.href && (
-                <span className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-600 rounded-full" aria-hidden="true" />
-              )}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+              // 검색 페이지에서 검색 링크를 클릭하면 현재 URL 유지하며 새로고침
+              if (item.href === "/search" && pathname === "/search") {
+                e.preventDefault()
+                // 현재 URL(페이지 번호 포함) 유지하며 새로고침
+                window.location.reload()
+              }
+            }
+            
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={handleClick}
+                className={`text-lg font-medium transition-colors hover:text-primary relative py-2 ${
+                  pathname === item.href ? "text-purple-600" : "text-muted-foreground"
+                }`}
+                aria-current={pathname === item.href ? "page" : undefined}
+              >
+                {item.label}
+                {pathname === item.href && (
+                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-600 rounded-full" aria-hidden="true" />
+                )}
+              </Link>
+            )
+          })}
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
@@ -167,16 +180,28 @@ export function SiteHeader() {
       {isMobileMenuOpen && (
         <div className="md:hidden border-t p-4 space-y-4 bg-background" role="menu" aria-label="메인 내비게이션">
           <nav className="flex flex-col gap-4">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm font-medium"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                setIsMobileMenuOpen(false)
+                // 검색 페이지에서 검색 링크를 클릭하면 현재 URL 유지하며 새로고침
+                if (item.href === "/search" && pathname === "/search") {
+                  e.preventDefault()
+                  // 현재 URL(페이지 번호 포함) 유지하며 새로고침
+                  window.location.reload()
+                }
+              }
+              
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm font-medium"
+                  onClick={handleClick}
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
           </nav>
           <div className="pt-4 border-t">
             {isLoggedIn ? (
