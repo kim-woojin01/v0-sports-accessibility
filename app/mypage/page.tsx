@@ -31,6 +31,24 @@ interface UserProfile {
   profileImageUrl: string | null
 }
 
+// 시설 ID에서 숫자 부분만 추출하는 헬퍼 함수
+// "accessible-123" -> 123, 123 -> 123
+function extractFacilityId(facilityId: number | string): number {
+  if (typeof facilityId === 'number') {
+    return facilityId
+  }
+  
+  // 문자열인 경우 "accessible-123" 형식에서 숫자 부분 추출
+  const match = facilityId.toString().match(/(\d+)$/)
+  if (match) {
+    return Number(match[1])
+  }
+  
+  // 숫자만 있는 경우
+  const num = Number(facilityId)
+  return isNaN(num) ? 0 : num
+}
+
 export default function MyPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -487,20 +505,29 @@ export default function MyPage() {
   ]
 
   // 즐겨찾기 토글 함수 (검색 페이지와 동일한 로직)
-  const toggleFavorite = async (facilityId: number) => {
+  const toggleFavorite = async (facilityId: number | string) => {
     if (!isLoggedIn || !profile.id) {
       alert('로그인 가입 후 서비스 이용이 가능합니다.')
       return
     }
 
+    // 시설 ID에서 숫자 부분만 추출 (accessible-123 형식 처리)
+    const numericFacilityId = extractFacilityId(facilityId)
+    
+    if (!numericFacilityId || numericFacilityId === 0) {
+      console.error('유효하지 않은 시설 ID:', facilityId)
+      alert('시설 ID가 유효하지 않습니다.')
+      return
+    }
+
     try {
-      const isFavorite = favoriteFacilities.includes(facilityId)
+      const isFavorite = favoriteFacilities.includes(numericFacilityId)
       console.log('마이페이지 - 즐겨찾기 토글 - user_id:', profile.id, 'facility_id:', facilityId, 'isFavorite:', isFavorite)
 
       if (isFavorite) {
         // 즐겨찾기 제거
         console.log('마이페이지 - 즐겨찾기 제거 요청 전송...')
-        const res = await fetch(`/api/favorites?facilityId=${facilityId}`, {
+        const res = await fetch(`/api/favorites?facilityId=${numericFacilityId}`, {
           method: 'DELETE',
           headers: {
             'x-user-id': profile.id.toString(),
@@ -520,7 +547,7 @@ export default function MyPage() {
         console.log('마이페이지 - 즐겨찾기 제거 응답:', res.status, res.statusText, data)
         
         if (res.ok) {
-          setFavoriteFacilities(favoriteFacilities.filter(id => id !== facilityId))
+          setFavoriteFacilities(favoriteFacilities.filter(id => id !== numericFacilityId))
           console.log('마이페이지 - 즐겨찾기 제거 성공 - UI 업데이트 완료')
           // DB에서 다시 로드하여 확인
           setTimeout(() => {
@@ -539,7 +566,7 @@ export default function MyPage() {
             'Content-Type': 'application/json',
             'x-user-id': profile.id.toString(),
           },
-          body: JSON.stringify({ facilityId }),
+          body: JSON.stringify({ facilityId: numericFacilityId }),
         })
         
         let data: any = {}
@@ -555,7 +582,7 @@ export default function MyPage() {
         console.log('마이페이지 - 즐겨찾기 추가 응답:', res.status, res.statusText, data)
         
         if (res.ok) {
-          setFavoriteFacilities([...favoriteFacilities, facilityId])
+          setFavoriteFacilities([...favoriteFacilities, numericFacilityId])
           console.log('마이페이지 - 즐겨찾기 추가 성공 - UI 업데이트 완료')
           // DB에서 다시 로드하여 확인
           setTimeout(() => {
@@ -1202,7 +1229,12 @@ export default function MyPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <h4 className="font-medium mb-2 text-sm">즐겨찾기 시설</h4>
+                    <h4 className="font-medium mb-2 text-sm flex items-center gap-2">
+                      즐겨찾기 시설
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ({favoriteFacilities.length}개)
+                      </span>
+                    </h4>
                     <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
                       {allFacilities.length === 0 ? (
                         <div className="text-sm text-muted-foreground text-center py-2">
@@ -1210,8 +1242,8 @@ export default function MyPage() {
                         </div>
                       ) : (
                         allFacilities.map((facility) => {
-                          const facilityId = Number(facility.id)
-                          const isFavorite = favoriteFacilities.includes(facilityId)
+                          const numericFacilityId = extractFacilityId(facility.id)
+                          const isFavorite = favoriteFacilities.includes(numericFacilityId)
                           return (
                             <div key={facility.id} className="flex items-center gap-2">
                               <input
@@ -1220,7 +1252,7 @@ export default function MyPage() {
                                 checked={isFavorite}
                                 onChange={(e) => {
                                   if (isAlarmEditing) {
-                                    toggleFavorite(facilityId)
+                                    toggleFavorite(facility.id)
                                   }
                                 }}
                                 className="rounded border-gray-300 text-purple-600"

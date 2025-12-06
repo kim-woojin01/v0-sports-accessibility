@@ -126,6 +126,10 @@ const REALTIME_WINDOW_MINUTES = 90
 
 const REALTIME_WINDOW_MS = REALTIME_WINDOW_MINUTES * 60 * 1000
 
+// ⚡ 성능 최적화: 배치 크기 설정
+
+const BATCH_SIZE = 10
+
 function clamp(value: number, min: number, max: number) {
 
   return Math.min(Math.max(value, min), max)
@@ -964,6 +968,10 @@ export async function GET(request: NextRequest) {
 
     const datetimeParam = url.searchParams.get("datetime")
 
+    // ⚡ 최적화 2: 날짜가 선택되지 않았으면 예측 생략
+
+    const shouldPredict = datetimeParam !== null
+
     let targetDate = datetimeParam ? new Date(datetimeParam) : new Date()
 
     if (isNaN(targetDate.getTime())) targetDate = new Date()
@@ -1160,63 +1168,107 @@ export async function GET(request: NextRequest) {
 
     // -----------------------------------------
 
-    // ⭐ 일반 시설 + 예측 조합
+    // ⭐ 일반 시설 + 예측 조합 (⚡ 최적화 1, 3: 병렬 처리 + 배치 처리)
 
     // -----------------------------------------
 
     const facilityList: any[] = []
 
-    for (const f of facilityRows as any[]) {
+    const facilityRowsArray = facilityRows as any[]
 
-      const congestion = calculateCongestion(
+    // ⚡ 최적화 3: 배치로 나눠서 처리 (메모리 관리)
 
-        Number(f.current_attendance ?? 0),
+    for (let i = 0; i < facilityRowsArray.length; i += BATCH_SIZE) {
 
-        Number(f.capacity ?? 1),
+      const batch = facilityRowsArray.slice(i, i + BATCH_SIZE)
 
-        Number(f.id),
+      // ⚡ 최적화 1: 병렬 처리 (Promise.all 사용)
 
-        targetDate,
+      const batchResults = await Promise.all(
+
+        batch.map(async (f) => {
+
+          const congestion = calculateCongestion(
+
+            Number(f.current_attendance ?? 0),
+
+            Number(f.capacity ?? 1),
+
+            Number(f.id),
+
+            targetDate,
+
+          )
+
+          // ⚡ 최적화 2: 날짜가 선택되지 않았으면 예측 생략
+
+          let predictedLevel = "moderate" // 기본값
+
+          if (shouldPredict) {
+
+            try {
+
+              const last6 = await loadLast6Values(f.id, targetDate)
+
+              const prediction = await predictFacility(f.id, last6, targetDate)
+
+              predictedLevel =
+
+                prediction?.predicted_level ??
+
+                fallbackPredictedLevel(f.id, targetDate, {
+
+                  distributionFn: getTemporalDistribution,
+
+                  jitterAmplitude: 0.12,
+
+                  salt: 23,
+
+                })
+
+            } catch (predictionError) {
+
+              console.error(`예측 실패 (시설 ${f.id}):`, predictionError)
+
+              predictedLevel = fallbackPredictedLevel(f.id, targetDate, {
+
+                distributionFn: getTemporalDistribution,
+
+                jitterAmplitude: 0.12,
+
+                salt: 23,
+
+              })
+
+            }
+
+          }
+
+          return {
+
+            ...f,
+
+            ...congestion,
+
+            predicted_level: predictedLevel,
+
+            isAccessible: false,
+
+            image: "/gymnasium.jpg",
+
+          }
+
+        }),
 
       )
 
-      const last6 = await loadLast6Values(f.id, targetDate)
-
-      const prediction = await predictFacility(f.id, last6, targetDate)
-
-      const predictedLevel =
-
-        prediction?.predicted_level ??
-
-        fallbackPredictedLevel(f.id, targetDate, {
-
-          distributionFn: getTemporalDistribution,
-
-          jitterAmplitude: 0.12,
-
-          salt: 23,
-
-        })
-
-      facilityList.push({
-
-        ...f,
-
-        ...congestion,
-
-        predicted_level: predictedLevel,
-
-        isAccessible: false,
-
-        image: "/gymnasium.jpg",
-
-      })
+      facilityList.push(...batchResults)
 
     }
 
     // -----------------------------------------
 
-    // 접근성 시설: 실시간 + 예측 혼잡도 제공
+    // 접근성 시설: 실시간 + 예측 혼잡도 제공 (⚡ 최적화 1, 3: 병렬 처리 + 배치 처리)
 
     // -----------------------------------------
 
@@ -1298,103 +1350,147 @@ export async function GET(request: NextRequest) {
 
     const accessibleList: any[] = []
 
-    for (const f of accessibleRows as any[]) {
+    const accessibleRowsArray = accessibleRows as any[]
 
-      const currentAttendance = Number(f.current_attendance ?? 0)
+    // ⚡ 최적화 3: 배치로 나눠서 처리
 
-      const realTime = calculateCongestion(
+    for (let i = 0; i < accessibleRowsArray.length; i += BATCH_SIZE) {
 
-        currentAttendance,
+      const batch = accessibleRowsArray.slice(i, i + BATCH_SIZE)
 
-        ACCESSIBLE_DEFAULT_CAPACITY,
+      // ⚡ 최적화 1: 병렬 처리
 
-        Number(f.id),
+      const batchResults = await Promise.all(
 
-        targetDate,
+        batch.map(async (f) => {
 
-        {
+          const currentAttendance = Number(f.current_attendance ?? 0)
 
-          distribution: getAccessibleTemporalDistribution(
+          const realTime = calculateCongestion(
+
+            currentAttendance,
+
+            ACCESSIBLE_DEFAULT_CAPACITY,
 
             Number(f.id),
 
             targetDate,
 
-          ),
+            {
 
-        },
+              distribution: getAccessibleTemporalDistribution(
+
+                Number(f.id),
+
+                targetDate,
+
+              ),
+
+            },
+
+          )
+
+          // ⚡ 최적화 2: 날짜가 선택되지 않았으면 예측 생략
+
+          let predictedLevel = "moderate" // 기본값
+
+          if (shouldPredict) {
+
+            try {
+
+              const last6Accessible = await loadAccessibleLast6Values(
+
+                f.facility_name,
+
+                Number(f.id),
+
+                targetDate,
+
+              )
+
+              const prediction = await predictAccessibleFacility(
+
+                Number(f.id),
+
+                last6Accessible,
+
+                targetDate,
+
+              )
+
+              predictedLevel =
+
+                prediction?.predicted_level ??
+
+                fallbackPredictedLevel(Number(f.id), targetDate, {
+
+                  distributionFn: getAccessibleTemporalDistribution,
+
+                  jitterAmplitude: 0.15,
+
+                  salt: 41,
+
+                })
+
+            } catch (predictionError) {
+
+              console.error(`접근성 시설 예측 실패 (시설 ${f.id}):`, predictionError)
+
+              predictedLevel = fallbackPredictedLevel(Number(f.id), targetDate, {
+
+                distributionFn: getAccessibleTemporalDistribution,
+
+                jitterAmplitude: 0.15,
+
+                salt: 41,
+
+              })
+
+            }
+
+          }
+
+          return {
+
+            id: `accessible-${f.id}`,
+
+            name: f.facility_name,
+
+            address: f.address,
+
+            lat: f.latitude,
+
+            lng: f.longitude,
+
+            homepage: f.homepage,
+
+            phone: f.phone,
+
+            wheelchair_entrance: f.wheelchair_entrance,
+
+            wheelchair_parking: f.wheelchair_parking,
+
+            wheelchair_toilet: f.wheelchair_toilet,
+
+            current_people: currentAttendance,
+
+            real_time_level: realTime.real_time_level,
+
+            real_time_percent: realTime.real_time_percent,
+
+            predicted_level: predictedLevel,
+
+            isAccessible: true,
+
+            image: "/accessible-gym.jpg",
+
+          }
+
+        }),
 
       )
 
-      const last6Accessible = await loadAccessibleLast6Values(
-
-        f.facility_name,
-
-        Number(f.id),
-
-        targetDate,
-
-      )
-
-      const prediction = await predictAccessibleFacility(
-
-        Number(f.id),
-
-        last6Accessible,
-
-        targetDate,
-
-      )
-
-      const predictedLevel =
-
-        prediction?.predicted_level ??
-
-        fallbackPredictedLevel(Number(f.id), targetDate, {
-
-          distributionFn: getAccessibleTemporalDistribution,
-
-          jitterAmplitude: 0.15,
-
-          salt: 41,
-
-        })
-
-      accessibleList.push({
-
-        id: `accessible-${f.id}`,
-
-        name: f.facility_name,
-
-        address: f.address,
-
-        lat: f.latitude,
-
-        lng: f.longitude,
-
-        homepage: f.homepage,
-
-        phone: f.phone,
-
-        wheelchair_entrance: f.wheelchair_entrance,
-
-        wheelchair_parking: f.wheelchair_parking,
-
-        wheelchair_toilet: f.wheelchair_toilet,
-
-        current_people: currentAttendance,
-
-        real_time_level: realTime.real_time_level,
-
-        real_time_percent: realTime.real_time_percent,
-
-        predicted_level: predictedLevel,
-
-        isAccessible: true,
-
-        image: "/accessible-gym.jpg",
-
-      })
+      accessibleList.push(...batchResults)
 
     }
 

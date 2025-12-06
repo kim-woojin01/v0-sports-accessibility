@@ -300,6 +300,24 @@ function detectRegionFromAddress(address?: string): { province?: string; distric
   return {}
 }
 
+// 시설 ID에서 숫자 부분만 추출하는 헬퍼 함수
+// "accessible-123" -> 123, 123 -> 123
+function extractFacilityId(facilityId: number | string): number {
+  if (typeof facilityId === 'number') {
+    return facilityId
+  }
+  
+  // 문자열인 경우 "accessible-123" 형식에서 숫자 부분 추출
+  const match = facilityId.toString().match(/(\d+)$/)
+  if (match) {
+    return Number(match[1])
+  }
+  
+  // 숫자만 있는 경우
+  const num = Number(facilityId)
+  return isNaN(num) ? 0 : num
+}
+
 export default function SearchPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -447,7 +465,15 @@ export default function SearchPage() {
   }, [highlightCongestion, highlightSearch, searchParams, router])
 
   // 즐겨찾기 토글
-  const toggleFavorite = async (facilityId: number) => {
+  const toggleFavorite = async (facilityId: number | string) => {
+    // 시설 ID에서 숫자 부분만 추출 (accessible-123 형식 처리)
+    const numericFacilityId = extractFacilityId(facilityId)
+    
+    if (!numericFacilityId || numericFacilityId === 0) {
+      console.error('유효하지 않은 시설 ID:', facilityId)
+      alert('시설 ID가 유효하지 않습니다.')
+      return
+    }
     if (!isLoggedIn) {
       alert('로그인 가입 후 서비스 이용이 가능합니다.')
       return
@@ -466,13 +492,13 @@ export default function SearchPage() {
         return
       }
 
-      const isFavorite = favoriteFacilities.includes(facilityId)
-      console.log('즐겨찾기 토글 - user_id:', user.id, 'facility_id:', facilityId, 'isFavorite:', isFavorite)
+      const isFavorite = favoriteFacilities.includes(numericFacilityId)
+      console.log('즐겨찾기 토글 - user_id:', user.id, 'facility_id:', facilityId, 'numeric_id:', numericFacilityId, 'isFavorite:', isFavorite)
 
       if (isFavorite) {
         // 즐겨찾기 제거
         console.log('즐겨찾기 제거 요청 전송...')
-        const res = await fetch(`/api/favorites?facilityId=${facilityId}`, {
+        const res = await fetch(`/api/favorites?facilityId=${numericFacilityId}`, {
           method: 'DELETE',
           headers: {
             'x-user-id': user.id.toString(),
@@ -480,72 +506,166 @@ export default function SearchPage() {
         })
         
         let data: any = {}
+        let responseText = ''
         try {
-          const text = await res.text()
-          if (text) {
-            data = JSON.parse(text)
+          responseText = await res.text()
+          console.log('즐겨찾기 제거 응답 원본:', responseText)
+          if (responseText) {
+            try {
+              data = JSON.parse(responseText)
+            } catch (parseError) {
+              console.error('JSON 파싱 실패:', parseError, '원본 텍스트:', responseText)
+              data = { 
+                message: '서버 응답을 파싱할 수 없습니다.',
+                rawResponse: responseText.substring(0, 200)
+              }
+            }
+          } else {
+            console.warn('응답 본문이 비어있습니다.')
+            data = { message: '서버에서 응답이 없습니다.' }
           }
         } catch (e) {
-          console.error('응답 파싱 오류:', e)
-          data = { message: '서버 응답을 파싱할 수 없습니다.' }
+          console.error('응답 읽기 오류:', e)
+          data = { message: '서버 응답을 읽을 수 없습니다.', error: String(e) }
         }
         
-        console.log('즐겨찾기 제거 응답:', res.status, res.statusText, data)
+        console.log('즐겨찾기 제거 응답:', {
+          status: res.status,
+          statusText: res.statusText,
+          ok: res.ok,
+          data: data,
+          hasData: Object.keys(data).length > 0
+        })
         
         if (res.ok) {
-          setFavoriteFacilities(favoriteFacilities.filter(id => id !== facilityId))
+          setFavoriteFacilities(favoriteFacilities.filter(id => id !== numericFacilityId))
           console.log('즐겨찾기 제거 성공 - UI 업데이트 완료')
           // DB에서 다시 로드하여 확인
           setTimeout(() => {
             loadFavorites()
           }, 500)
         } else {
+          const errorMessage = data.message || data.error || `즐겨찾기 제거에 실패했습니다. (${res.status})`
           console.error('즐겨찾기 제거 실패:', {
             status: res.status,
             statusText: res.statusText,
             data: data,
+            responseText: responseText.substring(0, 200),
           })
-          alert(data.message || data.error || `즐겨찾기 제거에 실패했습니다. (${res.status})`)
+          alert(errorMessage)
         }
       } else {
         // 즐겨찾기 추가
-        console.log('즐겨찾기 추가 요청 전송...')
-        const res = await fetch('/api/favorites', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': user.id.toString(),
-          },
-          body: JSON.stringify({ facilityId }),
-        })
-        
-        let data: any = {}
+        console.log('즐겨찾기 추가 요청 전송...', { userId: user.id, originalFacilityId: facilityId, numericFacilityId: numericFacilityId })
+        let res: Response
         try {
-          const text = await res.text()
-          if (text) {
-            data = JSON.parse(text)
-          }
-        } catch (e) {
-          console.error('응답 파싱 오류:', e)
-          data = { message: '서버 응답을 파싱할 수 없습니다.' }
+          res = await fetch('/api/favorites', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-id': user.id.toString(),
+            },
+            body: JSON.stringify({ facilityId: numericFacilityId }),
+          })
+        } catch (fetchError) {
+          console.error('네트워크 요청 실패:', fetchError)
+          alert('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.')
+          return
         }
         
-        console.log('즐겨찾기 추가 응답:', res.status, res.statusText, data)
+        let data: any = {}
+        let responseText = ''
+        const contentType = res.headers.get('content-type')
+        
+        console.log('응답 헤더:', {
+          status: res.status,
+          statusText: res.statusText,
+          contentType: contentType,
+          ok: res.ok
+        })
+        
+        try {
+          responseText = await res.text()
+          console.log('즐겨찾기 추가 응답 원본 (길이:', responseText.length, '):', responseText)
+          
+          if (responseText && responseText.trim()) {
+            try {
+              data = JSON.parse(responseText)
+              console.log('JSON 파싱 성공:', data)
+            } catch (parseError) {
+              console.error('JSON 파싱 실패:', parseError)
+              console.error('파싱 실패한 원본 텍스트:', responseText)
+              data = { 
+                message: '서버 응답을 파싱할 수 없습니다.',
+                rawResponse: responseText.substring(0, 500),
+                parseError: String(parseError)
+              }
+            }
+          } else {
+            console.warn('응답 본문이 비어있습니다. (길이: 0)')
+            data = { 
+              message: '서버에서 응답이 없습니다.',
+              status: res.status,
+              statusText: res.statusText
+            }
+          }
+        } catch (readError) {
+          console.error('응답 읽기 오류:', readError)
+          data = { 
+            message: '서버 응답을 읽을 수 없습니다.', 
+            error: String(readError),
+            status: res.status,
+            statusText: res.statusText
+          }
+        }
+        
+        console.log('즐겨찾기 추가 응답 최종:', {
+          status: res.status,
+          statusText: res.statusText,
+          ok: res.ok,
+          contentType: contentType,
+          responseLength: responseText.length,
+          data: data,
+          dataKeys: Object.keys(data),
+          hasMessage: !!data.message,
+          hasError: !!data.error
+        })
         
         if (res.ok) {
-          setFavoriteFacilities([...favoriteFacilities, facilityId])
+          setFavoriteFacilities([...favoriteFacilities, numericFacilityId])
           console.log('즐겨찾기 추가 성공 - UI 업데이트 완료')
           // DB에서 다시 로드하여 확인
           setTimeout(() => {
             loadFavorites()
           }, 500)
         } else {
-          console.error('즐겨찾기 추가 실패:', {
+          // 에러 메시지 구성
+          let errorMessage = '즐겨찾기 추가에 실패했습니다.'
+          
+          if (data && typeof data === 'object') {
+            if (data.message) {
+              errorMessage = data.message
+            } else if (data.error) {
+              errorMessage = data.error
+            } else if (Object.keys(data).length > 0) {
+              errorMessage = `서버 오류: ${JSON.stringify(data).substring(0, 100)}`
+            }
+          }
+          
+          if (res.status) {
+            errorMessage += ` (상태 코드: ${res.status})`
+          }
+          
+          console.error('즐겨찾기 추가 실패 상세:', {
             status: res.status,
             statusText: res.statusText,
-            data: data,
+            contentType: contentType,
+            responseText: responseText.substring(0, 500),
+            parsedData: data,
+            errorMessage: errorMessage
           })
-          alert(data.message || data.error || `즐겨찾기 추가에 실패했습니다. (${res.status})`)
+          
+          alert(errorMessage)
         }
       }
     } catch (e) {
@@ -743,6 +863,16 @@ export default function SearchPage() {
     }
   }
 
+  const resetDateSelection = () => {
+    setSelectedDate("이용날짜/시간")
+    setSelectedDateTime(null)
+    setTempSelectedDate(null)
+    setSelectedHour(12)
+    setSelectedMinute(0)
+    setSelectedAmPm("PM")
+    setCurrentDate(new Date())
+  }
+
   const nextMonth = () => {
     const next = new Date(currentDate)
     next.setMonth(next.getMonth() + 1)
@@ -880,7 +1010,11 @@ export default function SearchPage() {
 
   // 리뷰 모달 열기 함수
   const openReviewModal = async (facilityId: number | string) => {
-    const numericId = Number(facilityId)
+    const numericId = extractFacilityId(facilityId)
+    if (!numericId || numericId === 0) {
+      console.error('유효하지 않은 시설 ID:', facilityId)
+      return
+    }
     setSelectedFacilityId(numericId)
     setIsReviewModalOpen(true)
     setIsReviewsLoading(true)
@@ -1135,9 +1269,18 @@ export default function SearchPage() {
                         ))}
                       </select>
                     </div>
-                    <Button className="w-full bg-purple-600" onClick={confirmDateSelection}>
-                      선택 완료
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-100" 
+                        onClick={resetDateSelection}
+                      >
+                        초기화
+                      </Button>
+                      <Button className="flex-1 bg-purple-600" onClick={confirmDateSelection}>
+                        선택 완료
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1215,7 +1358,8 @@ export default function SearchPage() {
         ) : (
           <div className="space-y-6">
             {currentFacilities.map((facility) => {
-              const isFavorite = favoriteFacilities.includes(Number(facility.id))
+              const numericFacilityId = extractFacilityId(facility.id)
+      const isFavorite = favoriteFacilities.includes(numericFacilityId)
               return (
               <div
                 key={facility.id}
@@ -1224,7 +1368,7 @@ export default function SearchPage() {
                 {/* 즐겨찾기 버튼 - 카드 테두리 왼쪽 밖, 위쪽에 위치 */}
                 <div className="absolute -left-12 top-2 z-10">
                   <button
-                    onClick={() => toggleFavorite(Number(facility.id))}
+                    onClick={() => toggleFavorite(facility.id)}
                     className={`p-2 rounded-full transition-colors ${
                       isFavorite 
                         ? 'bg-yellow-400/50 text-red-600/70' 

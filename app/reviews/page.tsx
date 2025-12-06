@@ -9,6 +9,24 @@ import Link from "next/link"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import LoadingSpinner from "@/components/loading-spinner"
 
+// 시설 ID에서 숫자 부분만 추출하는 헬퍼 함수
+// "accessible-123" -> 123, 123 -> 123
+function extractFacilityId(facilityId: number | string): number {
+  if (typeof facilityId === 'number') {
+    return facilityId
+  }
+  
+  // 문자열인 경우 "accessible-123" 형식에서 숫자 부분 추출
+  const match = facilityId.toString().match(/(\d+)$/)
+  if (match) {
+    return Number(match[1])
+  }
+  
+  // 숫자만 있는 경우
+  const num = Number(facilityId)
+  return isNaN(num) ? 0 : num
+}
+
 // 시설 유형에 맞는 고품질 이미지 URL을 반환하는 함수
 function getFacilityImage(facilityName: string, features: string[] = []): string {
   const name = facilityName.toLowerCase()
@@ -114,7 +132,7 @@ export default function ReviewsPage() {
         // 시설별 리뷰 통계 계산
         const reviewStats = new Map<number, { count: number; avgRating: number; sum: number }>()
         allReviews.forEach((review: any) => {
-          const facilityId = Number(review.facilityId)
+          const facilityId = extractFacilityId(review.facilityId)
           if (!reviewStats.has(facilityId)) {
             reviewStats.set(facilityId, { count: 0, avgRating: 0, sum: 0 })
           }
@@ -125,7 +143,8 @@ export default function ReviewsPage() {
         })
 
         const mapped: Facility[] = facilitiesData.map((item: any) => {
-          const stats = reviewStats.get(Number(item.id))
+          const numericFacilityId = extractFacilityId(item.id)
+          const stats = reviewStats.get(numericFacilityId)
           // 시설 이미지 결정: DB에 이미지가 있으면 사용, 없으면 유형에 맞는 이미지 할당
           const facilityImage = item.image && item.image !== '/placeholder.svg' && item.image !== ''
             ? item.image
@@ -161,8 +180,8 @@ export default function ReviewsPage() {
   useEffect(() => {
     const facilityIdParam = searchParams.get('facilityId')
     if (facilityIdParam && !isLoading && facilities.length > 0 && !isReviewModalOpen) {
-      const numericId = Number(facilityIdParam)
-      if (!isNaN(numericId)) {
+      const numericId = extractFacilityId(facilityIdParam)
+      if (numericId && numericId !== 0) {
         // 시설이 로드된 후 모달 열기
         setSelectedFacilityId(numericId)
         setIsReviewModalOpen(true)
@@ -348,7 +367,11 @@ export default function ReviewsPage() {
   }
 
   const openReviewModal = async (facilityId: number | string) => {
-    const numericId = Number(facilityId)
+    const numericId = extractFacilityId(facilityId)
+    if (!numericId || numericId === 0) {
+      console.error('유효하지 않은 시설 ID:', facilityId)
+      return
+    }
     setSelectedFacilityId(numericId)
     setIsReviewModalOpen(true)
     setIsReviewsLoading(true)
