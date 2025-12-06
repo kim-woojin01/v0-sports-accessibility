@@ -1,13 +1,15 @@
 "use client"
 
-import { useRef, useEffect, useState } from "react"
+import { useRef } from "react"
 import { motion, useInView } from "framer-motion"
+import Image from "next/image"
 
 const steps = [
   {
     id: 1,
     title: "내 주변 시설 검색하기",
     subtitle: "Search",
+    image: "/guide1.png",
     content: [
       "원하는 운동 종목이나 지역명을 검색창에 입력해 보세요.",
       "키워드 검색: \"강남구 수영장\", \"휠체어 농구\" 등 핵심 단어로 검색할 수 있습니다.",
@@ -19,6 +21,7 @@ const steps = [
     id: 2,
     title: "접근성 정보 확인하기",
     subtitle: "Check Accessibility",
+    image: "/guide2.png",
     content: [
       "시설 상세 페이지에서 '배리어 프리(Barrier-Free)' 정보를 가장 먼저 확인하세요.",
       "픽토그램: 휠체어 경사로, 장애인 화장실, 전용 주차구역 유무를 알기 쉬운 아이콘으로 표시했습니다.",
@@ -29,6 +32,7 @@ const steps = [
     id: 3,
     title: "스마트한 혼잡도 분석",
     subtitle: "Congestion Insights",
+    image: "/guide3.png",
     content: [
       "방문하기 전에 '언제가 가장 쾌적할지' 미리 확인하세요.",
       "혼잡도 신호등: 현재 상태를 3가지 색상으로 알려드립니다.",
@@ -42,6 +46,7 @@ const steps = [
     id: 4,
     title: "찜하기 & 마이페이지",
     subtitle: "My Sports",
+    image: "/guide4.png",
     content: [
       "마음에 드는 시설을 발견하셨나요?",
       "찜하기: 하트(♥) 버튼을 누르면 나만의 즐겨찾기 목록에 저장됩니다.",
@@ -98,9 +103,33 @@ function StepSection({ step, index }: { step: typeof steps[0], index: number }) 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="relative w-full aspect-video bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl shadow-lg border-2 border-purple-200/50 flex items-center justify-center"
+          className={`relative w-full aspect-video rounded-xl shadow-lg border-2 border-purple-200/50 overflow-hidden ${
+            step.image ? 'bg-white' : 'bg-gradient-to-br from-purple-100 to-pink-100'
+          }`}
         >
-          <p className="text-slate-500 font-medium text-lg">ScreenShot Area</p>
+          {step.image ? (
+            <Image
+              src={step.image}
+              alt={`${step.title} 스크린샷`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              onError={(e) => {
+                // 이미지가 없을 경우 fallback 표시
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
+                const parent = target.parentElement
+                if (parent) {
+                  parent.className = parent.className.replace('bg-white', 'bg-gradient-to-br from-purple-100 to-pink-100')
+                  parent.innerHTML = '<p class="text-slate-500 font-medium text-lg absolute inset-0 flex items-center justify-center">ScreenShot Area</p>'
+                }
+              }}
+            />
+          ) : (
+            <p className="text-slate-500 font-medium text-lg absolute inset-0 flex items-center justify-center">
+              ScreenShot Area
+            </p>
+          )}
         </motion.div>
       </div>
     </motion.section>

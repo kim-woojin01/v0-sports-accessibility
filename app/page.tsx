@@ -366,7 +366,7 @@ export default function Home() {
             className="flex-1 relative h-[300px] md:h-[400px] w-full rounded-2xl overflow-hidden shadow-lg bg-slate-100 order-2 lg:order-1"
             style={{ y: mapY }}
           >
-            <Image src="/map-view.png" alt="체육 시설 지도 화면 - 주변 체육 시설 위치를 지도로 표시" fill className="object-cover" />
+            <Image src="/homepage_map.png" alt="체육 시설 지도 화면 - 주변 체육 시설 위치를 지도로 표시" fill className="object-cover" />
           </motion.div>
           <motion.div 
             className="flex-1 space-y-4 md:space-y-6 order-1 lg:order-2"
