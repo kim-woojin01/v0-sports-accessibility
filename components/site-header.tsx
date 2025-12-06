@@ -84,8 +84,8 @@ export function SiteHeader() {
 
   return (
     <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-20 items-center justify-between relative max-w-screen-2xl mx-auto">
-        <div className="flex items-center gap-8 pl-6">
+      <div className="container flex h-20 items-center justify-between relative max-w-screen-2xl mx-auto px-4">
+        <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center space-x-2" aria-label="SportsAccess 홈으로 이동">
             <span className="text-3xl font-bold tracking-tight">
               Sports<span className="text-primary">Access</span>
@@ -96,10 +96,9 @@ export function SiteHeader() {
         <nav className="hidden md:flex gap-30 absolute left-1/2 transform -translate-x-1/2" aria-label="메인 내비게이션">
           {navItems.map((item) => {
             const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-              // 검색 페이지에서 검색 링크를 클릭하면 현재 URL 유지하며 새로고침
-              if (item.href === "/search" && pathname === "/search") {
+              // 현재 페이지에서 같은 링크를 클릭하면 새로고침
+              if (item.href === pathname) {
                 e.preventDefault()
-                // 현재 URL(페이지 번호 포함) 유지하며 새로고침
                 window.location.reload()
               }
             }
@@ -142,7 +141,12 @@ export function SiteHeader() {
               <Link href="/mypage" className="text-sm font-medium hover:underline">
                 {userName || "사용자"}님 환영합니다!
               </Link>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleLogout}
+                className="bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:text-gray-800"
+              >
                 로그아웃
               </Button>
             </div>

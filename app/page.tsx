@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Search, Users, Info, Star, Phone, Clock } from "lucide-react"
 import { PartnerLogoSlider } from "@/components/partner-logo-slider"
 import { motion, useScroll, useTransform, useSpring } from "framer-motion"
-import { useRef } from "react"
+import { useRef, useState, useEffect } from "react"
 
 // 애니메이션 variants
 const fadeInUp = {
@@ -29,26 +29,27 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.2,
       delayChildren: 0.1
     }
   }
 }
 
-const cardVariants = {
+// 스크롤 방향에 따른 카드 애니메이션 variants
+const createCardVariants = (scrollDirection: 'down' | 'up') => ({
   hidden: { 
     opacity: 0, 
-    y: 40 
+    y: scrollDirection === 'down' ? -40 : 40 
   },
   visible: { 
     opacity: 1, 
     y: 0,
     transition: {
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1]
+      duration: 0.8,
+      ease: [0.25, 0.46, 0.45, 0.94] // 더 부드러운 easing
     }
   }
-}
+})
 
 // 패럴랙스 이미지 컴포넌트 (개선된 버전)
 function ParallaxImage({ 
@@ -93,6 +94,26 @@ function ParallaxImage({
 }
 
 export default function Home() {
+  // 스크롤 방향 감지
+  const [scrollDirection, setScrollDirection] = useState<'down' | 'up'>('down')
+  const lastScrollY = useRef(0)
+  
+  // 스크롤 방향 감지 useEffect
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      if (currentScrollY > lastScrollY.current) {
+        setScrollDirection('down')
+      } else if (currentScrollY < lastScrollY.current) {
+        setScrollDirection('up')
+      }
+      lastScrollY.current = currentScrollY
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+  
   // 전체 페이지 스크롤 추적
   const containerRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
@@ -189,11 +210,11 @@ export default function Home() {
   )
 
   return (
-    <div ref={containerRef} className="flex flex-col min-h-screen">
+    <div ref={containerRef} className="flex flex-col min-h-screen w-full">
       {/* Hero Section */}
-      <section ref={heroSectionRef} className="py-12 md:py-20 bg-gradient-to-b from-white to-pink-50/50">
+      <section ref={heroSectionRef} className="pt-16 md:pt-24 pb-16 md:pb-24 bg-gradient-to-b from-white to-pink-50/50 w-full">
         {/* 서비스 소개 섹션 */}
-        <div className="container px-4">
+        <div className="container px-4 max-w-screen-2xl mx-auto">
           <motion.div 
             className="relative py-16 md:py-20 bg-gradient-to-br from-purple-600 via-pink-500 to-purple-700 text-white rounded-2xl overflow-hidden"
             initial="hidden"
@@ -242,18 +263,19 @@ export default function Home() {
         </div>
 
         {/* Service Cards - 모바일 1열, 태블릿 2열, 데스크톱 가로 스크롤 */}
-        <div ref={cardsSectionRef} className="container mt-8 md:mt-16 px-4">
+        <div ref={cardsSectionRef} className="container mt-8 md:mt-16 px-4 pt-8 md:pt-12 pb-8 md:pb-12 max-w-screen-2xl mx-auto">
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:gap-6 lg:overflow-x-auto lg:pb-8 lg:min-w-max lg:justify-center gap-4 md:gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:flex lg:gap-8 lg:overflow-x-auto lg:pt-4 lg:pb-12 lg:min-w-max lg:justify-center gap-6 md:gap-8 lg:scrollbar-hide"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
+            viewport={{ once: false, amount: 0.2 }}
             variants={staggerContainer}
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {/* Card 1 */}
             <motion.div 
               className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between"
-              variants={cardVariants}
+              variants={createCardVariants(scrollDirection)}
               style={{ y: card1Y }}
             >
               <div>
@@ -275,7 +297,7 @@ export default function Home() {
             {/* Card 2 */}
             <motion.div 
               className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-pink-200 hover:shadow-md transition-shadow flex flex-col justify-between lg:mt-12"
-              variants={cardVariants}
+              variants={createCardVariants(scrollDirection)}
               style={{ y: card2Y }}
             >
               <div>
@@ -297,7 +319,7 @@ export default function Home() {
             {/* Card 3 */}
             <motion.div 
               className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between"
-              variants={cardVariants}
+              variants={createCardVariants(scrollDirection)}
               style={{ y: card3Y }}
             >
               <div>
@@ -317,7 +339,7 @@ export default function Home() {
             {/* Card 4 */}
             <motion.div 
               className="w-full lg:w-80 h-auto lg:h-80 bg-white p-6 md:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between lg:mt-12"
-              variants={cardVariants}
+              variants={createCardVariants(scrollDirection)}
               style={{ y: card4Y }}
             >
               <div>
@@ -338,8 +360,8 @@ export default function Home() {
       </section>
 
       {/* Map Feature Section */}
-      <section ref={mapSectionRef} className="py-12 md:py-20 bg-white">
-        <div className="container flex flex-col lg:flex-row items-center gap-8 md:gap-12 px-4">
+      <section ref={mapSectionRef} className="py-12 md:py-20 bg-white w-full">
+        <div className="container flex flex-col lg:flex-row items-center gap-8 md:gap-12 px-4 max-w-screen-2xl mx-auto">
           <motion.div 
             className="flex-1 relative h-[300px] md:h-[400px] w-full rounded-2xl overflow-hidden shadow-lg bg-slate-100 order-2 lg:order-1"
             style={{ y: mapY }}
@@ -415,8 +437,8 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section ref={ctaSectionRef} className="py-12 md:py-20 bg-slate-50">
-        <div className="container flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-12 px-4">
+      <section ref={ctaSectionRef} className="py-12 md:py-20 bg-slate-50 w-full">
+        <div className="container flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-12 px-4 max-w-screen-2xl mx-auto">
           <motion.div 
             className="flex-1 space-y-4 md:space-y-6 lg:pl-12 xl:pl-20 order-2 lg:order-1"
             initial="hidden"

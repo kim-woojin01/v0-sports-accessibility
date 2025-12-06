@@ -10,9 +10,9 @@ export default function TeamPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* 팀원 카드 예시 - 추후 정보 추가 예정 */}
-        <Card className="text-center">
+      <div className="flex flex-col md:flex-row justify-center items-center gap-6 max-w-5xl mx-auto">
+        {/* 팀원 카드 1 */}
+        <Card className="text-center w-full md:w-1/3">
           <CardHeader>
             <div className="w-24 h-24 rounded-full bg-gray-200 mx-auto mb-4 flex items-center justify-center">
               <span className="text-2xl text-gray-400">👤</span>
@@ -29,7 +29,41 @@ export default function TeamPage() {
           </CardContent>
         </Card>
 
-        {/* 추가 팀원 카드들도 동일한 구조로 추가 가능 */}
+        {/* 팀원 카드 2 */}
+        <Card className="text-center w-full md:w-1/3">
+          <CardHeader>
+            <div className="w-24 h-24 rounded-full bg-gray-200 mx-auto mb-4 flex items-center justify-center">
+              <span className="text-2xl text-gray-400">👤</span>
+            </div>
+            <CardTitle>팀원 이름</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              역할 및 담당 업무
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              소개 내용은 추후 추가 예정입니다.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* 팀원 카드 3 */}
+        <Card className="text-center w-full md:w-1/3">
+          <CardHeader>
+            <div className="w-24 h-24 rounded-full bg-gray-200 mx-auto mb-4 flex items-center justify-center">
+              <span className="text-2xl text-gray-400">👤</span>
+            </div>
+            <CardTitle>팀원 이름</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              역할 및 담당 업무
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              소개 내용은 추후 추가 예정입니다.
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mt-12 text-center">
