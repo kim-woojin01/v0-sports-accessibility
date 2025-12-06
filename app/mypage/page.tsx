@@ -876,7 +876,7 @@ export default function MyPage() {
 
   const handleSaveAlarmSettings = () => {
     setIsAlarmEditing(false)
-    alert("알람 설정이 저장되었습니다.")
+    alert("시설 즐겨찾기 정보가 저장되었습니다.")
   }
 
   const disabilityTypeOptions = [
@@ -1100,7 +1100,7 @@ export default function MyPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Bell className="w-5 h-5 text-purple-600" />
-                    시설 알람 예약
+                    시설 알람 예약 & 즐겨찾기
                   </CardTitle>
                   <CardDescription>자주 가는 시설의 혼잡도 알림을 받아보세요.</CardDescription>
                 </CardHeader>
