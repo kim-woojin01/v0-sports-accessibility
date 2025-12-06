@@ -5,12 +5,8 @@ const dbConfig = {
   host: process.env.RAILWAY_HOST || process.env.RAILWAY_REVIEWS_HOST || "nozomi.proxy.rlwy.net",
   port: Number(process.env.RAILWAY_PORT || process.env.RAILWAY_REVIEWS_PORT) || 51173,
   user: process.env.RAILWAY_USER || process.env.RAILWAY_REVIEWS_USER || "root",
-  password: process.env.RAILWAY_PASSWORD || process.env.RAILWAY_REVIEWS_PASSWORD,
+  password: process.env.RAILWAY_PASSWORD || process.env.RAILWAY_REVIEWS_PASSWORD || "lRzqwghWSchqdRyErESveHwVyKYUfhME",
   database: process.env.RAILWAY_DATABASE || process.env.RAILWAY_REVIEWS_DATABASE || "railway",
-}
-
-if (!dbConfig.password) {
-  throw new Error('RAILWAY_PASSWORD or RAILWAY_REVIEWS_PASSWORD environment variable is required')
 }
 
 // GET: 특정 요청 상세 조회

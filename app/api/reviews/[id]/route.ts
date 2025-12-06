@@ -7,12 +7,10 @@ const dbConfig = {
   host: process.env.RAILWAY_REVIEWS_HOST || "nozomi.proxy.rlwy.net",
   port: Number(process.env.RAILWAY_REVIEWS_PORT) || 51173,
   user: process.env.RAILWAY_REVIEWS_USER || "root",
-  password: process.env.RAILWAY_REVIEWS_PASSWORD,
+  password:
+    process.env.RAILWAY_REVIEWS_PASSWORD ||
+    "lRzqwghWSchqdRyErESveHwVyKYUfhME",
   database: process.env.RAILWAY_REVIEWS_DATABASE || "railway",
-}
-
-if (!dbConfig.password) {
-  throw new Error('RAILWAY_REVIEWS_PASSWORD environment variable is required')
 }
 
 // 단일 리뷰 조회 (선택 사항)
