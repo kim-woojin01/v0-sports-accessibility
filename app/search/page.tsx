@@ -234,6 +234,50 @@ interface Facility {
 
 const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 }
 
+// 시설 유형에 맞는 고품질 이미지 URL을 반환하는 함수
+function getFacilityImage(facilityName: string, features: string[] = []): string {
+  const name = facilityName.toLowerCase()
+  const featuresStr = features.join(' ').toLowerCase()
+
+  // 수영장
+  if (featuresStr.includes('수영장') || name.includes('수영')) {
+    return 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 헬스장/체력단련장
+  if (featuresStr.includes('헬스장') || name.includes('헬스') || name.includes('체력') || name.includes('피트니스')) {
+    return 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 체육관
+  if (name.includes('체육관') || name.includes('체육관')) {
+    return 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 운동장
+  if (name.includes('운동장') || name.includes('경기장') || name.includes('스타디움')) {
+    return 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 복합시설 (여러 features가 있거나 이름에 복합, 센터가 포함)
+  if (features.length > 2 || name.includes('복합') || name.includes('센터') || name.includes('종합')) {
+    return 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 재활/물리치료
+  if (name.includes('재활') || name.includes('물리') || featuresStr.includes('재활')) {
+    return 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 장애인 전용 시설
+  if (name.includes('장애인') || featuresStr.includes('장애인')) {
+    return 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 기본 체육시설 이미지
+  return 'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=800&h=600&fit=crop&q=80'
+}
+
 // 주소에서 시/도, 시/군/구를 유추하는 헬퍼
 function detectRegionFromAddress(address?: string): { province?: string; district?: string } {
   if (!address) return {}
@@ -298,6 +342,7 @@ export default function SearchPage() {
   const [isLocating, setIsLocating] = useState(false)
   const locationWatchId = useRef<number | null>(null)
   const hasCenteredOnUser = useRef(false)
+  const isInitialLoad = useRef(true) // 초기 로드 여부 추적
 
   useEffect(() => {
     // URL 파라미터에서 혼잡도 하이라이트 확인
@@ -557,11 +602,16 @@ export default function SearchPage() {
           // 리뷰 통계에서 평점 가져오기
           const stats = reviewStats.get(Number(item.id))
 
+          // 시설 이미지 결정: DB에 이미지가 있으면 사용, 없으면 유형에 맞는 이미지 할당
+          const facilityImage = item.image && item.image !== '/placeholder.svg' && item.image !== ''
+            ? item.image
+            : getFacilityImage(item.name, item.features || [])
+
           return {
             id: item.id,
             name: item.name,
             address: item.address ?? "",
-            image: item.image ?? "/placeholder.svg",
+            image: facilityImage,
             rating: stats ? Number(stats.avgRating.toFixed(1)) : 0,
             phone: item.phone ?? "",
             hours: item.hours ?? "",
@@ -582,8 +632,14 @@ export default function SearchPage() {
         setFacilitiesData(mapped)
         setFilteredFacilities(mapped)
 
-        if (mapped.length > 0 && mapped[0].lat && mapped[0].lng) {
+        // 초기 로드가 아닐 때만 지도 중심 변경 (초기 로드 시에는 사용자 위치 유지)
+        if (!isInitialLoad.current && mapped.length > 0 && mapped[0].lat && mapped[0].lng) {
           setMapCenter({ lat: mapped[0].lat, lng: mapped[0].lng })
+        }
+        
+        // 초기 로드 완료 표시
+        if (isInitialLoad.current) {
+          isInitialLoad.current = false
         }
       } catch (e) {
         console.error("데이터 로드 오류:", e)
@@ -684,7 +740,26 @@ export default function SearchPage() {
       return
     }
 
+    // 처음 페이지 로드 시 사용자 위치를 즉시 가져와서 지도 중심 설정
     setIsLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        }
+        setUserLocation(coords)
+        setMapCenter(coords)
+        setIsLocating(false)
+        hasCenteredOnUser.current = true
+      },
+      () => {
+        setIsLocating(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+
+    // 이후 위치 변경을 감지하기 위해 watchPosition 사용
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const coords = {
@@ -692,17 +767,11 @@ export default function SearchPage() {
           lng: position.coords.longitude,
         }
         setUserLocation(coords)
-        setIsLocating(false)
-
-        if (!hasCenteredOnUser.current) {
-          setMapCenter(coords)
-          hasCenteredOnUser.current = true
-        }
       },
       () => {
-        setIsLocating(false)
+        // 위치 감지 실패 시 무시
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
+      { enableHighAccuracy: true, maximumAge: 60000, timeout: 15000 },
     )
 
     locationWatchId.current = watchId
@@ -1129,7 +1198,16 @@ export default function SearchPage() {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <MapPin className="w-4 h-4 text-primary" />
-                            <h3 className="font-bold text-xl">{facility.name}</h3>
+                            <h3 
+                              className="font-bold text-xl cursor-pointer hover:text-primary transition-colors"
+                              onClick={() => {
+                                if (facility.lat && facility.lng) {
+                                  setMapCenter({ lat: facility.lat, lng: facility.lng })
+                                }
+                              }}
+                            >
+                              {facility.name}
+                            </h3>
                           </div>
                           <p className="text-muted-foreground text-sm mb-3">{facility.address}</p>
                         </div>

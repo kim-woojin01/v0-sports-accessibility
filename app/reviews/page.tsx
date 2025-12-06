@@ -9,6 +9,50 @@ import Link from "next/link"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import LoadingSpinner from "@/components/loading-spinner"
 
+// 시설 유형에 맞는 고품질 이미지 URL을 반환하는 함수
+function getFacilityImage(facilityName: string, features: string[] = []): string {
+  const name = facilityName.toLowerCase()
+  const featuresStr = features.join(' ').toLowerCase()
+
+  // 수영장
+  if (featuresStr.includes('수영장') || name.includes('수영')) {
+    return 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 헬스장/체력단련장
+  if (featuresStr.includes('헬스장') || name.includes('헬스') || name.includes('체력') || name.includes('피트니스')) {
+    return 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 체육관
+  if (name.includes('체육관') || name.includes('체육관')) {
+    return 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 운동장
+  if (name.includes('운동장') || name.includes('경기장') || name.includes('스타디움')) {
+    return 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 복합시설 (여러 features가 있거나 이름에 복합, 센터가 포함)
+  if (features.length > 2 || name.includes('복합') || name.includes('센터') || name.includes('종합')) {
+    return 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 재활/물리치료
+  if (name.includes('재활') || name.includes('물리') || featuresStr.includes('재활')) {
+    return 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 장애인 전용 시설
+  if (name.includes('장애인') || featuresStr.includes('장애인')) {
+    return 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&h=600&fit=crop&q=80'
+  }
+  
+  // 기본 체육시설 이미지
+  return 'https://images.unsplash.com/photo-1576678927484-cc907957088c?w=800&h=600&fit=crop&q=80'
+}
+
 type Facility = {
   id: number | string
   name: string
@@ -82,11 +126,16 @@ export default function ReviewsPage() {
 
         const mapped: Facility[] = facilitiesData.map((item: any) => {
           const stats = reviewStats.get(Number(item.id))
+          // 시설 이미지 결정: DB에 이미지가 있으면 사용, 없으면 유형에 맞는 이미지 할당
+          const facilityImage = item.image && item.image !== '/placeholder.svg' && item.image !== ''
+            ? item.image
+            : getFacilityImage(item.name, item.features || [])
+          
           return {
             id: item.id,
             name: item.name,
             address: item.address ?? "",
-            image: item.image ?? "/placeholder.svg",
+            image: facilityImage,
             rating: stats ? Number(stats.avgRating.toFixed(1)) : 0,
             description: item.description ?? "",
             features: item.features ?? [],
