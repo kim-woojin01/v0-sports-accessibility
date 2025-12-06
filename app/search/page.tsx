@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import LoadingSpinner from "@/components/loading-spinner"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 const FacilityMap = dynamic(() => import("@/components/facility-map"), {
   ssr: false,
@@ -268,6 +269,12 @@ export default function SearchPage() {
   const [highlightCongestion, setHighlightCongestion] = useState(false)
   const [highlightSearch, setHighlightSearch] = useState(false)
   const [favoriteFacilities, setFavoriteFacilities] = useState<number[]>([])
+  
+  // 리뷰 모달 관련 상태
+  const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(null)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [selectedFacilityReviews, setSelectedFacilityReviews] = useState<any[]>([])
+  const [isReviewsLoading, setIsReviewsLoading] = useState(false)
 
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null)
@@ -497,6 +504,7 @@ export default function SearchPage() {
     async function loadData() {
       setIsLoading(true)
       try {
+        // 시설 목록 조회
         const res = await fetch("/api/facilities")
         if (!res.ok) {
           console.error("시설 데이터 요청 실패:", res.status, res.statusText)
@@ -506,6 +514,23 @@ export default function SearchPage() {
         }
 
         const data = await res.json()
+
+        // 전체 리뷰 조회 (시설별 평점 계산용)
+        const reviewsRes = await fetch("/api/reviews")
+        const allReviews = reviewsRes.ok ? await reviewsRes.json() : []
+
+        // 시설별 리뷰 통계 계산
+        const reviewStats = new Map<number, { count: number; avgRating: number; sum: number }>()
+        allReviews.forEach((review: any) => {
+          const facilityId = Number(review.facilityId)
+          if (!reviewStats.has(facilityId)) {
+            reviewStats.set(facilityId, { count: 0, avgRating: 0, sum: 0 })
+          }
+          const stats = reviewStats.get(facilityId)!
+          stats.count++
+          stats.sum = (stats.sum || 0) + review.rating
+          stats.avgRating = stats.sum / stats.count
+        })
 
         // ✅ API 응답을 화면에서 쓰기 좋은 형태로 매핑
         const mapped: Facility[] = data.map((item: any) => {
@@ -529,12 +554,15 @@ export default function SearchPage() {
           // 위치 디버그 로그
           console.debug("시설 위치 디버그:", item.name, rawLat, rawLng, latNum, lngNum)
 
+          // 리뷰 통계에서 평점 가져오기
+          const stats = reviewStats.get(Number(item.id))
+
           return {
             id: item.id,
             name: item.name,
             address: item.address ?? "",
             image: item.image ?? "/placeholder.svg",
-            rating: item.rating ?? 0,
+            rating: stats ? Number(stats.avgRating.toFixed(1)) : 0,
             phone: item.phone ?? "",
             hours: item.hours ?? "",
             features: item.features ?? [],
@@ -736,10 +764,43 @@ export default function SearchPage() {
     }
   }
 
+  // 리뷰 모달 열기 함수
+  const openReviewModal = async (facilityId: number | string) => {
+    const numericId = Number(facilityId)
+    setSelectedFacilityId(numericId)
+    setIsReviewModalOpen(true)
+    setIsReviewsLoading(true)
+
+    try {
+      const res = await fetch(`/api/reviews?facilityId=${numericId}`)
+      const data = await res.json()
+      
+      // API가 빈 배열을 반환하거나 에러 객체를 반환할 수 있음
+      if (Array.isArray(data)) {
+        setSelectedFacilityReviews(data)
+        if (data.length === 0) {
+          console.log(`시설 ID ${numericId}에 대한 리뷰가 없습니다.`)
+        }
+      } else {
+        console.error("리뷰 조회 실패:", data)
+        setSelectedFacilityReviews([])
+      }
+    } catch (e) {
+      console.error("시설 리뷰 로드 오류:", e)
+      setSelectedFacilityReviews([])
+    } finally {
+      setIsReviewsLoading(false)
+    }
+  }
+
+  const selectedFacility = facilitiesData.find((f) => String(f.id) === String(selectedFacilityId))
+
   return (
-    <div className="flex flex-col min-h-screen items-center w-full">
+    <div className={`flex flex-col min-h-screen items-center w-full relative ${isReviewModalOpen ? 'overflow-hidden' : ''}`}>
       {/* Map Section */}
-      <div className="relative w-full h-[420px] rounded-2xl overflow-hidden shadow-lg bg-slate-100 mt-16">
+      <div className={`relative w-full h-[420px] rounded-2xl overflow-hidden shadow-lg bg-slate-100 mt-16 transition-all duration-300 ${
+        isReviewModalOpen ? 'opacity-50 z-0' : 'opacity-100 z-auto'
+      }`}>
         <FacilityMap facilities={currentFacilities} center={mapCenter} userLocation={userLocation} />
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-md text-sm font-medium text-slate-700">
           {userLocation ? "내 위치 기준으로 지도를 표시하고 있어요." : "검색 결과를 지도 아이콘으로 확인해보세요."}
@@ -759,7 +820,9 @@ export default function SearchPage() {
       <div className="h-12"></div> {/* 여백 추가 */}
 
       {/* Search Filter Bar */}
-      <div className="sticky top-16 z-40 bg-white border-b shadow-sm w-full">
+      <div className={`sticky top-16 z-40 bg-white border-b shadow-sm w-full transition-all duration-300 ${
+        isReviewModalOpen ? 'opacity-50' : 'opacity-100'
+      }`}>
         <div className="container py-4 mx-auto max-w-screen-2xl">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
             {/* Facility Name Search */}
@@ -1028,7 +1091,9 @@ export default function SearchPage() {
       </div>
 
       {/* Results List */}
-      <div className="container py-12 max-w-4xl mx-auto">
+      <div className={`container py-12 max-w-4xl mx-auto transition-all duration-300 ${
+        isReviewModalOpen ? 'opacity-50' : 'opacity-100'
+      }`}>
         {isLoading ? (
           <LoadingSpinner message="시설 목록을 불러오는 중입니다..." />
         ) : (
@@ -1073,21 +1138,12 @@ export default function SearchPage() {
                           <Star className="w-5 h-5 fill-current" />
                           <span className="font-bold text-lg">{facility.rating}</span>
                         </div>
-                        {isLoggedIn && hasVisited(facility.id) ? (
-                          <Link href={`/reviews/write/${facility.id}`}>
-                            <Button 
-  size="sm" 
-  variant="outline" 
-  className="text-xs h-7 border-purple-500 text-purple-500 hover:bg-purple-50 transition-colors"
->
-  리뷰 작성하기
-</Button>
-                          </Link>
-                        ) : (
-                          <Link href="/reviews">
-                            <span className="text-xs text-muted-foreground underline cursor-pointer">리뷰 보기</span>
-                          </Link>
-                        )}
+                        <button
+                          onClick={() => openReviewModal(facility.id)}
+                          className="text-xs text-muted-foreground underline cursor-pointer hover:text-primary transition-colors"
+                        >
+                          리뷰 보기
+                        </button>
                       </div>
                     </div>
 
@@ -1213,6 +1269,52 @@ export default function SearchPage() {
           </div>
         )}
       </div>
+
+      {/* 리뷰 모달 */}
+      <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedFacility?.name} 리뷰</DialogTitle>
+            <DialogDescription>{selectedFacility?.address}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 mt-4">
+            {isReviewsLoading ? (
+              <LoadingSpinner message="리뷰를 불러오는 중입니다..." className="min-h-[200px]" />
+            ) : selectedFacilityReviews.length > 0 ? (
+              selectedFacilityReviews.map((review) => (
+                <div key={review.id} className="border-b pb-6 last:border-0">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold">
+                        {review.userName?.charAt(0) || 'U'}
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">{review.userName || '익명'}</div>
+                        <div className="text-xs text-muted-foreground">{review.date}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-amber-500">
+                      <Star className="w-4 h-4 fill-current" />
+                      <span className="font-bold text-sm">{review.rating}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-700 mb-3">{review.content}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {review.tags && review.tags.map((tag: string) => (
+                      <span key={tag} className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">등록된 리뷰가 없습니다.</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
