@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, MapPin, Star, PenSquare, ChevronLeft, ChevronRight } from "lucide-react"
@@ -31,6 +32,8 @@ type Review = {
 }
 
 export default function ReviewsPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [facilities, setFacilities] = useState<Facility[]>([])
   const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>([])
@@ -104,6 +107,44 @@ export default function ReviewsPage() {
 
     loadFacilities()
   }, [])
+
+  // URL 쿼리 파라미터에서 facilityId를 읽어서 자동으로 리뷰 모달 열기
+  useEffect(() => {
+    const facilityIdParam = searchParams.get('facilityId')
+    if (facilityIdParam && !isLoading && facilities.length > 0 && !isReviewModalOpen) {
+      const numericId = Number(facilityIdParam)
+      if (!isNaN(numericId)) {
+        // 시설이 로드된 후 모달 열기
+        setSelectedFacilityId(numericId)
+        setIsReviewModalOpen(true)
+        setIsReviewsLoading(true)
+
+        // 리뷰 데이터 로드
+        fetch(`/api/reviews?facilityId=${numericId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (Array.isArray(data)) {
+              setSelectedFacilityReviews(data)
+            } else {
+              setSelectedFacilityReviews([])
+            }
+          })
+          .catch((e) => {
+            console.error("시설 리뷰 로드 오류:", e)
+            setSelectedFacilityReviews([])
+          })
+          .finally(() => {
+            setIsReviewsLoading(false)
+          })
+
+        // URL에서 쿼리 파라미터 제거
+        const newParams = new URLSearchParams(searchParams.toString())
+        newParams.delete('facilityId')
+        router.replace(`/reviews?${newParams.toString()}`, { scroll: false })
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isLoading, facilities, isReviewModalOpen])
 
   const handleSearch = () => {
     // showWriteableOnly가 true이면 현재 필터링된 시설 기준으로 검색
