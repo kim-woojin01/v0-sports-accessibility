@@ -50,9 +50,13 @@ export async function GET(request: Request) {
 
     // 테이블이 없을 수 있으니 안전하게 처리
     try {
-      // 이용 내역 조회 (Railway DB) - 리뷰가 작성되지 않은 이용 내역만
-      const [usageRows] = await connection.execute(
-        `
+      // 전체 이용 내역 조회 (리뷰 작성 여부와 관계없이)
+      // all 파라미터가 있으면 전체 조회, 없으면 리뷰가 없는 것만 조회
+      const { searchParams } = new URL(request.url)
+      const all = searchParams.get("all") === "true"
+      
+      // 먼저 이용 내역 조회
+      let usageQuery = `
         SELECT 
           u.id AS usage_id,
           u.facility_id,
@@ -60,12 +64,63 @@ export async function GET(request: Request) {
           DATE_FORMAT(u.used_at, '%Y-%m-%d') AS used_date,
           DATE_FORMAT(u.used_at, '%H:%i') AS used_time
         FROM facility_usage u
-        LEFT JOIN facility_reviews r ON u.id = r.facility_usage_id
-        WHERE u.user_id = ? AND r.id IS NULL
+        WHERE u.user_id = ?
         ORDER BY u.used_at DESC
-        `,
-        [numericUserId],
-      )
+      `
+      
+      const [usageRows] = await connection.execute(usageQuery, [numericUserId])
+      
+      // 각 이용 내역에 대해 리뷰 작성 여부 확인
+      const usageIds = (usageRows as any[]).map((u) => u.usage_id)
+      let reviewMap = new Map<number, boolean>()
+      
+      // 시설별 리뷰 작성 횟수 조회 (facility_id와 user_id 기준)
+      let facilityReviewCountMap = new Map<number, number>()
+      
+      if (usageIds.length > 0) {
+        // 모든 이용 내역에 대한 리뷰 존재 여부 확인
+        const placeholders = usageIds.map(() => "?").join(",")
+        const [reviews] = await connection.execute(
+          `SELECT DISTINCT facility_usage_id 
+           FROM facility_reviews 
+           WHERE facility_usage_id IN (${placeholders}) AND facility_usage_id IS NOT NULL`,
+          usageIds
+        )
+        
+        // 리뷰가 있는 이용 내역 ID를 Map에 저장
+        ;(reviews as any[]).forEach((r) => {
+          if (r.facility_usage_id) {
+            reviewMap.set(r.facility_usage_id, true)
+          }
+        })
+        
+        // 시설별 리뷰 작성 횟수 조회 (동일 시설에 여러 날짜에 작성된 리뷰 개수)
+        const facilityIds = [...new Set((usageRows as any[]).map((u) => u.facility_id))]
+        if (facilityIds.length > 0) {
+          const facilityPlaceholders = facilityIds.map(() => "?").join(",")
+          const [facilityReviews] = await connection.execute(
+            `SELECT facility_id, COUNT(*) as review_count
+             FROM facility_reviews
+             WHERE facility_id IN (${facilityPlaceholders}) AND user_id = ?
+             GROUP BY facility_id`,
+            [...facilityIds, numericUserId]
+          )
+          
+          ;(facilityReviews as any[]).forEach((fr) => {
+            facilityReviewCountMap.set(fr.facility_id, fr.review_count)
+          })
+        }
+        
+        // all=false일 때는 리뷰가 없는 이용 내역만 필터링
+        if (!all) {
+          const reviewedUsageIds = new Set(Array.from(reviewMap.keys()))
+          const filteredUsageRows = (usageRows as any[]).filter((u) => !reviewedUsageIds.has(u.usage_id))
+          
+          // 필터링된 결과를 usageRows에 반영
+          usageRows.length = 0
+          usageRows.push(...filteredUsageRows)
+        }
+      }
 
       console.log("이용 내역 조회 결과:", (usageRows as any[]).length, "개")
 
@@ -90,6 +145,8 @@ export async function GET(request: Request) {
       // 이용 내역과 시설 정보 결합
       const rows = (usageRows as any[]).map((u) => {
         const facility = facilityMap.get(u.facility_id)
+        const hasReview = reviewMap.get(u.usage_id) || false
+        const reviewCount = facilityReviewCountMap.get(u.facility_id) || 0
         return {
           id: facility?.id || u.facility_id,
           usage_id: u.usage_id, // 이용 내역 ID 추가
@@ -102,6 +159,8 @@ export async function GET(request: Request) {
           used_date: u.used_date,
           used_time: u.used_time,
           used_at: u.used_at, // 전체 날짜/시간 정보
+          has_review: hasReview, // 리뷰 작성 여부 (정확한 매칭)
+          review_count: reviewCount, // 시설별 리뷰 작성 횟수
         }
       })
 

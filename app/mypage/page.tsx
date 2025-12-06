@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { facilities } from "@/lib/data"
-import { Calendar, Clock, Settings, LogOut, Save, X, Bell, BellOff, Edit2, Check, User } from "lucide-react"
+import { Calendar, Clock, Settings, LogOut, Save, X, Bell, BellOff, Edit2, Check, User, Star, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -58,7 +58,18 @@ export default function MyPage() {
 
   const [isAlarmEditing, setIsAlarmEditing] = useState(false)
   const [isAlarmOn, setIsAlarmOn] = useState(false)
-  const [favoriteFacilities, setFavoriteFacilities] = useState<string[]>([])
+  const [favoriteFacilities, setFavoriteFacilities] = useState<number[]>([])
+  const [allFacilities, setAllFacilities] = useState<any[]>([]) // Railway DB에서 가져온 시설 목록
+  const [usageHistory, setUsageHistory] = useState<any[]>([]) // 이용 내역 (facility_usage 테이블)
+  const [myReviews, setMyReviews] = useState<any[]>([]) // 작성한 리뷰 (facility_reviews 테이블)
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false)
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false)
+  const [editingReview, setEditingReview] = useState<any | null>(null) // 수정 중인 리뷰
+  const [editReviewRating, setEditReviewRating] = useState(0)
+  const [editReviewContent, setEditReviewContent] = useState("")
+  const [editReviewTags, setEditReviewTags] = useState<string[]>([])
+  const [isSavingReview, setIsSavingReview] = useState(false)
+  const [isDeletingReview, setIsDeletingReview] = useState<number | null>(null)
   const [preferredTime, setPreferredTime] = useState({
     day: "월요일",
     startTime: "14:00",
@@ -213,6 +224,305 @@ export default function MyPage() {
 
     loadUserProfile()
   }, [router])
+
+  // 시설 목록 및 즐겨찾기 로드 함수
+  const loadFacilitiesAndFavorites = async () => {
+    if (!isLoggedIn || !profile.id) {
+      setAllFacilities([])
+      setFavoriteFacilities([])
+      return
+    }
+
+    try {
+      // 시설 목록 로드 (Railway DB에서)
+      const facilitiesRes = await fetch('/api/facilities')
+      if (facilitiesRes.ok) {
+        const facilitiesData = await facilitiesRes.json()
+        setAllFacilities(facilitiesData)
+        console.log('마이페이지 - 시설 목록 로드 성공:', facilitiesData.length, '개')
+      } else {
+        const errorText = await facilitiesRes.text()
+        console.error('마이페이지 - 시설 목록 로드 실패:', facilitiesRes.status, facilitiesRes.statusText, errorText)
+      }
+
+      // 즐겨찾기 로드 (facility_favorites 테이블에서)
+      const favoritesRes = await fetch('/api/favorites', {
+        headers: {
+          'x-user-id': profile.id.toString(),
+        },
+      })
+      if (favoritesRes.ok) {
+        const favoritesData = await favoritesRes.json()
+        const facilityIds = (favoritesData.favorites || []).map((id: any) => Number(id))
+        setFavoriteFacilities(facilityIds)
+        console.log('마이페이지 - 즐겨찾기 로드 성공:', facilityIds)
+      } else {
+        const errorText = await favoritesRes.text()
+        console.error('마이페이지 - 즐겨찾기 로드 실패:', favoritesRes.status, favoritesRes.statusText, errorText)
+        setFavoriteFacilities([])
+      }
+    } catch (e) {
+      console.error('마이페이지 - 시설/즐겨찾기 로드 오류:', e)
+      setAllFacilities([])
+      setFavoriteFacilities([])
+    }
+  }
+
+  // 시설 목록 및 즐겨찾기 로드
+  useEffect(() => {
+    loadFacilitiesAndFavorites()
+  }, [isLoggedIn, profile.id])
+
+  // 이용 내역 로드 (facility_usage 테이블)
+  const loadUsageHistory = async () => {
+    if (!isLoggedIn || !profile.id) {
+      setUsageHistory([])
+      return
+    }
+
+    setIsLoadingUsage(true)
+    try {
+      // 모든 이용 내역 조회 (리뷰 작성 여부와 관계없이)
+      const res = await fetch(`/api/usage?userId=${profile.id}&all=true`)
+      if (res.ok) {
+        const data = await res.json()
+        setUsageHistory(data)
+        console.log('마이페이지 - 이용 내역 로드 성공:', data.length, '개')
+      } else {
+        const errorText = await res.text()
+        console.error('마이페이지 - 이용 내역 로드 실패:', res.status, res.statusText, errorText)
+        setUsageHistory([])
+      }
+    } catch (e) {
+      console.error('마이페이지 - 이용 내역 로드 오류:', e)
+      setUsageHistory([])
+    } finally {
+      setIsLoadingUsage(false)
+    }
+  }
+
+  // 작성한 리뷰 로드 (facility_reviews 테이블)
+  const loadMyReviews = async () => {
+    if (!isLoggedIn || !profile.id) {
+      setMyReviews([])
+      return
+    }
+
+    setIsLoadingReviews(true)
+    try {
+      const res = await fetch(`/api/reviews?userId=${profile.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setMyReviews(data)
+        console.log('마이페이지 - 작성한 리뷰 로드 성공:', data.length, '개')
+      } else {
+        const errorText = await res.text()
+        console.error('마이페이지 - 작성한 리뷰 로드 실패:', res.status, res.statusText, errorText)
+        setMyReviews([])
+      }
+    } catch (e) {
+      console.error('마이페이지 - 작성한 리뷰 로드 오류:', e)
+      setMyReviews([])
+    } finally {
+      setIsLoadingReviews(false)
+    }
+  }
+
+  // 이용 내역 및 리뷰 로드
+  useEffect(() => {
+    if (isLoggedIn && profile.id) {
+      loadUsageHistory()
+      loadMyReviews()
+    }
+  }, [isLoggedIn, profile.id])
+
+  // 리뷰 수정 시작
+  const handleEditReview = (review: any) => {
+    setEditingReview(review)
+    setEditReviewRating(review.rating)
+    setEditReviewContent(review.content)
+    setEditReviewTags(review.tags || [])
+  }
+
+  // 리뷰 수정 취소
+  const handleCancelEditReview = () => {
+    setEditingReview(null)
+    setEditReviewRating(0)
+    setEditReviewContent("")
+    setEditReviewTags([])
+  }
+
+  // 리뷰 수정 저장
+  const handleSaveReview = async () => {
+    if (!editingReview || !profile.id) {
+      return
+    }
+
+    if (!editReviewRating || !editReviewContent.trim()) {
+      alert("평점과 내용을 입력해주세요.")
+      return
+    }
+
+    setIsSavingReview(true)
+    try {
+      const res = await fetch(`/api/reviews/${editingReview.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rating: editReviewRating,
+          content: editReviewContent,
+          tags: editReviewTags,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        alert("리뷰가 수정되었습니다.")
+        handleCancelEditReview()
+        // 리뷰 목록 다시 로드
+        loadMyReviews()
+      } else {
+        alert(data.error || "리뷰 수정에 실패했습니다.")
+      }
+    } catch (e) {
+      console.error('리뷰 수정 오류:', e)
+      alert("리뷰 수정 중 오류가 발생했습니다.")
+    } finally {
+      setIsSavingReview(false)
+    }
+  }
+
+  // 리뷰 삭제
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!confirm("정말 이 리뷰를 삭제하시겠습니까?")) {
+      return
+    }
+
+    setIsDeletingReview(reviewId)
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}`, {
+        method: 'DELETE',
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        alert("리뷰가 삭제되었습니다.")
+        // 리뷰 목록 다시 로드
+        loadMyReviews()
+        // 이용 내역도 다시 로드 (리뷰 작성 여부 업데이트)
+        loadUsageHistory()
+      } else {
+        alert(data.error || "리뷰 삭제에 실패했습니다.")
+      }
+    } catch (e) {
+      console.error('리뷰 삭제 오류:', e)
+      alert("리뷰 삭제 중 오류가 발생했습니다.")
+    } finally {
+      setIsDeletingReview(null)
+    }
+  }
+
+  // 리뷰 태그 옵션
+  const reviewTagOptions = [
+    "직원들이 친절했어요",
+    "시설이 청결했어요",
+    "진입로 평탄해요",
+    "운동 기구 상태가 좋았어요",
+    "이용 요금이 합리적이에요",
+    "접근성이 좋았어요",
+    "주차장이 넓었어요",
+  ]
+
+  // 즐겨찾기 토글 함수 (검색 페이지와 동일한 로직)
+  const toggleFavorite = async (facilityId: number) => {
+    if (!isLoggedIn || !profile.id) {
+      alert('로그인 가입 후 서비스 이용이 가능합니다.')
+      return
+    }
+
+    try {
+      const isFavorite = favoriteFacilities.includes(facilityId)
+      console.log('마이페이지 - 즐겨찾기 토글 - user_id:', profile.id, 'facility_id:', facilityId, 'isFavorite:', isFavorite)
+
+      if (isFavorite) {
+        // 즐겨찾기 제거
+        console.log('마이페이지 - 즐겨찾기 제거 요청 전송...')
+        const res = await fetch(`/api/favorites?facilityId=${facilityId}`, {
+          method: 'DELETE',
+          headers: {
+            'x-user-id': profile.id.toString(),
+          },
+        })
+        
+        let data: any = {}
+        try {
+          const text = await res.text()
+          if (text) {
+            data = JSON.parse(text)
+          }
+        } catch (e) {
+          console.error('마이페이지 - 즐겨찾기 제거 응답 JSON 파싱 실패:', e)
+          data = { message: '서버 응답을 파싱할 수 없습니다.' }
+        }
+        console.log('마이페이지 - 즐겨찾기 제거 응답:', res.status, res.statusText, data)
+        
+        if (res.ok) {
+          setFavoriteFacilities(favoriteFacilities.filter(id => id !== facilityId))
+          console.log('마이페이지 - 즐겨찾기 제거 성공 - UI 업데이트 완료')
+          // DB에서 다시 로드하여 확인
+          setTimeout(() => {
+            loadFacilitiesAndFavorites()
+          }, 500)
+        } else {
+          console.error('마이페이지 - 즐겨찾기 제거 실패:', data)
+          alert(data.message || data.error || `즐겨찾기 제거에 실패했습니다. (${res.status})`)
+        }
+      } else {
+        // 즐겨찾기 추가
+        console.log('마이페이지 - 즐겨찾기 추가 요청 전송...')
+        const res = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': profile.id.toString(),
+          },
+          body: JSON.stringify({ facilityId }),
+        })
+        
+        let data: any = {}
+        try {
+          const text = await res.text()
+          if (text) {
+            data = JSON.parse(text)
+          }
+        } catch (e) {
+          console.error('마이페이지 - 즐겨찾기 추가 응답 JSON 파싱 실패:', e)
+          data = { message: '서버 응답을 파싱할 수 없습니다.' }
+        }
+        console.log('마이페이지 - 즐겨찾기 추가 응답:', res.status, res.statusText, data)
+        
+        if (res.ok) {
+          setFavoriteFacilities([...favoriteFacilities, facilityId])
+          console.log('마이페이지 - 즐겨찾기 추가 성공 - UI 업데이트 완료')
+          // DB에서 다시 로드하여 확인
+          setTimeout(() => {
+            loadFacilitiesAndFavorites()
+          }, 500)
+        } else {
+          console.error('마이페이지 - 즐겨찾기 추가 실패:', data)
+          alert(data.message || data.error || `즐겨찾기 추가에 실패했습니다. (${res.status})`)
+        }
+      }
+    } catch (e) {
+      console.error('마이페이지 - 즐겨찾기 토글 오류:', e)
+      alert('즐겨찾기 처리 중 오류가 발생했습니다.')
+    }
+  }
+
 
   if (isLoading) {
     return (
@@ -734,9 +1044,54 @@ export default function MyPage() {
 
             <TabsContent value="history" className="space-y-4">
               <h2 className="text-xl font-bold mb-4">최근 이용한 시설</h2>
-              <div className="text-center py-12 text-muted-foreground">
-                이용 내역이 없습니다.
-              </div>
+              {isLoadingUsage ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  이용 내역을 불러오는 중...
+                </div>
+              ) : usageHistory.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  이용 내역이 없습니다.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {usageHistory.map((usage) => (
+                    <Card key={usage.usage_id || usage.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg mb-1">{usage.name}</h3>
+                            <p className="text-sm text-muted-foreground mb-2">{usage.address}</p>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {usage.used_date}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {usage.used_time}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            {usage.has_review && (
+                              <>
+                                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">
+                                  리뷰 작성됨
+                                </span>
+                                {usage.review_count > 0 && (
+                                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                    총 {usage.review_count}개 작성
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="alarm" className="space-y-4">
@@ -753,24 +1108,32 @@ export default function MyPage() {
                   <div>
                     <h4 className="font-medium mb-2 text-sm">즐겨찾기 시설</h4>
                     <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
-                      {facilities.map((facility) => (
-                        <div key={facility.id} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            disabled={!isAlarmEditing}
-                            checked={favoriteFacilities.includes(facility.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFavoriteFacilities([...favoriteFacilities, facility.id])
-                              } else {
-                                setFavoriteFacilities(favoriteFacilities.filter((id) => id !== facility.id))
-                              }
-                            }}
-                            className="rounded border-gray-300 text-purple-600"
-                          />
-                          <span className="text-sm truncate">{facility.name}</span>
+                      {allFacilities.length === 0 ? (
+                        <div className="text-sm text-muted-foreground text-center py-2">
+                          시설 정보를 불러오는 중...
                         </div>
-                      ))}
+                      ) : (
+                        allFacilities.map((facility) => {
+                          const facilityId = Number(facility.id)
+                          const isFavorite = favoriteFacilities.includes(facilityId)
+                          return (
+                            <div key={facility.id} className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                disabled={!isAlarmEditing}
+                                checked={isFavorite}
+                                onChange={(e) => {
+                                  if (isAlarmEditing) {
+                                    toggleFavorite(facilityId)
+                                  }
+                                }}
+                                className="rounded border-gray-300 text-purple-600"
+                              />
+                              <span className="text-sm truncate">{facility.name || `시설 ${facility.id}`}</span>
+                            </div>
+                          )
+                        })
+                      )}
                     </div>
                   </div>
 
@@ -859,8 +1222,78 @@ export default function MyPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews">
-              <div className="text-center py-12 text-muted-foreground">작성한 리뷰가 없습니다.</div>
+            <TabsContent value="reviews" className="space-y-4">
+              <h2 className="text-xl font-bold mb-4">작성한 리뷰</h2>
+              {isLoadingReviews ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  리뷰를 불러오는 중...
+                </div>
+              ) : myReviews.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  작성한 리뷰가 없습니다.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {myReviews.map((review) => (
+                    <Card key={review.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg mb-1">{review.facilityName}</h3>
+                            <p className="text-sm text-muted-foreground mb-2">{review.facilityAddress}</p>
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-1">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-4 h-4 ${
+                                      i < review.rating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-sm text-muted-foreground">{review.date}</span>
+                            </div>
+                            <p className="text-sm mb-2">{review.content}</p>
+                            {review.tags && review.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {review.tags.map((tag: string, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2 mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditReview(review)}
+                            disabled={isDeletingReview === review.id}
+                          >
+                            수정
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteReview(review.id)}
+                            disabled={isDeletingReview === review.id}
+                          >
+                            {isDeletingReview === review.id ? "삭제 중..." : "삭제"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="settings">
@@ -1036,6 +1469,105 @@ export default function MyPage() {
               }}
             >
               확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 리뷰 수정 모달 */}
+      <Dialog open={!!editingReview} onOpenChange={(open) => !open && handleCancelEditReview()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>리뷰 수정</DialogTitle>
+            <DialogDescription>
+              {editingReview?.facilityName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* 평점 */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block">평점</Label>
+              <div className="flex items-center gap-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setEditReviewRating(i + 1)}
+                    className="focus:outline-none"
+                  >
+                    <Star
+                      className={`w-6 h-6 ${
+                        i < editReviewRating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  </button>
+                ))}
+                <span className="text-sm text-muted-foreground ml-2">
+                  {editReviewRating > 0 ? `${editReviewRating}점` : "평점을 선택해주세요"}
+                </span>
+              </div>
+            </div>
+
+            {/* 내용 */}
+            <div>
+              <Label htmlFor="review-content" className="text-sm font-medium mb-2 block">
+                리뷰 내용
+              </Label>
+              <Textarea
+                id="review-content"
+                value={editReviewContent}
+                onChange={(e) => setEditReviewContent(e.target.value)}
+                placeholder="리뷰를 작성해주세요..."
+                rows={5}
+                className="resize-none"
+              />
+            </div>
+
+            {/* 태그 */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block">태그 선택</Label>
+              <div className="flex flex-wrap gap-2">
+                {reviewTagOptions.map((tag) => {
+                  const isSelected = editReviewTags.includes(tag)
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setEditReviewTags(editReviewTags.filter((t) => t !== tag))
+                        } else {
+                          setEditReviewTags([...editReviewTags, tag])
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                        isSelected
+                          ? "bg-purple-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCancelEditReview}
+              disabled={isSavingReview}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSaveReview}
+              disabled={isSavingReview || !editReviewRating || !editReviewContent.trim()}
+            >
+              {isSavingReview ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>
