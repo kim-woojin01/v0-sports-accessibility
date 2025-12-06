@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
@@ -17,8 +18,10 @@ import {
   ChevronRight,
   Crosshair,
   Loader2,
+  Heart,
 } from "lucide-react"
 import Link from "next/link"
+import LoadingSpinner from "@/components/loading-spinner"
 
 const FacilityMap = dynamic(() => import("@/components/facility-map"), {
   ssr: false,
@@ -251,6 +254,8 @@ function detectRegionFromAddress(address?: string): { province?: string; distric
 }
 
 export default function SearchPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [isRegionOpen, setIsRegionOpen] = useState(false)
   const [isDateOpen, setIsDateOpen] = useState(false)
   const [isFacilityOpen, setIsFacilityOpen] = useState(false)
@@ -260,6 +265,9 @@ export default function SearchPage() {
   // ✅ 현재 필터/검색 결과
   const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [highlightCongestion, setHighlightCongestion] = useState(false)
+  const [highlightSearch, setHighlightSearch] = useState(false)
+  const [favoriteFacilities, setFavoriteFacilities] = useState<number[]>([])
 
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null)
@@ -283,6 +291,204 @@ export default function SearchPage() {
   const [isLocating, setIsLocating] = useState(false)
   const locationWatchId = useRef<number | null>(null)
   const hasCenteredOnUser = useRef(false)
+
+  useEffect(() => {
+    // URL 파라미터에서 혼잡도 하이라이트 확인
+    const showCongestion = searchParams.get('highlight') === 'congestion'
+    const showSearch = searchParams.get('highlight') === 'search'
+    if (showCongestion) {
+      setHighlightCongestion(true)
+    } else {
+      setHighlightCongestion(false)
+    }
+    if (showSearch) {
+      setHighlightSearch(true)
+    } else {
+      setHighlightSearch(false)
+    }
+  }, [searchParams])
+
+  // 즐겨찾기 목록 로드 함수
+  const loadFavorites = async () => {
+    if (!isLoggedIn) {
+      setFavoriteFacilities([])
+      return
+    }
+
+    const userStr = localStorage.getItem("user")
+    if (!userStr) {
+      setFavoriteFacilities([])
+      return
+    }
+
+    try {
+      const user = JSON.parse(userStr)
+      if (!user || !user.id) {
+        setFavoriteFacilities([])
+        return
+      }
+
+      console.log('즐겨찾기 목록 로드 요청 - user_id:', user.id)
+      const res = await fetch('/api/favorites', {
+        headers: {
+          'x-user-id': user.id.toString(),
+        },
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        const facilityIds = (data.favorites || []).map((id: any) => Number(id))
+        setFavoriteFacilities(facilityIds)
+        console.log('즐겨찾기 로드 성공:', facilityIds)
+      } else {
+        const errorData = await res.json().catch(() => ({}))
+        console.error('즐겨찾기 로드 실패:', res.status, res.statusText, errorData)
+        setFavoriteFacilities([])
+      }
+    } catch (e) {
+      console.error('즐겨찾기 로드 오류:', e)
+      setFavoriteFacilities([])
+    }
+  }
+
+  // 즐겨찾기 목록 로드
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadFavorites()
+    }
+  }, [isLoggedIn])
+
+  // 페이지 클릭 시 하이라이트 제거
+  useEffect(() => {
+    const handleClick = () => {
+      if (highlightCongestion || highlightSearch) {
+        setHighlightCongestion(false)
+        setHighlightSearch(false)
+        const newParams = new URLSearchParams(searchParams.toString())
+        newParams.delete('highlight')
+        router.replace(`/search?${newParams.toString()}`, { scroll: false })
+      }
+    }
+
+    if (highlightCongestion || highlightSearch) {
+      // 약간의 지연 후 클릭 이벤트 리스너 추가 (초기 하이라이트 표시 후)
+      const timer = setTimeout(() => {
+        document.addEventListener('click', handleClick, { once: true })
+      }, 100)
+      return () => {
+        clearTimeout(timer)
+        document.removeEventListener('click', handleClick)
+      }
+    }
+  }, [highlightCongestion, highlightSearch, searchParams, router])
+
+  // 즐겨찾기 토글
+  const toggleFavorite = async (facilityId: number) => {
+    if (!isLoggedIn) {
+      alert('로그인 가입 후 서비스 이용이 가능합니다.')
+      return
+    }
+
+    const userStr = localStorage.getItem("user")
+    if (!userStr) {
+      alert('로그인 가입 후 서비스 이용이 가능합니다.')
+      return
+    }
+
+    try {
+      const user = JSON.parse(userStr)
+      if (!user || !user.id) {
+        alert('사용자 정보를 찾을 수 없습니다.')
+        return
+      }
+
+      const isFavorite = favoriteFacilities.includes(facilityId)
+      console.log('즐겨찾기 토글 - user_id:', user.id, 'facility_id:', facilityId, 'isFavorite:', isFavorite)
+
+      if (isFavorite) {
+        // 즐겨찾기 제거
+        console.log('즐겨찾기 제거 요청 전송...')
+        const res = await fetch(`/api/favorites?facilityId=${facilityId}`, {
+          method: 'DELETE',
+          headers: {
+            'x-user-id': user.id.toString(),
+          },
+        })
+        
+        let data: any = {}
+        try {
+          const text = await res.text()
+          if (text) {
+            data = JSON.parse(text)
+          }
+        } catch (e) {
+          console.error('응답 파싱 오류:', e)
+          data = { message: '서버 응답을 파싱할 수 없습니다.' }
+        }
+        
+        console.log('즐겨찾기 제거 응답:', res.status, res.statusText, data)
+        
+        if (res.ok) {
+          setFavoriteFacilities(favoriteFacilities.filter(id => id !== facilityId))
+          console.log('즐겨찾기 제거 성공 - UI 업데이트 완료')
+          // DB에서 다시 로드하여 확인
+          setTimeout(() => {
+            loadFavorites()
+          }, 500)
+        } else {
+          console.error('즐겨찾기 제거 실패:', {
+            status: res.status,
+            statusText: res.statusText,
+            data: data,
+          })
+          alert(data.message || data.error || `즐겨찾기 제거에 실패했습니다. (${res.status})`)
+        }
+      } else {
+        // 즐겨찾기 추가
+        console.log('즐겨찾기 추가 요청 전송...')
+        const res = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id.toString(),
+          },
+          body: JSON.stringify({ facilityId }),
+        })
+        
+        let data: any = {}
+        try {
+          const text = await res.text()
+          if (text) {
+            data = JSON.parse(text)
+          }
+        } catch (e) {
+          console.error('응답 파싱 오류:', e)
+          data = { message: '서버 응답을 파싱할 수 없습니다.' }
+        }
+        
+        console.log('즐겨찾기 추가 응답:', res.status, res.statusText, data)
+        
+        if (res.ok) {
+          setFavoriteFacilities([...favoriteFacilities, facilityId])
+          console.log('즐겨찾기 추가 성공 - UI 업데이트 완료')
+          // DB에서 다시 로드하여 확인
+          setTimeout(() => {
+            loadFavorites()
+          }, 500)
+        } else {
+          console.error('즐겨찾기 추가 실패:', {
+            status: res.status,
+            statusText: res.statusText,
+            data: data,
+          })
+          alert(data.message || data.error || `즐겨찾기 추가에 실패했습니다. (${res.status})`)
+        }
+      }
+    } catch (e) {
+      console.error('즐겨찾기 토글 오류:', e)
+      alert('즐겨찾기 처리 중 오류가 발생했습니다.')
+    }
+  }
 
   useEffect(() => {
     const user = localStorage.getItem("user")
@@ -692,8 +898,8 @@ export default function SearchPage() {
                     </Button>
                   </div>
                   <div className="grid grid-cols-7 gap-2 text-center text-sm mb-4">
-                    {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
-                      <div key={d} className="text-muted-foreground">
+                    {["S", "M", "T", "W", "T", "F", "S"].map((d, index) => (
+                      <div key={`day-${index}-${d}`} className="text-muted-foreground">
                         {d}
                       </div>
                     ))}
@@ -823,27 +1029,46 @@ export default function SearchPage() {
 
       {/* Results List */}
       <div className="container py-12 max-w-5xl mx-auto">
-        <div className="space-y-6">
-          {currentFacilities.map((facility) => (
-            <div
-              key={facility.id}
-              className="bg-white rounded-xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-            >
-              <div className="flex flex-col md:flex-row">
-                <div className="relative w-full md:w-72 h-48 md:h-auto">
-                  <Image src={facility.image || "/placeholder.svg"} alt={facility.name} fill className="object-cover" />
-                </div>
-                <div className="flex-1 p-6 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <MapPin className="w-4 h-4 text-primary" />
-                          <h3 className="font-bold text-xl">{facility.name}</h3>
+        {isLoading ? (
+          <LoadingSpinner message="시설 목록을 불러오는 중입니다..." />
+        ) : (
+          <div className="space-y-6">
+            {currentFacilities.map((facility) => {
+              const isFavorite = favoriteFacilities.includes(Number(facility.id))
+              return (
+              <div
+                key={facility.id}
+                className={`bg-white rounded-xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow ${isFavorite ? 'border-yellow-300 border-2' : ''}`}
+              >
+                <div className="flex flex-col md:flex-row">
+                  <div className="relative w-full md:w-72 h-48 md:h-auto">
+                    <Image src={facility.image || "/placeholder.svg"} alt={facility.name} fill className="object-cover" />
+                    {/* 즐겨찾기 버튼 */}
+                    <div className="absolute top-2 left-2 z-10">
+                      <button
+                        onClick={() => toggleFavorite(Number(facility.id))}
+                        className={`p-2 rounded-full backdrop-blur-sm transition-colors ${
+                          isFavorite 
+                            ? 'bg-yellow-400/90 text-red-600' 
+                            : 'bg-white/80 text-gray-400 hover:bg-white/90'
+                        }`}
+                        aria-label={isFavorite ? '즐겨찾기 제거' : '즐겨찾기 추가'}
+                      >
+                        <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex-1 p-6 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <MapPin className="w-4 h-4 text-primary" />
+                            <h3 className="font-bold text-xl">{facility.name}</h3>
+                          </div>
+                          <p className="text-muted-foreground text-sm mb-3">{facility.address}</p>
                         </div>
-                        <p className="text-muted-foreground text-sm mb-3">{facility.address}</p>
-                      </div>
-                      <div className="flex flex-col items-end">
+                        <div className="flex flex-col items-end">
                         <div className="flex items-center gap-1 text-amber-500 mb-1">
                           <Star className="w-5 h-5 fill-current" />
                           <span className="font-bold text-lg">{facility.rating}</span>
@@ -885,7 +1110,7 @@ export default function SearchPage() {
                     <div className="flex items-center gap-2">
                       {/* Congestion Indicator */}
                       {selectedDate !== "이용날짜/시간" ? (
-                        <div className="flex flex-col items-end">
+                        <div className={`flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-400 ring-offset-2 rounded-lg p-2 bg-yellow-50' : ''}`}>
                           <span className="text-xs text-muted-foreground mb-1">예측 혼잡도</span>
                           <div className="flex items-center gap-1">
                             <div
@@ -907,7 +1132,7 @@ export default function SearchPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-end">
+                        <div className={`flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-400 ring-offset-2 rounded-lg p-2 bg-yellow-50' : ''}`}>
                           <span className="text-xs text-muted-foreground mb-1">예측 혼잡도</span>
                           <div className="flex items-center gap-1 text-muted-foreground">
                             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
@@ -917,7 +1142,7 @@ export default function SearchPage() {
                       )}
 
                       {/* Real-time Congestion */}
-                      <div className="ml-4 pl-4 border-l flex flex-col items-end">
+                      <div className={`ml-4 pl-4 border-l flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-400 ring-offset-2 rounded-lg p-2 bg-yellow-50' : ''}`}>
                         <span className="text-xs text-muted-foreground mb-1">실시간</span>
                         <div className="flex items-center gap-1">
                           <div
@@ -942,11 +1167,13 @@ export default function SearchPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+              </div>
+            )
+          })}
+          </div>
+        )}
 
-        {totalPages > 0 && (
+        {!isLoading && totalPages > 0 && (
           <div className="flex justify-center items-center mt-12 gap-2">
             <Button
               variant="ghost"

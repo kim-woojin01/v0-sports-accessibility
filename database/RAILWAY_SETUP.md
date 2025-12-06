@@ -134,3 +134,5 @@ DESCRIBE facility_usage;
 ### "Unknown database" 오류
 - `USE railway;` 명령으로 데이터베이스 선택 필요
 
+
+

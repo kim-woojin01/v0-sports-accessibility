@@ -232,6 +232,7 @@ export default function AboutPage() {
                   </div>
                   <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground ml-4">
                     <li>AI 기반 맞춤형 시설 추천 (사용자 신체 조건 및 선호 종목 분석)</li>
+                    <li>AI 기반 맞춤형 운동 프로그램 (사용자 신체 조건 및 선호 종목 분석)</li>
                     <li>음성 인식 검색 기능 도입 (보조 기술 강화)</li>
                     <li>예약 및 결제 시스템 통합</li>
                   </ul>

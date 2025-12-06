@@ -46,3 +46,5 @@ CREATE TABLE IF NOT EXISTS facility_usage (
 -- INSERT INTO facility_reviews (facility_id, user_id, user_name, rating, content, tags) 
 -- VALUES (1, 1, '테스트 사용자', 5, '좋은 시설이에요!', '["진입로 평탄해요", "휠체어 출입"]');
 
+
+

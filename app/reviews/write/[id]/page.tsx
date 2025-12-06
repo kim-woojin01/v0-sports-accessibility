@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Star, MapPin, Phone, Clock, TreePine, User, Bell, Lock, CircleUser, Building2, TrendingUp, Circle } from "lucide-react"
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
+import LoadingSpinner from "@/components/loading-spinner"
 
 type Facility = {
   id: number | string
@@ -129,10 +130,22 @@ export default function WriteReviewPage({ params }: { params: Promise<{ id: stri
   }, [reviewId])
 
   if (isFacilityLoading) {
-    return <div className="container py-12 max-w-3xl">시설 정보를 불러오는 중입니다...</div>
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner message="시설 정보를 불러오는 중입니다..." />
+      </div>
+    )
   }
 
-  if (!facility) return <div className="container py-12 max-w-3xl">Facility not found</div>
+  if (!facility) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-lg text-muted-foreground">시설을 찾을 수 없습니다.</p>
+        </div>
+      </div>
+    )
+  }
 
   const reviewTags = {
     style: [
@@ -226,8 +239,9 @@ export default function WriteReviewPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="container py-12 max-w-3xl">
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+    <div className="flex items-center justify-center min-h-screen py-12">
+      <div className="container max-w-3xl w-full">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Facility Info Header */}
         <div className="p-6 border-b">
           <div className="flex gap-6 mb-4">
@@ -370,6 +384,7 @@ export default function WriteReviewPage({ params }: { params: Promise<{ id: stri
           >
             {isSubmitting ? "저장 중..." : reviewId ? "리뷰 수정하기" : "리뷰 제출하기"}
           </Button>
+        </div>
         </div>
       </div>
     </div>

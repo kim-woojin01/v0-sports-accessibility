@@ -8,12 +8,34 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
       <section className="py-12 md:py-20 bg-gradient-to-b from-white to-pink-50/50">
-        <div className="container text-center space-y-4 md:space-y-6 px-4">
-          <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold tracking-tight text-slate-900">Services we offer</h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-            모두가 편안하게 운동할 수 있는 스마트 체육 환경을 구축합니다. 장애인, 고령층, 임산부 등 누구나 쉽게 접근
-            가능한 체육 시설을 찾아보세요.
-          </p>
+        {/* 서비스 소개 섹션 */}
+        <div className="container px-4">
+          <div className="relative py-16 md:py-20 bg-gradient-to-br from-purple-600 via-pink-500 to-purple-700 text-white rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="container relative z-10 text-center max-w-4xl mx-auto px-4">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 leading-tight">
+                SportsAccess 서비스 소개
+              </h2>
+              <p className="text-lg md:text-xl font-medium mb-4 md:mb-6 leading-relaxed">
+                "누구나, 언제든, 편안하게 땀 흘릴 권리가 있습니다."
+              </p>
+              <p className="text-base md:text-lg leading-relaxed max-w-3xl mx-auto mb-4">
+                SportsAccess는 장벽 없는 스포츠 환경을 만들어갑니다.
+              </p>
+              <p className="text-sm md:text-base leading-relaxed max-w-3xl mx-auto opacity-90">
+                우리는 건강을 위해 운동을 하려 할 때, 종종 보이지 않는 장벽에 부딪힙니다.
+                <br className="hidden md:block" />
+                "휠체어로 들어갈 수 있을까?", "지금 사람이 너무 많아서 위험하진 않을까?"
+                <br className="hidden md:block" />
+                SportsAccess는 이러한 정보의 비대칭을 해결하기 위해 시작되었습니다.
+                <br className="hidden md:block" />
+                <br />
+                신체적 조건이나 환경에 구애받지 않고 누구나 자신에게 맞는 체육 시설을 찾을 수 있도록 돕는 것,
+                <br className="hidden md:block" />
+                그것이 우리가 기술로 풀고자 하는 문제입니다.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Service Cards - 모바일 1열, 태블릿 2열, 데스크톱 가로 스크롤 */}
@@ -160,7 +182,7 @@ export default function Home() {
               <br />
               체육시설을 찾아보세요.
             </p>
-            <Link href="/search">
+            <Link href="/search?highlight=search">
               <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6 md:px-8 mt-4 w-full md:w-auto">
                 시설 검색하기
               </Button>

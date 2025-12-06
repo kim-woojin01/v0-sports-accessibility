@@ -69,7 +69,8 @@ export default function MyPage() {
 
   const [isAlarmEditing, setIsAlarmEditing] = useState(false)
   const [isAlarmOn, setIsAlarmOn] = useState(false)
-  const [favoriteFacilities, setFavoriteFacilities] = useState<string[]>([])
+  const [favoriteFacilities, setFavoriteFacilities] = useState<number[]>([])
+  const [allFacilities, setAllFacilities] = useState<any[]>([])
   const [preferredTime, setPreferredTime] = useState({
     day: "월요일",
     startTime: "14:00",
@@ -109,6 +110,35 @@ export default function MyPage() {
     exercisePurposes: [],
     profileImageUrl: null,
   })
+
+  // URL 해시로 스크롤 처리
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (typeof window !== 'undefined' && window.location.hash === '#my-reviews') {
+        setTimeout(() => {
+          const element = document.getElementById('my-reviews')
+          if (element) {
+            // 탭을 먼저 reviews로 변경
+            const reviewsTab = document.querySelector('[value="reviews"]') as HTMLElement
+            if (reviewsTab) {
+              reviewsTab.click()
+            }
+            // 그 다음 스크롤
+            setTimeout(() => {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 300)
+          }
+        }, 500)
+      }
+    }
+
+    // 초기 로드 시 확인
+    handleHashChange()
+
+    // 해시 변경 감지
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -312,6 +342,165 @@ export default function MyPage() {
       loadMyReviews()
     }
   }, [isLoggedIn, profile.id])
+
+  // 시설 목록 및 즐겨찾기 로드
+  useEffect(() => {
+    const loadFacilitiesAndFavorites = async () => {
+      if (!isLoggedIn || !profile.id) {
+        setAllFacilities([])
+        setFavoriteFacilities([])
+        return
+      }
+
+      try {
+        // 시설 목록 로드
+        const facilitiesRes = await fetch('/api/facilities')
+        if (facilitiesRes.ok) {
+          const facilitiesData = await facilitiesRes.json()
+          setAllFacilities(facilitiesData)
+          console.log('시설 목록 로드 성공:', facilitiesData.length, '개')
+        } else {
+          console.error('시설 목록 로드 실패:', facilitiesRes.status)
+        }
+
+        // 즐겨찾기 로드
+        await loadFavoriteFacilities()
+      } catch (e) {
+        console.error('시설/즐겨찾기 로드 오류:', e)
+        setAllFacilities([])
+        setFavoriteFacilities([])
+      }
+    }
+
+    loadFacilitiesAndFavorites()
+  }, [isLoggedIn, profile.id])
+
+  // 즐겨찾기 목록 로드 함수
+  const loadFavoriteFacilities = async () => {
+    if (!isLoggedIn || !profile.id) {
+      setFavoriteFacilities([])
+      return
+    }
+
+    try {
+      console.log('즐겨찾기 목록 로드 요청 - user_id:', profile.id)
+      const favoritesRes = await fetch('/api/favorites', {
+        headers: {
+          'x-user-id': profile.id.toString(),
+        },
+      })
+      
+      if (favoritesRes.ok) {
+        const favoritesData = await favoritesRes.json()
+        const facilityIds = (favoritesData.favorites || []).map((id: any) => Number(id))
+        setFavoriteFacilities(facilityIds)
+        console.log('즐겨찾기 로드 성공:', facilityIds)
+      } else {
+        const errorData = await favoritesRes.json().catch(() => ({}))
+        console.error('즐겨찾기 로드 실패:', favoritesRes.status, errorData)
+        setFavoriteFacilities([])
+      }
+    } catch (e) {
+      console.error('즐겨찾기 로드 오류:', e)
+      setFavoriteFacilities([])
+    }
+  }
+
+  // 즐겨찾기 토글
+  const toggleFavorite = async (facilityId: number) => {
+    if (!isLoggedIn || !profile.id) {
+      alert('로그인 가입 후 서비스 이용이 가능합니다.')
+      return
+    }
+
+    try {
+      const isFavorite = favoriteFacilities.includes(facilityId)
+      console.log('즐겨찾기 토글 - user_id:', profile.id, 'facility_id:', facilityId, 'isFavorite:', isFavorite)
+
+      if (isFavorite) {
+        // 즐겨찾기 제거
+        console.log('즐겨찾기 제거 요청 전송...')
+        const res = await fetch(`/api/favorites?facilityId=${facilityId}`, {
+          method: 'DELETE',
+          headers: {
+            'x-user-id': profile.id.toString(),
+          },
+        })
+        
+        let data: any = {}
+        try {
+          const text = await res.text()
+          if (text) {
+            data = JSON.parse(text)
+          }
+        } catch (e) {
+          console.error('응답 파싱 오류:', e)
+          data = { message: '서버 응답을 파싱할 수 없습니다.' }
+        }
+        
+        console.log('즐겨찾기 제거 응답:', res.status, res.statusText, data)
+        
+        if (res.ok) {
+          setFavoriteFacilities(favoriteFacilities.filter(id => id !== facilityId))
+          console.log('즐겨찾기 제거 성공 - UI 업데이트 완료')
+          // DB에서 다시 로드하여 확인
+          setTimeout(() => {
+            loadFavoriteFacilities()
+          }, 500)
+        } else {
+          console.error('즐겨찾기 제거 실패:', {
+            status: res.status,
+            statusText: res.statusText,
+            data: data,
+          })
+          alert(data.message || data.error || `즐겨찾기 제거에 실패했습니다. (${res.status})`)
+        }
+      } else {
+        // 즐겨찾기 추가
+        console.log('즐겨찾기 추가 요청 전송...')
+        const res = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': profile.id.toString(),
+          },
+          body: JSON.stringify({ facilityId }),
+        })
+        
+        let data: any = {}
+        try {
+          const text = await res.text()
+          if (text) {
+            data = JSON.parse(text)
+          }
+        } catch (e) {
+          console.error('응답 파싱 오류:', e)
+          data = { message: '서버 응답을 파싱할 수 없습니다.' }
+        }
+        
+        console.log('즐겨찾기 추가 응답:', res.status, res.statusText, data)
+        
+        if (res.ok) {
+          setFavoriteFacilities([...favoriteFacilities, facilityId])
+          console.log('즐겨찾기 추가 성공 - UI 업데이트 완료')
+          // DB에서 다시 로드하여 확인
+          setTimeout(() => {
+            loadFavoriteFacilities()
+          }, 500)
+        } else {
+          console.error('즐겨찾기 추가 실패:', {
+            status: res.status,
+            statusText: res.statusText,
+            data: data,
+          })
+          alert(data.message || data.error || `즐겨찾기 추가에 실패했습니다. (${res.status})`)
+        }
+      }
+    } catch (e) {
+      console.error('즐겨찾기 토글 오류:', e)
+      alert('즐겨찾기 처리 중 오류가 발생했습니다.')
+    }
+  }
 
   // 리뷰 삭제
   const handleDeleteReview = async () => {
@@ -937,24 +1126,32 @@ export default function MyPage() {
                   <div>
                     <h4 className="font-medium mb-2 text-sm">즐겨찾기 시설</h4>
                     <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
-                      {facilities.map((facility) => (
-                        <div key={facility.id} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            disabled={!isAlarmEditing}
-                            checked={favoriteFacilities.includes(facility.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFavoriteFacilities([...favoriteFacilities, facility.id])
-                              } else {
-                                setFavoriteFacilities(favoriteFacilities.filter((id) => id !== facility.id))
-                              }
-                            }}
-                            className="rounded border-gray-300 text-purple-600"
-                          />
-                          <span className="text-sm truncate">{facility.name}</span>
-                        </div>
-                      ))}
+                      {allFacilities.length === 0 ? (
+                        <div className="text-sm text-muted-foreground text-center py-4">시설 목록을 불러오는 중...</div>
+                      ) : (
+                        allFacilities.map((facility) => {
+                          const facilityId = Number(facility.id)
+                          const isFavorite = favoriteFacilities.includes(facilityId)
+                          return (
+                            <div key={facility.id} className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                disabled={!isAlarmEditing}
+                                checked={isFavorite}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    toggleFavorite(facilityId)
+                                  } else {
+                                    toggleFavorite(facilityId)
+                                  }
+                                }}
+                                className="rounded border-gray-300 text-purple-600"
+                              />
+                              <span className="text-sm truncate">{facility.name}</span>
+                            </div>
+                          )
+                        })
+                      )}
                     </div>
                   </div>
 
@@ -1043,7 +1240,7 @@ export default function MyPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews" className="space-y-4">
+            <TabsContent value="reviews" className="space-y-4" id="my-reviews">
               <h2 className="text-xl font-bold mb-4">작성한 리뷰</h2>
               {isLoadingReviews ? (
                 <div className="text-center py-8 text-muted-foreground">리뷰를 불러오는 중입니다...</div>

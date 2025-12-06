@@ -97,10 +97,10 @@ export function SiteFooter() {
               <Link href="#">접근성 등급 안내</Link>
             </li>
             <li>
-              <Link href="#">혼잡도 분석</Link>
+              <Link href="/search?highlight=congestion">혼잡도 분석</Link>
             </li>
             <li>
-              <Link href="/mypage">작성한 리뷰 관리</Link>
+              <Link href="/mypage#my-reviews">작성한 리뷰 관리</Link>
             </li>
           </ul>
         </div>

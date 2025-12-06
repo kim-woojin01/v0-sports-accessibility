@@ -6,6 +6,7 @@ import { Search, MapPin, Star, PenSquare, ChevronLeft, ChevronRight } from "luci
 import Image from "next/image"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import LoadingSpinner from "@/components/loading-spinner"
 
 type Facility = {
   id: number | string
@@ -320,8 +321,11 @@ export default function ReviewsPage() {
       </div>
 
       <div className="container py-12 max-w-5xl mx-auto">
-        <div className="grid gap-6">
-          {currentFacilities.map((facility) => (
+        {isLoading ? (
+          <LoadingSpinner message="시설 목록을 불러오는 중입니다..." />
+        ) : (
+          <div className="grid gap-6">
+            {currentFacilities.map((facility) => (
             <div
               key={facility.id}
               className="bg-white rounded-xl border shadow-sm p-6 flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow"
@@ -383,9 +387,10 @@ export default function ReviewsPage() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
 
-        {totalPages > 0 && (
+        {!isLoading && totalPages > 0 && (
           <div className="flex justify-center items-center mt-12 gap-2">
             <Button
               variant="ghost"
@@ -430,7 +435,9 @@ export default function ReviewsPage() {
           </DialogHeader>
 
           <div className="space-y-6 mt-4">
-            {selectedFacilityReviews.length > 0 ? (
+            {isReviewsLoading ? (
+              <LoadingSpinner message="리뷰를 불러오는 중입니다..." className="min-h-[200px]" />
+            ) : selectedFacilityReviews.length > 0 ? (
               selectedFacilityReviews.map((review) => (
                 <div key={review.id} className="border-b pb-6 last:border-0">
                   <div className="flex justify-between items-start mb-2">
