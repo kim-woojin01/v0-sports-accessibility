@@ -6,7 +6,6 @@ import "./globals.css"
 import "leaflet/dist/leaflet.css"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { PartnerLogoSlider } from "@/components/partner-logo-slider"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -51,7 +50,6 @@ export default function RootLayout({
         </a>
         <SiteHeader />
         <main id="main-content" className="flex-1 w-full max-w-screen-2xl mx-auto pt-16">{children}</main>
-        <PartnerLogoSlider />
         <SiteFooter />
         <Analytics />
       </body>
