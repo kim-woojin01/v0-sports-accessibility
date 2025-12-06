@@ -85,13 +85,13 @@ export function SiteFooter() {
         </div>
 
         <div className="text-center md:text-left">
-          <h4 className="font-semibold mb-4">서비스</h4>
+          <h4 className="font-semibold mb-4">서비스 안내</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>
-              <Link href="/search">시설 검색</Link>
+              <Link href="/search?highlight=search">시설 검색</Link>
             </li>
             <li>
-              <Link href="/mypage">찜한 시설</Link>
+              <Link href="/mypage?highlight=favorites">찜한 시설</Link>
             </li>
             <li>
               <Link href="#">접근성 등급 안내</Link>
@@ -100,7 +100,7 @@ export function SiteFooter() {
               <Link href="/search?highlight=congestion">혼잡도 분석</Link>
             </li>
             <li>
-              <Link href="/mypage#my-reviews">작성한 리뷰 관리</Link>
+              <Link href="/mypage?highlight=reviews#my-reviews">작성한 리뷰 관리</Link>
             </li>
           </ul>
         </div>

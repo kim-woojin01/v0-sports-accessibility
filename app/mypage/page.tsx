@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Calendar, Clock, Settings, LogOut, Save, X, Bell, BellOff, Edit2, Check, User, Star, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
@@ -33,7 +33,10 @@ interface UserProfile {
 
 export default function MyPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [highlightFavorites, setHighlightFavorites] = useState(false)
+  const [highlightReviews, setHighlightReviews] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
@@ -80,6 +83,9 @@ export default function MyPage() {
   const [usageCurrentPage, setUsageCurrentPage] = useState(1)
   const [reviewsCurrentPage, setReviewsCurrentPage] = useState(1)
   const itemsPerPage = 5
+  
+  // 탭 상태
+  const [activeTab, setActiveTab] = useState("history")
 
   // 프로필 사진 상태
   const [profileImage, setProfileImage] = useState<File | null>(null)
@@ -340,6 +346,44 @@ export default function MyPage() {
       loadMyReviews()
     }
   }, [isLoggedIn, profile.id])
+
+  // URL 파라미터에서 하이라이트 확인
+  useEffect(() => {
+    const highlightParam = searchParams.get('highlight')
+    if (highlightParam === 'favorites') {
+      setHighlightFavorites(true)
+      setActiveTab("alarm")
+    } else if (highlightParam === 'reviews') {
+      setHighlightReviews(true)
+      setActiveTab("reviews")
+    } else if (window.location.hash === '#my-reviews') {
+      setActiveTab("reviews")
+    }
+  }, [searchParams])
+
+  // 페이지 클릭 시 하이라이트 제거
+  useEffect(() => {
+    const handleClick = () => {
+      if (highlightFavorites || highlightReviews) {
+        setHighlightFavorites(false)
+        setHighlightReviews(false)
+        const newParams = new URLSearchParams(searchParams.toString())
+        newParams.delete('highlight')
+        const hash = window.location.hash
+        router.replace(`/mypage${hash}${newParams.toString() ? `?${newParams.toString()}` : ''}`, { scroll: false })
+      }
+    }
+
+    if (highlightFavorites || highlightReviews) {
+      const timer = setTimeout(() => {
+        document.addEventListener('click', handleClick, { once: true })
+      }, 100)
+      return () => {
+        clearTimeout(timer)
+        document.removeEventListener('click', handleClick)
+      }
+    }
+  }, [highlightFavorites, highlightReviews, searchParams, router])
 
   // 리뷰 수정 시작
   const handleEditReview = (review: any) => {
@@ -1039,11 +1083,21 @@ export default function MyPage() {
 
         {/* Main Content - 나머지 탭 내용은 기존과 동일 */}
         <div className="w-full md:w-2/3">
-          <Tabs defaultValue="history" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="history">나의 이용 내역</TabsTrigger>
-              <TabsTrigger value="alarm">시설 알람 예약</TabsTrigger>
-              <TabsTrigger value="reviews">작성한 리뷰</TabsTrigger>
+              <TabsTrigger 
+                value="alarm"
+                className={highlightFavorites ? 'ring-2 ring-yellow-300 rounded bg-yellow-50/50' : ''}
+              >
+                시설 알람 예약
+              </TabsTrigger>
+              <TabsTrigger 
+                value="reviews"
+                className={highlightReviews ? 'ring-2 ring-yellow-300 rounded bg-yellow-50/50' : ''}
+              >
+                작성한 리뷰
+              </TabsTrigger>
               <TabsTrigger value="settings">계정 설정</TabsTrigger>
             </TabsList>
 
@@ -1136,7 +1190,9 @@ export default function MyPage() {
 
             <TabsContent value="alarm" className="space-y-4">
               {/* 알람 설정 내용은 기존과 동일 */}
-              <Card>
+              <Card className={`transition-all duration-500 ${
+                highlightFavorites ? 'ring-4 ring-yellow-300 ring-offset-2 bg-yellow-50/50' : ''
+              }`}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Bell className="w-5 h-5 text-purple-600" />
@@ -1263,18 +1319,21 @@ export default function MyPage() {
             </TabsContent>
 
             <TabsContent value="reviews" className="space-y-4" id="my-reviews">
-              <h2 className="text-xl font-bold mb-4">작성한 리뷰</h2>
-              {isLoadingReviews ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  리뷰를 불러오는 중...
-                </div>
-              ) : myReviews.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  작성한 리뷰가 없습니다.
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-3">
+              <div className={`transition-all duration-500 ${
+                highlightReviews ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-4 bg-yellow-50/50' : ''
+              }`}>
+                <h2 className="text-xl font-bold mb-4">작성한 리뷰</h2>
+                {isLoadingReviews ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    리뷰를 불러오는 중...
+                  </div>
+                ) : myReviews.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    작성한 리뷰가 없습니다.
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-3">
                     {myReviews
                       .slice((reviewsCurrentPage - 1) * itemsPerPage, reviewsCurrentPage * itemsPerPage)
                       .map((review) => (
@@ -1367,8 +1426,9 @@ export default function MyPage() {
                       </Button>
                     </div>
                   )}
-                </>
-              )}
+                    </>
+                  )}
+                </div>
             </TabsContent>
 
             <TabsContent value="settings">

@@ -462,7 +462,7 @@ export default function ReviewsPage() {
                       const usageId = usage?.usage_id
                       return (
                         <Link href={`/reviews/write/${facility.id}${usageId ? `?usageId=${usageId}` : ''}`}>
-                          <Button size="sm" className="bg-purple-400 hover:bg-purple-500 text-white">
+                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
                             리뷰 작성
                           </Button>
                         </Link>

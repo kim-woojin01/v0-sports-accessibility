@@ -921,7 +921,9 @@ export default function SearchPage() {
         isReviewModalOpen ? 'opacity-50' : 'opacity-100'
       }`}>
         <div className="container py-4 mx-auto max-w-screen-2xl">
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
+          <div className={`flex flex-col lg:flex-row gap-4 items-center justify-center transition-all duration-500 ${
+            highlightSearch ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-4 bg-yellow-50/50' : ''
+          }`}>
             {/* Facility Name Search */}
             <div className="relative w-full lg:w-64">
               <Input
@@ -1276,7 +1278,7 @@ export default function SearchPage() {
                     <div className="flex items-center gap-2">
                       {/* Congestion Indicator */}
                       {selectedDate !== "이용날짜/시간" ? (
-                        <div className={`flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-400 ring-offset-2 rounded-lg p-2 bg-yellow-50' : ''}`}>
+                        <div className={`flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-2 bg-yellow-50/50' : ''}`}>
                           <span className="text-xs text-muted-foreground mb-1">예측 혼잡도</span>
                           <div className="flex items-center gap-1">
                             <div
@@ -1298,7 +1300,7 @@ export default function SearchPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className={`flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-400 ring-offset-2 rounded-lg p-2 bg-yellow-50' : ''}`}>
+                        <div className={`flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-2 bg-yellow-50/50' : ''}`}>
                           <span className="text-xs text-muted-foreground mb-1">예측 혼잡도</span>
                           <div className="flex items-center gap-1 text-muted-foreground">
                             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
