@@ -6,10 +6,12 @@ const dbConfig = {
   host: process.env.RAILWAY_HOST || "caboose.proxy.rlwy.net",
   port: Number(process.env.RAILWAY_PORT) || 44225,
   user: process.env.RAILWAY_USER || "root",
-  password:
-    process.env.RAILWAY_PASSWORD ||
-    "OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD",
+  password: process.env.RAILWAY_PASSWORD,
   database: process.env.RAILWAY_DATABASE || "railway",
+}
+
+if (!dbConfig.password) {
+  throw new Error('RAILWAY_PASSWORD environment variable is required')
 }
 
 // --- 혼잡도 계산 헬퍼 함수 ---

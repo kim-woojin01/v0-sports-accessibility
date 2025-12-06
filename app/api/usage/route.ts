@@ -7,10 +7,12 @@ const dbConfig = {
   host: process.env.RAILWAY_REVIEWS_HOST || "nozomi.proxy.rlwy.net",
   port: Number(process.env.RAILWAY_REVIEWS_PORT) || 51173,
   user: process.env.RAILWAY_REVIEWS_USER || "root",
-  password:
-    process.env.RAILWAY_REVIEWS_PASSWORD ||
-    "lRzqwghWSchqdRyErESveHwVyKYUfhME",
+  password: process.env.RAILWAY_REVIEWS_PASSWORD,
   database: process.env.RAILWAY_REVIEWS_DATABASE || "railway",
+}
+
+if (!dbConfig.password) {
+  throw new Error('RAILWAY_REVIEWS_PASSWORD environment variable is required')
 }
 
 // 시설 정보 조회용 DB (별도 연결)
@@ -18,10 +20,12 @@ const facilityDbConfig = {
   host: process.env.RAILWAY_HOST || "caboose.proxy.rlwy.net",
   port: Number(process.env.RAILWAY_PORT) || 44225,
   user: process.env.RAILWAY_USER || "root",
-  password:
-    process.env.RAILWAY_PASSWORD ||
-    "OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD",
+  password: process.env.RAILWAY_PASSWORD,
   database: process.env.RAILWAY_DATABASE || "railway",
+}
+
+if (!facilityDbConfig.password) {
+  throw new Error('RAILWAY_PASSWORD environment variable is required')
 }
 
 // GET /api/usage?userId=1
