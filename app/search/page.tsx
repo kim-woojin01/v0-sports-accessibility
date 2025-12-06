@@ -1188,7 +1188,7 @@ export default function SearchPage() {
       </div>
 
       {/* Results List */}
-      <div className={`container py-12 max-w-4xl mx-auto transition-all duration-300 ${
+      <div className={`container py-12 max-w-7xl mx-auto transition-all duration-300 ${
         isReviewModalOpen ? 'opacity-50' : 'opacity-100'
       }`}>
         {isLoading ? (
