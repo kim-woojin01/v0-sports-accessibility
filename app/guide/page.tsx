@@ -70,19 +70,19 @@ function StepSection({ step, index }: { step: typeof steps[0], index: number }) 
             initial={{ opacity: 0, scale: 0.8 }}
             animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="absolute -left-4 -top-4 text-[120px] lg:text-[180px] font-black text-purple-100/50 leading-none select-none"
+            className="absolute -right-4 -bottom-4 text-[120px] lg:text-[180px] font-black text-purple-100/50 leading-none select-none z-0"
             aria-hidden="true"
           >
             {String(step.id).padStart(2, '0')}
           </motion.div>
-          <h2 className="relative text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
+          <h2 className="relative text-3xl lg:text-4xl font-bold text-slate-900 mb-2 z-10">
             STEP {String(step.id).padStart(2, '0')}. {step.title}
           </h2>
-          <p className="text-lg lg:text-xl text-purple-600 font-semibold">
+          <p className="relative text-lg lg:text-xl text-purple-600 font-semibold z-10">
             {step.subtitle}
           </p>
         </div>
-        <ul className="space-y-3 text-slate-700 leading-relaxed">
+        <ul className="relative space-y-3 text-slate-700 leading-relaxed z-10">
           {step.content.map((item, idx) => (
             <li key={idx} className="flex items-start gap-2">
               <span className="text-purple-500 mt-1">•</span>
