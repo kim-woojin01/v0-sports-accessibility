@@ -1028,7 +1028,7 @@ export default function SearchPage() {
       </div>
 
       {/* Results List */}
-      <div className="container py-12 max-w-5xl mx-auto">
+      <div className="container py-12 max-w-4xl mx-auto">
         {isLoading ? (
           <LoadingSpinner message="시설 목록을 불러오는 중입니다..." />
         ) : (
@@ -1038,25 +1038,25 @@ export default function SearchPage() {
               return (
               <div
                 key={facility.id}
-                className={`bg-white rounded-xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow ${isFavorite ? 'border-yellow-300 border-2' : ''}`}
+                className={`relative bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow ${isFavorite ? 'border-yellow-100 border-2' : ''}`}
               >
+                {/* 즐겨찾기 버튼 - 카드 테두리 왼쪽 밖, 위쪽에 위치 */}
+                <div className="absolute -left-12 top-2 z-10">
+                  <button
+                    onClick={() => toggleFavorite(Number(facility.id))}
+                    className={`p-2 rounded-full transition-colors ${
+                      isFavorite 
+                        ? 'bg-yellow-400/90 text-red-600' 
+                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    }`}
+                    aria-label={isFavorite ? '즐겨찾기 제거' : '즐겨찾기 추가'}
+                  >
+                    <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+                  </button>
+                </div>
                 <div className="flex flex-col md:flex-row">
                   <div className="relative w-full md:w-72 h-48 md:h-auto">
                     <Image src={facility.image || "/placeholder.svg"} alt={facility.name} fill className="object-cover" />
-                    {/* 즐겨찾기 버튼 */}
-                    <div className="absolute top-2 left-2 z-10">
-                      <button
-                        onClick={() => toggleFavorite(Number(facility.id))}
-                        className={`p-2 rounded-full backdrop-blur-sm transition-colors ${
-                          isFavorite 
-                            ? 'bg-yellow-400/90 text-red-600' 
-                            : 'bg-white/80 text-gray-400 hover:bg-white/90'
-                        }`}
-                        aria-label={isFavorite ? '즐겨찾기 제거' : '즐겨찾기 추가'}
-                      >
-                        <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-                      </button>
-                    </div>
                   </div>
                   <div className="flex-1 p-6 flex flex-col justify-between">
                     <div>
@@ -1075,9 +1075,13 @@ export default function SearchPage() {
                         </div>
                         {isLoggedIn && hasVisited(facility.id) ? (
                           <Link href={`/reviews/write/${facility.id}`}>
-                            <Button size="sm" variant="outline" className="text-xs h-7 bg-transparent">
-                              리뷰 작성하기
-                            </Button>
+                            <Button 
+  size="sm" 
+  variant="outline" 
+  className="text-xs h-7 border-purple-500 text-purple-500 hover:bg-purple-50 transition-colors"
+>
+  리뷰 작성하기
+</Button>
                           </Link>
                         ) : (
                           <Link href="/reviews">
@@ -1087,7 +1091,7 @@ export default function SearchPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4 text-sm text-muted-foreground">
+                    <div className="flex flex-col gap-2 mt-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4" />
                         <span>{facility.phone}</span>
