@@ -147,14 +147,14 @@ export default function AccessibilityPolicyPage() {
               <div className="bg-slate-50 p-6 rounded-lg space-y-3 text-base">
                 <div>
                   <strong className="text-foreground">이메일:</strong>{" "}
-                  <Link href="mailto:accessibility@sportsaccess.com" className="text-primary hover:underline">
-                    accessibility@sportsaccess.com
+                  <Link href="kjwelf@naver.com" className="text-primary hover:underline">
+                    kjwelf@naver.com
                   </Link>
                 </div>
                 <div>
                   <strong className="text-foreground">전화:</strong>{" "}
-                  <Link href="tel:02-0000-0000" className="text-primary hover:underline">
-                    02-0000-0000
+                  <Link href="tel:010-5918-3088" className="text-primary hover:underline">
+                    010-5918-3088
                   </Link>
                   {" "}(평일 09:00 ~ 18:00)
                 </div>
