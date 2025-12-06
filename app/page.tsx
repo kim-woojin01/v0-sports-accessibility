@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Search, Users, Info, Star, Phone, Clock } from "lucide-react"
+import { PartnerLogoSlider } from "@/components/partner-logo-slider"
 
 export default function Home() {
   return (
@@ -198,6 +199,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Partner Logo Slider - 홈 화면에만 표시 */}
+      <PartnerLogoSlider />
     </div>
   )
 }
