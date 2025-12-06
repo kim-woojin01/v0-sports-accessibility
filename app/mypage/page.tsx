@@ -89,6 +89,33 @@ export default function MyPage() {
     profileImageUrl: null,
   })
 
+  // 탭 상태 관리
+  const [activeTab, setActiveTab] = useState("profile")
+
+  // URL 해시로 스크롤 처리 (#my-reviews)
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (typeof window !== 'undefined' && window.location.hash === '#my-reviews') {
+        // 탭을 reviews로 변경
+        setActiveTab('reviews')
+        // 약간의 지연 후 스크롤 (탭 전환 후)
+        setTimeout(() => {
+          const element = document.getElementById('my-reviews')
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 300)
+      }
+    }
+
+    // 초기 로드 시 확인
+    handleHashChange()
+
+    // 해시 변경 감지
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
   // 사용자 정보 로드
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -724,7 +751,7 @@ export default function MyPage() {
 
         {/* Main Content - 나머지 탭 내용은 기존과 동일 */}
         <div className="w-full md:w-2/3">
-          <Tabs defaultValue="history" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="history">나의 이용 내역</TabsTrigger>
               <TabsTrigger value="alarm">시설 알람 예약</TabsTrigger>
@@ -859,7 +886,7 @@ export default function MyPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews">
+            <TabsContent value="reviews" id="my-reviews">
               <div className="text-center py-12 text-muted-foreground">작성한 리뷰가 없습니다.</div>
             </TabsContent>
 
