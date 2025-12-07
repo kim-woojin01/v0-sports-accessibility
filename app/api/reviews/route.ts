@@ -4,23 +4,23 @@ import mysql from "mysql2/promise"
 // Railway DB 설정 (실제 리뷰 데이터가 저장된 DB)
 // setup.js와 동일한 DB 사용
 const dbConfig = {
-  host: process.env.RAILWAY_REVIEWS_HOST || "nozomi.proxy.rlwy.net",
-  port: Number(process.env.RAILWAY_REVIEWS_PORT) || 51173,
-  user: process.env.RAILWAY_REVIEWS_USER || "root",
+  host: process.env.RAILWAY_HOST || "nozomi.proxy.rlwy.net",
+  port: Number(process.env.RAILWAY_PORT) || 51173,
+  user: process.env.RAILWAY_USER || "root",
   password:
-    process.env.RAILWAY_REVIEWS_PASSWORD ||
+    process.env.RAILWAY_PASSWORD ||
     "lRzqwghWSchqdRyErESveHwVyKYUfhME",
-  database: process.env.RAILWAY_REVIEWS_DATABASE || "railway",
+  database: process.env.RAILWAY_DATABASE || "railway",
 }
 
 // 시설 정보 조회용 DB (별도 연결)
 const facilityDbConfig = {
-  host: process.env.RAILWAY_HOST || "caboose.proxy.rlwy.net",
-  port: Number(process.env.RAILWAY_PORT) || 44225,
+  host: process.env.RAILWAY_HOST || "nozomi.proxy.rlwy.net",
+  port: Number(process.env.RAILWAY_PORT) || 51173,
   user: process.env.RAILWAY_USER || "root",
   password:
     process.env.RAILWAY_PASSWORD ||
-    "OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD",
+    "lRzqwghWSchqdRyErESveHwVyKYUfhME",
   database: process.env.RAILWAY_DATABASE || "railway",
 }
 

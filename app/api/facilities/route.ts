@@ -16,9 +16,9 @@ import mysql from "mysql2/promise"
 
 const dbConfig = {
 
-  host: process.env.RAILWAY_HOST || "caboose.proxy.rlwy.net",
+  host: process.env.RAILWAY_HOST || "nozomi.proxy.rlwy.net",
 
-  port: Number(process.env.RAILWAY_PORT) || 44225,
+  port: Number(process.env.RAILWAY_PORT) || 51173,
 
   user: process.env.RAILWAY_USER || "root",
 
@@ -26,7 +26,7 @@ const dbConfig = {
 
     process.env.RAILWAY_PASSWORD ||
 
-    "OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD",
+    "lRzqwghWSchqdRyErESveHwVyKYUfhME",
 
   database: process.env.RAILWAY_DATABASE || "railway",
 

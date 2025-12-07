@@ -13,14 +13,14 @@ const dbConfig = {
   database: process.env.RAILWAY_REVIEWS_DATABASE || "railway",
 }
 
-// 시설 정보 조회용 DB (별도 연결)
+// 시설 정보 조회용 DB (51173 Railway로 통합)
 const facilityDbConfig = {
-  host: process.env.RAILWAY_HOST || "caboose.proxy.rlwy.net",
-  port: Number(process.env.RAILWAY_PORT) || 44225,
+  host: process.env.RAILWAY_HOST || "nozomi.proxy.rlwy.net",
+  port: Number(process.env.RAILWAY_PORT) || 51173,
   user: process.env.RAILWAY_USER || "root",
   password:
     process.env.RAILWAY_PASSWORD ||
-    "OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD",
+    "lRzqwghWSchqdRyErESveHwVyKYUfhME",
   database: process.env.RAILWAY_DATABASE || "railway",
 }
 
