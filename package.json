@@ -51,6 +51,7 @@
     "framer-motion": "^12.23.24",
     "input-otp": "1.4.1",
     "leaflet": "^1.9.4",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^0.454.0",
     "mysql2": "^3.15.3",
     "next": "16.0.3",
