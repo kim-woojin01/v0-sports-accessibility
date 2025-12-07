@@ -1127,7 +1127,22 @@ export default function SearchPage() {
       <div className={`relative w-full h-[500px] rounded-2xl overflow-hidden shadow-lg bg-slate-100 mt-20 transition-all duration-300 ${
         isMounted && isReviewModalOpen ? 'opacity-50 z-0' : 'opacity-100 z-10'
       }`}>
-        <FacilityMap facilities={currentFacilities} center={mapCenter} userLocation={userLocation} />
+        <FacilityMap 
+          facilities={filteredFacilities} 
+          center={mapCenter} 
+          userLocation={userLocation}
+          onFacilityClick={(facility) => {
+            // 마커 클릭 시 해당 시설로 스크롤하거나 강조 표시
+            const facilityElement = document.getElementById(`facility-${facility.id}`)
+            if (facilityElement) {
+              facilityElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              facilityElement.classList.add('ring-2', 'ring-purple-500')
+              setTimeout(() => {
+                facilityElement.classList.remove('ring-2', 'ring-purple-500')
+              }, 2000)
+            }
+          }}
+        />
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-md text-sm font-medium text-slate-700">
           {userLocation ? "내 위치 기준으로 지도를 표시하고 있어요." : "검색 결과를 지도 아이콘으로 확인해보세요."}
         </div>
