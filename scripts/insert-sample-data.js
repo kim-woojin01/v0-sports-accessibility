@@ -42,7 +42,7 @@ try {
 // API 라우트와 동일한 DB 사용 (app/api/facilities/route.ts 참고)
 const dbConfig = {
   host: process.env.RAILWAY_HOST || "caboose.proxy.rlwy.net",
-  port: Number(process.env.RAILWAY_PORT) || 44225,
+  port: Number(process.env.RAILWAY_PORT) || 51173,
   user: process.env.RAILWAY_USER || "root",
   password:
     process.env.RAILWAY_PASSWORD ||

@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS facility_usage (
 
 2. **Railway MySQL에 연결**
    ```bash
-   mysql -h caboose.proxy.rlwy.net -P 44225 -u root -p
+   mysql -h caboose.proxy.rlwy.net -P 51173 -u root -p
    ```
    - 비밀번호 입력: `OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD`
 
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS facility_usage (
 
 4. **SQL 파일 실행**
    ```bash
-   mysql -h caboose.proxy.rlwy.net -P 44225 -u root -p railway < database/create_review_tables_simple.sql
+   mysql -h caboose.proxy.rlwy.net -P 51173 -u root -p railway < database/create_review_tables_simple.sql
    ```
 
 ---
@@ -97,7 +97,7 @@ node scripts/create-tables.js
 
 현재 `.env.local`에 설정된 Railway MySQL 정보:
 - **Host**: `caboose.proxy.rlwy.net`
-- **Port**: `44225`
+- **Port**: `51173`
 - **User**: `root`
 - **Password**: `OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD`
 - **Database**: `railway`

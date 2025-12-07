@@ -25,7 +25,7 @@ SQL 파일의 내용을 복사하여 Railway MySQL 콘솔에 붙여넣고 실행
 
 또는 MySQL CLI를 사용하는 경우:
 ```bash
-mysql -h caboose.proxy.rlwy.net -P 44225 -u root -p railway < create_review_tables_simple.sql
+mysql -h caboose.proxy.rlwy.net -P 51173 -u root -p railway < create_review_tables_simple.sql
 ```
 
 ## 생성되는 테이블

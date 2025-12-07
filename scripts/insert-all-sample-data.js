@@ -10,7 +10,7 @@ const mysql = require("mysql2/promise")
 // API가 사용하는 DB (시설 정보)
 const apiDbConfig = {
   host: "caboose.proxy.rlwy.net",
-  port: 44225,
+  port: 51173,
   user: "root",
   password: "OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD",
   database: "railway",

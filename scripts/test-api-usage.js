@@ -16,7 +16,7 @@ const railwayDbConfig = {
 // API DB
 const apiDbConfig = {
   host: "caboose.proxy.rlwy.net",
-  port: 44225,
+  port: 51173,
   user: "root",
   password: "OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD",
   database: "railway",
