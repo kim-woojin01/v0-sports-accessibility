@@ -11,11 +11,27 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
+  title: "SportsAccess",
+  description: "장애인을 위한 스포츠 시설 접근성 플랫폼",
   generator: "v0.app",
+  applicationName: "SportsAccess",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SportsAccess",
+  },
   icons: {
     icon: [
+      {
+        url: "/icons/icon-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "/icons/icon-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
       {
         url: "/icon-light-32x32.png",
         media: "(prefers-color-scheme: light)",
@@ -29,8 +45,15 @@ export const metadata: Metadata = {
         type: "image/svg+xml",
       },
     ],
-    apple: "/apple-icon.png",
+    apple: [
+      {
+        url: "/icons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
   },
+  manifest: "/manifest.json",
 }
 
 export default function RootLayout({
