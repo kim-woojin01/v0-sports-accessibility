@@ -219,3 +219,15 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari, Opera */
 }
+
+/* .hide-scrollbar 클래스가 붙은 요소만 스크롤바를 숨김 -> 하단의 코드 역할은 날짜/시간 선택 팝업에서 시간 핸들러에 스크롤바가 나타나지 않게 하는 역할임 */
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* 인터넷 익스플로러, 엣지 */
+    scrollbar-width: none;  /* 파이어폭스 */
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;  /* 크롬, 사파리, 오페라 */
+  }
+}

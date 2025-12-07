@@ -1396,7 +1396,7 @@ export default function SearchPage() {
                             }, 150)
                           }}
                         >
-                          <div className="h-[96px]" />
+                          <div className="h-[72px]" />
                           {Array.from({ length: 24 }, (_, i) => i).map((h) => {
                             const isSelected = h === selectedHour
                             return (
@@ -1422,7 +1422,7 @@ export default function SearchPage() {
                               </div>
                             )
                           })}
-                          <div className="h-[96px]" />
+                          <div className="h-[72px]" />
                         </div>
                       </div>
                       <span className="text-lg font-bold">:</span>
@@ -1463,7 +1463,7 @@ export default function SearchPage() {
                             }, 150)
                           }}
                         >
-                          <div className="h-[96px]" />
+                          <div className="h-[72px]" />
                           {[0, 10, 20, 30, 40, 50].map((m, index) => {
                             const isSelected = m === selectedMinute
                             return (
@@ -1489,7 +1489,7 @@ export default function SearchPage() {
                               </div>
                             )
                           })}
-                          <div className="h-[96px]" />
+                          <div className="h-[72px]" />
                         </div>
                       </div>
                     </div>
