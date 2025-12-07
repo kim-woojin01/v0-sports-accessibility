@@ -1641,3 +1641,5 @@ export async function GET(request: NextRequest) {
   }
 
 }
+
+// 합격 기원!
