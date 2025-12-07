@@ -16,17 +16,14 @@ import mysql from "mysql2/promise"
 
 // Railway DB 설정 (51173 포트 - 통합 DB)
 // Vercel 환경 변수: RAILWAY_HOST, RAILWAY_PORT, RAILWAY_USER, RAILWAY_PASSWORD, RAILWAY_DATABASE
+// createConnection에서는 connectTimeout만 지원됨 (acquireTimeout, timeout, reconnect는 지원 안 됨)
 const dbConfig = {
   host: process.env.RAILWAY_HOST || "nozomi.proxy.rlwy.net",
   port: Number(process.env.RAILWAY_PORT) || 51173,
   user: process.env.RAILWAY_USER || "root",
   password: process.env.RAILWAY_PASSWORD || "lRzqwghWSchqdRyErESveHwVyKYUfhME",
   database: process.env.RAILWAY_DATABASE || "railway",
-  // 연결 안정성 향상 옵션
-  connectTimeout: 10000,
-  acquireTimeout: 10000,
-  timeout: 10000,
-  reconnect: true,
+  connectTimeout: 10000, // 연결 타임아웃 (createConnection에서 지원)
 }
 
 // ---------------------------------------
@@ -1007,51 +1004,69 @@ export async function GET(request: NextRequest) {
 
     // -----------------------------------------
 
-    const [facilityRows] = await connection.execute(
+    let facilityRows: any[] = []
+    try {
+      // 먼저 facility_logs 테이블이 있는지 확인
+      const [logTables] = await connection.execute(
+        `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'facility_logs'`,
+        [dbConfig.database]
+      )
+      
+      const hasLogsTable = (logTables as any[]).length > 0
 
-      `
-
-      SELECT 
-
-        f.id,
-
-        f.name,
-
-        f.capacity,
-
-        f.address,
-
-        f.latitude AS lat,
-
-        f.longitude AS lng,
-
-        SUM(
-
-          CASE 
-
-            WHEN fl.timestamp > ? AND fl.timestamp <= ? THEN 
-
-              CASE fl.log_type WHEN 'ENTRY' THEN 1 WHEN 'EXIT' THEN -1 ELSE 0 END
-
-            ELSE 0
-
-          END
-
-        ) AS current_attendance
-
-      FROM facility f
-
-      LEFT JOIN facility_logs fl ON f.id = fl.facility_id
-
-      GROUP BY f.id
-
-      ORDER BY f.id
-
-      `,
-
-      [realTimeWindowStartSql, targetSql],
-
-    )
+      if (hasLogsTable) {
+        // facility_logs 테이블이 있으면 JOIN 쿼리 사용
+        const [rows] = await connection.execute(
+          `
+          SELECT 
+            f.id,
+            f.name,
+            f.capacity,
+            f.address,
+            f.latitude AS lat,
+            f.longitude AS lng,
+            COALESCE(SUM(
+              CASE 
+                WHEN fl.timestamp > ? AND fl.timestamp <= ? THEN 
+                  CASE fl.log_type WHEN 'ENTRY' THEN 1 WHEN 'EXIT' THEN -1 ELSE 0 END
+                ELSE 0
+              END
+            ), 0) AS current_attendance
+          FROM facility f
+          LEFT JOIN facility_logs fl ON f.id = fl.facility_id
+          GROUP BY f.id, f.name, f.capacity, f.address, f.latitude, f.longitude
+          ORDER BY f.id
+          `,
+          [realTimeWindowStartSql, targetSql],
+        )
+        facilityRows = rows as any[]
+        console.log(`✅ 일반 시설 ${facilityRows.length}개 조회 성공 (로그 포함)`)
+      } else {
+        // facility_logs 테이블이 없으면 facility만 조회
+        const [rows] = await connection.execute(
+          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, 0 AS current_attendance FROM facility ORDER BY id`
+        )
+        facilityRows = rows as any[]
+        console.log(`✅ 일반 시설 ${facilityRows.length}개 조회 성공 (로그 없이)`)
+      }
+    } catch (queryError: any) {
+      console.error("❌ 시설 데이터 조회 실패:", {
+        error: queryError.message,
+        code: queryError.code,
+        sqlState: queryError.sqlState
+      })
+      // Fallback: facility 테이블만 조회 시도
+      try {
+        const [rows] = await connection.execute(
+          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, 0 AS current_attendance FROM facility ORDER BY id`
+        )
+        facilityRows = rows as any[]
+        console.log(`✅ 시설 데이터 조회 성공 (fallback, ${facilityRows.length}개)`)
+      } catch (fallbackError: any) {
+        console.error("❌ 시설 데이터 조회 실패 (fallback):", fallbackError)
+        throw new Error(`Failed to fetch facilities: ${fallbackError.message}`)
+      }
+    }
 
     // ⭐ 마지막 6시간 net_people 시계열 생성
 
