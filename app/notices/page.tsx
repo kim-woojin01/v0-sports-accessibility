@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
+import LottieLoader from "@/components/loading-animation"
 
 interface Notice {
   id: number
@@ -58,8 +59,8 @@ export default function NoticesPage() {
 
   if (isLoading) {
     return (
-      <div className="container py-12 max-w-4xl mx-auto pt-24 px-4">
-        <div className="text-center">로딩 중...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <LottieLoader />
       </div>
     )
   }

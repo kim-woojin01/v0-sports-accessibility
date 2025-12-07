@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, ArrowLeft, FileText, Search, CheckCircle2, XCircle, Clock, Eye, Trash2, MessageSquare } from "lucide-react"
+import LottieLoader from "@/components/loading-animation"
 import {
   Dialog,
   DialogContent,
@@ -240,7 +241,7 @@ export default function AdminFacilityRequestsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <LottieLoader />
       </div>
     )
   }

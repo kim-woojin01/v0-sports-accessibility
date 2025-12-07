@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { CheckCircle2, Upload, X, Loader2, User, Building2, ChevronRight, ChevronLeft } from "lucide-react"
+import { CheckCircle2, Upload, X, User, Building2, ChevronRight, ChevronLeft } from "lucide-react"
+import LottieLoader from "@/components/loading-animation"
 
 type UserType = "user" | "facility_manager" | null
 
@@ -396,7 +397,7 @@ export default function FacilityRequestPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <LottieLoader />
       </div>
     )
   }

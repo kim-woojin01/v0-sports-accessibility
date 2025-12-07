@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
 import { Pencil, Trash2, Bell, ArrowLeft, Loader2 } from "lucide-react"
+import LottieLoader from "@/components/loading-animation"
 
 interface Notice {
   id: number
@@ -259,7 +260,7 @@ export default function AdminNoticesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <LottieLoader />
       </div>
     )
   }

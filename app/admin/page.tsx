@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Shield, Users, FileText, Settings, BarChart3, Bell } from "lucide-react"
+import { Shield, Users, FileText, Settings, BarChart3, Bell } from "lucide-react"
+import LottieLoader from "@/components/loading-animation"
 import { motion } from "framer-motion"
 
 interface AdminFeature {
@@ -96,7 +97,7 @@ export default function AdminPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <LottieLoader />
       </div>
     )
   }

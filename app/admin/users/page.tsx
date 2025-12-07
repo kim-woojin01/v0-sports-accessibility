@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Loader2, Users, Search, Phone, Calendar, ArrowLeft } from "lucide-react"
+import LoadingSpinner from "@/components/loading-spinner"
+import LottieLoader from "@/components/loading-animation"
 import {
   Dialog,
   DialogContent,
@@ -132,7 +134,7 @@ export default function AdminUsersPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <LottieLoader />
       </div>
     )
   }
@@ -188,9 +190,7 @@ export default function AdminUsersPage() {
             </div>
 
             {isLoadingUsers ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-              </div>
+              <LoadingSpinner message="사용자 목록을 불러오는 중입니다..." />
             ) : (
               <>
                 {/* 데스크톱 테이블 뷰 */}

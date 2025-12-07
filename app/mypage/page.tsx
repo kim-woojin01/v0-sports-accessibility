@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Calendar, Clock, Settings, LogOut, Save, X, Bell, BellOff, Edit2, Check, User, Star, Trash2 } from "lucide-react"
 import Link from "next/link"
+import LottieLoader from "@/components/loading-animation"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -602,8 +603,8 @@ export default function MyPage() {
 
   if (isLoading) {
     return (
-      <div className="container py-12 max-w-5xl mx-auto pt-24">
-        <div className="text-center">로딩 중...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <LottieLoader />
       </div>
     )
   }
