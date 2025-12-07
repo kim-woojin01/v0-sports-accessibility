@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { CheckCircle2, Upload, X, User, Building2, ChevronRight, ChevronLeft } from "lucide-react"
+import { CheckCircle2, Upload, X, User, Building2, ChevronRight, ChevronLeft, Loader2 } from "lucide-react"
 import LottieLoader from "@/components/loading-animation"
 
 type UserType = "user" | "facility_manager" | null
@@ -723,39 +723,46 @@ export default function FacilityRequestPage() {
           </p>
         </div>
 
-        {/* 진행 단계 표시 */}
-        <div className="mb-8">
+        {/* 진행 단계 표시 (수정됨: 텍스트를 원 안으로 이동하여 정렬 문제 해결) */}
+        <div className="mb-12">
           <div className="flex justify-between items-center">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center flex-1">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                    step === currentStep
-                      ? "bg-purple-600 text-white"
-                      : step < currentStep
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-200 text-gray-600"
-                  }`}
-                  aria-label={`단계 ${step}`}
-                >
-                  {step < currentStep ? <CheckCircle2 className="w-6 h-6" /> : step}
+            {["본인 인증", "기본 정보", "접근성 정보", "사진/소개"].map((label, index) => {
+              const step = index + 1;
+              return (
+                <div key={step} className={`flex items-center ${step < 4 ? "flex-1" : ""}`}>
+                  <div className="relative flex flex-col items-center group">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold z-10 transition-colors duration-300 ${
+                        step === currentStep
+                          ? "bg-purple-600 text-white shadow-lg scale-110"
+                          : step < currentStep
+                          ? "bg-green-500 text-white"
+                          : "bg-gray-200 text-gray-600"
+                      }`}
+                      aria-label={`단계 ${step}`}
+                    >
+                      {step < currentStep ? <CheckCircle2 className="w-6 h-6" /> : step}
+                    </div>
+                    
+                    {/* 텍스트: 절대 위치로 고정 */}
+                    <div className={`absolute top-12 w-32 text-center text-sm font-medium ${
+                      step === currentStep ? "text-purple-700 font-bold" : "text-muted-foreground"
+                    }`}>
+                      {label}
+                    </div>
+                  </div>
+
+                  {step < 4 && (
+                    <div
+                      className={`flex-1 h-1 mx-2 transition-colors duration-500 ${
+                        step < currentStep ? "bg-green-500" : "bg-gray-200"
+                      }`}
+                      aria-hidden="true"
+                    />
+                  )}
                 </div>
-                {step < 4 && (
-                  <div
-                    className={`flex-1 h-1 mx-2 ${
-                      step < currentStep ? "bg-green-500" : "bg-gray-200"
-                    }`}
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-            <span>본인 인증</span>
-            <span>기본 정보</span>
-            <span>접근성 정보</span>
-            <span>사진/소개</span>
+              );
+            })}
           </div>
         </div>
 
@@ -1109,4 +1116,3 @@ export default function FacilityRequestPage() {
     </div>
   )
 }
-
