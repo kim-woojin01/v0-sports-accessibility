@@ -4,9 +4,20 @@ import fs from "fs"
 
 import path from "path"
 
-import ort from "onnxruntime-node"
-
 import mysql from "mysql2/promise"
+
+// onnxruntime-node는 optional로 처리 (Vercel에서 로드 실패할 수 있음)
+let ort: any = null
+let onnxAvailable = false
+
+try {
+  ort = require("onnxruntime-node")
+  onnxAvailable = true
+  console.log("✅ ONNX Runtime 로드 성공")
+} catch (error) {
+  console.warn("⚠️ ONNX Runtime 로드 실패 (예측 기능 비활성화):", error instanceof Error ? error.message : String(error))
+  onnxAvailable = false
+}
 
 // ---------------------------------------
 
@@ -14,22 +25,16 @@ import mysql from "mysql2/promise"
 
 // ---------------------------------------
 
+// Railway DB 설정 (51173 포트 - 통합 DB)
+// Vercel 환경 변수: RAILWAY_HOST, RAILWAY_PORT, RAILWAY_USER, RAILWAY_PASSWORD, RAILWAY_DATABASE
+// createConnection에서는 connectTimeout만 지원됨 (acquireTimeout, timeout, reconnect는 지원 안 됨)
 const dbConfig = {
-
-  host: process.env.RAILWAY_HOST || "caboose.proxy.rlwy.net",
-
-  port: Number(process.env.RAILWAY_PORT) || 44225,
-
+  host: process.env.RAILWAY_HOST || "nozomi.proxy.rlwy.net",
+  port: Number(process.env.RAILWAY_PORT) || 51173,
   user: process.env.RAILWAY_USER || "root",
-
-  password:
-
-    process.env.RAILWAY_PASSWORD ||
-
-    "OYtPVGecIvjzArpQfMWwRNyyXnEfsXaD",
-
+  password: process.env.RAILWAY_PASSWORD || "lRzqwghWSchqdRyErESveHwVyKYUfhME",
   database: process.env.RAILWAY_DATABASE || "railway",
-
+  connectTimeout: 10000, // 연결 타임아웃 (createConnection에서 지원)
 }
 
 // ---------------------------------------
@@ -64,7 +69,7 @@ const AVAILABLE_MODEL_FILES = (() => {
 
 })()
 
-const MODEL_SESSION_CACHE = new Map<string, Promise<ort.InferenceSession>>()
+const MODEL_SESSION_CACHE = new Map<string, Promise<any>>()
 
 const ACCESSIBLE_MODEL_DIRECTORY = path.join(
 
@@ -104,7 +109,7 @@ const ACCESSIBLE_MODEL_SESSION_CACHE = new Map<
 
   string,
 
-  Promise<ort.InferenceSession>
+  Promise<any>
 
 >()
 
@@ -156,7 +161,7 @@ function formatDateTime(date: Date) {
 
 async function loadModelSession(filename: string) {
 
-  if (!filename) return null
+  if (!filename || !onnxAvailable || !ort) return null
 
   if (!MODEL_SESSION_CACHE.has(filename)) {
 
@@ -184,7 +189,7 @@ async function loadModelSession(filename: string) {
 
 async function loadAccessibleModelSession(filename: string) {
 
-  if (!filename) return null
+  if (!filename || !onnxAvailable || !ort) return null
 
   if (!ACCESSIBLE_MODEL_SESSION_CACHE.has(filename)) {
 
@@ -680,7 +685,7 @@ async function runPredictionUsingModel(
 
   availableFiles: string[],
 
-  sessionLoader: (filename: string) => Promise<ort.InferenceSession | null>,
+  sessionLoader: (filename: string) => Promise<any | null>,
 
   facilityId: number,
 
@@ -692,7 +697,7 @@ async function runPredictionUsingModel(
 
 ): Promise<{ predicted_level: string } | null> {
 
-  if (!availableFiles.includes(modelFile)) return null
+  if (!availableFiles.includes(modelFile) || !onnxAvailable || !ort) return null
 
   const session = await sessionLoader(modelFile)
 
@@ -712,11 +717,11 @@ async function runPredictionUsingModel(
 
   const outputName = session.outputNames[0]
 
-  const outputTensor = output[outputName] as ort.Tensor
+  const outputTensor = output[outputName] as any
 
   if (!outputTensor) return null
 
-  const logits = Array.from(outputTensor.data as Float32Array)
+  const logits = Array.from(outputTensor.data as Float32Array | number[])
 
   const maxLogit = Math.max(...logits)
 
@@ -982,7 +987,27 @@ export async function GET(request: NextRequest) {
 
     const realTimeWindowStartSql = formatDateTime(realTimeWindowStart)
 
-    connection = await mysql.createConnection(dbConfig)
+    // DB 연결 시도 (에러 로깅 강화)
+    try {
+      connection = await mysql.createConnection(dbConfig)
+      console.log("✅ DB 연결 성공:", {
+        host: dbConfig.host,
+        port: dbConfig.port,
+        database: dbConfig.database,
+        user: dbConfig.user
+      })
+    } catch (dbError: any) {
+      console.error("❌ DB 연결 실패:", {
+        error: dbError.message,
+        code: dbError.code,
+        host: dbConfig.host,
+        port: dbConfig.port,
+        database: dbConfig.database,
+        user: dbConfig.user,
+        hasPassword: !!dbConfig.password
+      })
+      throw new Error(`Database connection failed: ${dbError.message}`)
+    }
 
     // -----------------------------------------
 
@@ -990,51 +1015,69 @@ export async function GET(request: NextRequest) {
 
     // -----------------------------------------
 
-    const [facilityRows] = await connection.execute(
+    let facilityRows: any[] = []
+    try {
+      // 먼저 facility_logs 테이블이 있는지 확인
+      const [logTables] = await connection.execute(
+        `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'facility_logs'`,
+        [dbConfig.database]
+      )
+      
+      const hasLogsTable = (logTables as any[]).length > 0
 
-      `
-
-      SELECT 
-
-        f.id,
-
-        f.name,
-
-        f.capacity,
-
-        f.address,
-
-        f.latitude AS lat,
-
-        f.longitude AS lng,
-
-        SUM(
-
-          CASE 
-
-            WHEN fl.timestamp > ? AND fl.timestamp <= ? THEN 
-
-              CASE fl.log_type WHEN 'ENTRY' THEN 1 WHEN 'EXIT' THEN -1 ELSE 0 END
-
-            ELSE 0
-
-          END
-
-        ) AS current_attendance
-
-      FROM facility f
-
-      LEFT JOIN facility_logs fl ON f.id = fl.facility_id
-
-      GROUP BY f.id
-
-      ORDER BY f.id
-
-      `,
-
-      [realTimeWindowStartSql, targetSql],
-
-    )
+      if (hasLogsTable) {
+        // facility_logs 테이블이 있으면 JOIN 쿼리 사용
+        const [rows] = await connection.execute(
+          `
+          SELECT 
+            f.id,
+            f.name,
+            f.capacity,
+            f.address,
+            f.latitude AS lat,
+            f.longitude AS lng,
+            COALESCE(SUM(
+              CASE 
+                WHEN fl.timestamp > ? AND fl.timestamp <= ? THEN 
+                  CASE fl.log_type WHEN 'ENTRY' THEN 1 WHEN 'EXIT' THEN -1 ELSE 0 END
+                ELSE 0
+              END
+            ), 0) AS current_attendance
+          FROM facility f
+          LEFT JOIN facility_logs fl ON f.id = fl.facility_id
+          GROUP BY f.id, f.name, f.capacity, f.address, f.latitude, f.longitude
+          ORDER BY f.id
+          `,
+          [realTimeWindowStartSql, targetSql],
+        )
+        facilityRows = rows as any[]
+        console.log(`✅ 일반 시설 ${facilityRows.length}개 조회 성공 (로그 포함)`)
+      } else {
+        // facility_logs 테이블이 없으면 facility만 조회
+        const [rows] = await connection.execute(
+          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, 0 AS current_attendance FROM facility ORDER BY id`
+        )
+        facilityRows = rows as any[]
+        console.log(`✅ 일반 시설 ${facilityRows.length}개 조회 성공 (로그 없이)`)
+      }
+    } catch (queryError: any) {
+      console.error("❌ 시설 데이터 조회 실패:", {
+        error: queryError.message,
+        code: queryError.code,
+        sqlState: queryError.sqlState
+      })
+      // Fallback: facility 테이블만 조회 시도
+      try {
+        const [rows] = await connection.execute(
+          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, 0 AS current_attendance FROM facility ORDER BY id`
+        )
+        facilityRows = rows as any[]
+        console.log(`✅ 시설 데이터 조회 성공 (fallback, ${facilityRows.length}개)`)
+      } catch (fallbackError: any) {
+        console.error("❌ 시설 데이터 조회 실패 (fallback):", fallbackError)
+        throw new Error(`Failed to fetch facilities: ${fallbackError.message}`)
+      }
+    }
 
     // ⭐ 마지막 6시간 net_people 시계열 생성
 
@@ -1628,15 +1671,36 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json([...facilityList, ...accessibleList], { status: 200 })
 
-  } catch (error) {
+  } catch (error: any) {
 
-    console.error("API Error:", error)
+    console.error("❌ API Error:", {
+      message: error?.message || String(error),
+      code: error?.code,
+      stack: error?.stack,
+      name: error?.name,
+      dbConfig: {
+        host: dbConfig.host,
+        port: dbConfig.port,
+        database: dbConfig.database,
+        user: dbConfig.user,
+        hasPassword: !!dbConfig.password
+      }
+    })
 
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ 
+      error: error?.message || String(error),
+      code: error?.code || "UNKNOWN_ERROR"
+    }, { status: 500 })
 
   } finally {
 
-    if (connection) connection.end()
+    if (connection) {
+      try {
+        await connection.end()
+      } catch (endError) {
+        console.error("❌ DB 연결 종료 실패:", endError)
+      }
+    }
 
   }
 

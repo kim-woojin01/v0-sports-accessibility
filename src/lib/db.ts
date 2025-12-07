@@ -16,18 +16,41 @@ function parseConnectionString(url: string) {
   };
 }
 
+// DB 설정 가져오기 (RAILWAY_* 변수 우선, DATABASE_URL 대체)
+function getDbConfig() {
+  // RAILWAY_* 환경 변수가 있으면 사용
+  if (process.env.RAILWAY_HOST || process.env.RAILWAY_REVIEWS_HOST) {
+    return {
+      host: process.env.RAILWAY_HOST || process.env.RAILWAY_REVIEWS_HOST || 'nozomi.proxy.rlwy.net',
+      port: Number(process.env.RAILWAY_PORT || process.env.RAILWAY_REVIEWS_PORT) || 51173,
+      user: process.env.RAILWAY_USER || process.env.RAILWAY_REVIEWS_USER || 'root',
+      password: process.env.RAILWAY_PASSWORD || process.env.RAILWAY_REVIEWS_PASSWORD || 'lRzqwghWSchqdRyErESveHwVyKYUfhME',
+      database: process.env.RAILWAY_DATABASE || process.env.RAILWAY_REVIEWS_DATABASE || 'railway',
+    };
+  }
+  
+  // DATABASE_URL이 있으면 파싱하여 사용
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl) {
+    return parseConnectionString(databaseUrl);
+  }
+  
+  // 기본값 사용 (51173 Railway)
+  return {
+    host: 'nozomi.proxy.rlwy.net',
+    port: 51173,
+    user: 'root',
+    password: 'lRzqwghWSchqdRyErESveHwVyKYUfhME',
+    database: 'railway',
+  };
+}
+
 // 연결 풀 생성
 let pool: mysql.Pool | null = null;
 
 export function getPool(): mysql.Pool {
   if (!pool) {
-    const databaseUrl = process.env.DATABASE_URL;
-    
-    if (!databaseUrl) {
-      throw new Error('DATABASE_URL environment variable is not set');
-    }
-
-    const config = parseConnectionString(databaseUrl);
+    const config = getDbConfig();
     
     pool = mysql.createPool({
       ...config,
@@ -36,6 +59,13 @@ export function getPool(): mysql.Pool {
       queueLimit: 0,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
+    });
+    
+    console.log('✅ DB 연결 풀 생성:', {
+      host: config.host,
+      port: config.port,
+      database: config.database,
+      user: config.user,
     });
   }
 
