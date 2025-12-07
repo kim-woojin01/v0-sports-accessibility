@@ -23,6 +23,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
+        url: "/icon.svg",
+        type: "image/svg+xml",
+      },
+      {
         url: "/icons/icon-192x192.png",
         sizes: "192x192",
         type: "image/png",
@@ -39,10 +43,6 @@ export const metadata: Metadata = {
       {
         url: "/icon-dark-32x32.png",
         media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
       },
     ],
     apple: [
