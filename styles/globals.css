@@ -123,3 +123,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 스크롤바 숨김 */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

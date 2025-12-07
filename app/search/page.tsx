@@ -352,6 +352,8 @@ export default function SearchPage() {
 
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null)
+  const [tempSelectedProvince, setTempSelectedProvince] = useState<string | null>(null)
+  const [tempSelectedDistrict, setTempSelectedDistrict] = useState<string | null>(null)
 
   const [selectedDate, setSelectedDate] = useState("이용날짜/시간")
   const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null)
@@ -362,8 +364,11 @@ export default function SearchPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedHour, setSelectedHour] = useState(12)
   const [selectedMinute, setSelectedMinute] = useState(0)
-  const [selectedAmPm, setSelectedAmPm] = useState("PM")
   const [tempSelectedDate, setTempSelectedDate] = useState<Date | null>(null)
+  const hourScrollRef = useRef<HTMLDivElement>(null)
+  const minuteScrollRef = useRef<HTMLDivElement>(null)
+  const hourScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const minuteScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // URL에서 페이지 번호 읽기
   const pageFromUrl = searchParams.get('page') ? Number(searchParams.get('page')) : 1
@@ -690,7 +695,7 @@ export default function SearchPage() {
     }
   }
 
-  const loadData = useCallback(async (targetDateTime: Date | null = null) => {
+  const loadData = useCallback(async (targetDateTime: Date | null = null): Promise<Facility[]> => {
     setIsLoading(true)
     try {
       // 시설 목록 조회 (datetime 파라미터 포함)
@@ -700,7 +705,7 @@ export default function SearchPage() {
         console.error("시설 데이터 요청 실패:", res.status, res.statusText)
         setFacilitiesData([])
         setFilteredFacilities([])
-        return
+        return []
       }
 
       const data = await res.json()
@@ -781,7 +786,6 @@ export default function SearchPage() {
       })
 
       setFacilitiesData(mapped)
-      setFilteredFacilities(mapped)
 
       // 초기 로드가 아닐 때만 지도 중심 변경 (초기 로드 시에는 사용자 위치 유지)
       if (!isInitialLoad.current && mapped.length > 0 && mapped[0].lat && mapped[0].lng) {
@@ -791,11 +795,15 @@ export default function SearchPage() {
       // 초기 로드 완료 표시
       if (isInitialLoad.current) {
         isInitialLoad.current = false
+        setFilteredFacilities(mapped)
       }
+
+      return mapped
     } catch (e) {
       console.error("데이터 로드 오류:", e)
       setFacilitiesData([])
       setFilteredFacilities([])
+      return []
     } finally {
       setIsLoading(false)
     }
@@ -804,83 +812,93 @@ export default function SearchPage() {
   useEffect(() => {
     const user = localStorage.getItem("user")
     setIsLoggedIn(!!user)
-    loadData(selectedDateTime)
+    // 초기 로드 시에는 날짜/시간 조건 없이 기본 데이터 로드
+    loadData(null)
   }, [loadData])
 
-  // selectedDateTime 변경 시 데이터 다시 로드
-  useEffect(() => {
-    if (selectedDateTime !== null) {
-      loadData(selectedDateTime)
-    }
-  }, [selectedDateTime, loadData])
-
-  const handleSearch = () => {
-    let results = facilitiesData
-
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase().replace(/\s+/g, "")
-      results = results.filter((f) => {
-        const name = f.name.toLowerCase().replace(/\s+/g, "")
-        const address = (f.address ?? "").toLowerCase().replace(/\s+/g, "")
-        const features = (f.features ?? []).map((feat) => feat.toLowerCase())
-
-        return (
-          name.includes(query) ||
-          address.includes(query) ||
-          features.some((feat) => feat.includes(query))
-        )
-      })
-    }
-
-    if (selectedProvince) {
-      results = results.filter((f) => f.province === selectedProvince)
-      if (selectedDistrict) {
-        results = results.filter((f) => f.district === selectedDistrict)
+  const handleSearch = async () => {
+    setIsLoading(true)
+    
+    try {
+      // 날짜/시간이 선택된 경우 해당 날짜/시간으로 데이터 새로 로드
+      let dataToFilter: Facility[]
+      if (selectedDateTime !== null) {
+        dataToFilter = await loadData(selectedDateTime)
+      } else {
+        // 날짜/시간이 선택되지 않은 경우 기존 데이터 사용
+        dataToFilter = facilitiesData
       }
-    }
+      
+      // 데이터 로드 후 필터링 수행
+      let results = dataToFilter
 
-    if (selectedFacilities.length > 0) {
-      results = results.filter((f) =>
-        selectedFacilities.every((sf) => (f.features ?? []).includes(sf)),
-      )
-    }
+      if (searchQuery.trim() !== "") {
+        const query = searchQuery.toLowerCase().replace(/\s+/g, "")
+        results = results.filter((f) => {
+          const name = f.name.toLowerCase().replace(/\s+/g, "")
+          const address = (f.address ?? "").toLowerCase().replace(/\s+/g, "")
+          const features = (f.features ?? []).map((feat) => feat.toLowerCase())
 
-    // 접근성 정보 필터링
-    if (selectedAccessibility.length > 0) {
-      results = results.filter((f) => {
-        if (!f.isAccessible) return false
-        return selectedAccessibility.every((accKey) => {
-          if (accKey === "wheelchair_entrance") {
-            return f.wheelchair_entrance === 0 || f.wheelchair_entrance === '0'
-          }
-          if (accKey === "wheelchair_parking") {
-            return f.wheelchair_parking === 0 || f.wheelchair_parking === '0'
-          }
-          if (accKey === "wheelchair_toilet") {
-            return f.wheelchair_toilet === 0 || f.wheelchair_toilet === '0'
-          }
-          return false
+          return (
+            name.includes(query) ||
+            address.includes(query) ||
+            features.some((feat) => feat.includes(query))
+          )
         })
-      })
-    }
+      }
 
-    setFilteredFacilities(results)
-    const firstResult = results[0]
+      if (selectedProvince) {
+        results = results.filter((f) => f.province === selectedProvince)
+        if (selectedDistrict) {
+          results = results.filter((f) => f.district === selectedDistrict)
+        }
+      }
 
-    if (firstResult?.lat && firstResult?.lng) {
-      setMapCenter({ lat: firstResult.lat, lng: firstResult.lng })
-    } else {
-      setMapCenter(DEFAULT_CENTER)
+      if (selectedFacilities.length > 0) {
+        results = results.filter((f) =>
+          selectedFacilities.every((sf) => (f.features ?? []).includes(sf)),
+        )
+      }
+
+      // 접근성 정보 필터링
+      if (selectedAccessibility.length > 0) {
+        results = results.filter((f) => {
+          if (!f.isAccessible) return false
+          return selectedAccessibility.every((accKey) => {
+            if (accKey === "wheelchair_entrance") {
+              return f.wheelchair_entrance === 0 || f.wheelchair_entrance === '0'
+            }
+            if (accKey === "wheelchair_parking") {
+              return f.wheelchair_parking === 0 || f.wheelchair_parking === '0'
+            }
+            if (accKey === "wheelchair_toilet") {
+              return f.wheelchair_toilet === 0 || f.wheelchair_toilet === '0'
+            }
+            return false
+          })
+        })
+      }
+
+      setFilteredFacilities(results)
+      const firstResult = results[0]
+
+      if (firstResult?.lat && firstResult?.lng) {
+        setMapCenter({ lat: firstResult.lat, lng: firstResult.lng })
+      } else {
+        setMapCenter(DEFAULT_CENTER)
+      }
+      // 검색 시 첫 페이지로 이동하고 URL 업데이트
+      setCurrentPage(1)
+      setPageBlock(0)
+      const newParams = new URLSearchParams(searchParams.toString())
+      newParams.set('page', '1')
+      router.replace(`/search?${newParams.toString()}`, { scroll: false })
+      setIsRegionOpen(false)
+      setIsDateOpen(false)
+      setIsFacilityOpen(false)
+    } finally {
+      setIsLoading(false)
     }
-    // 검색 시 첫 페이지로 이동하고 URL 업데이트
-    setCurrentPage(1)
-    setPageBlock(0)
-    const newParams = new URLSearchParams(searchParams.toString())
-    newParams.set('page', '1')
-    router.replace(`/search?${newParams.toString()}`, { scroll: false })
-    setIsRegionOpen(false)
-    setIsDateOpen(false)
-    setIsFacilityOpen(false)
   }
 
   const handleDateClick = (day: number) => {
@@ -892,10 +910,12 @@ export default function SearchPage() {
   const confirmDateSelection = () => {
     if (tempSelectedDate) {
       const selected = new Date(tempSelectedDate)
-      const normalizedHour = selectedHour % 12
-      const hour24 = normalizedHour + (selectedAmPm === "PM" ? 12 : 0)
-      selected.setHours(hour24, selectedMinute, 0, 0)
-      const formattedDate = `${selected.getFullYear()}년 ${selected.getMonth() + 1}월 ${selected.getDate()}일 ${selectedHour}:${selectedMinute.toString().padStart(2, "0")} ${selectedAmPm}`
+      selected.setHours(selectedHour, selectedMinute, 0, 0)
+      // 월/일 - 시간 형태로 표시 (예: "1/15 - 14:30")
+      const month = selected.getMonth() + 1
+      const day = selected.getDate()
+      const formattedTime = `${selectedHour.toString().padStart(2, "0")}:${selectedMinute.toString().padStart(2, "0")}`
+      const formattedDate = `${month}/${day} - ${formattedTime}`
       setSelectedDate(formattedDate)
       setSelectedDateTime(selected)
       setIsDateOpen(false)
@@ -908,7 +928,6 @@ export default function SearchPage() {
     setTempSelectedDate(null)
     setSelectedHour(12)
     setSelectedMinute(0)
-    setSelectedAmPm("PM")
     setCurrentDate(new Date())
   }
 
@@ -930,6 +949,26 @@ export default function SearchPage() {
       setCurrentDate(prev)
     }
   }
+
+  // 날짜/시간 선택이 열릴 때 스크롤 위치 자동 조정
+  useEffect(() => {
+    if (isDateOpen) {
+      // 시간 스크롤 위치 조정
+      if (hourScrollRef.current) {
+        const itemHeight = 48
+        hourScrollRef.current.scrollTop = selectedHour * itemHeight
+      }
+      // 분 스크롤 위치 조정
+      if (minuteScrollRef.current) {
+        const itemHeight = 48
+        const minutes = [0, 10, 20, 30, 40, 50]
+        const minuteIndex = minutes.indexOf(selectedMinute)
+        if (minuteIndex !== -1) {
+          minuteScrollRef.current.scrollTop = minuteIndex * itemHeight
+        }
+      }
+    }
+  }, [isDateOpen, selectedHour, selectedMinute])
 
   const hasVisited = (facilityId: string | number) => {
     return String(facilityId) === "2"
@@ -1135,6 +1174,10 @@ export default function SearchPage() {
                 variant="outline"
                 className="w-full lg:w-48 justify-between bg-transparent"
                 onClick={() => {
+                  if (!isRegionOpen) {
+                    setTempSelectedProvince(selectedProvince)
+                    setTempSelectedDistrict(selectedDistrict)
+                  }
                   setIsRegionOpen(!isRegionOpen)
                   setIsDateOpen(false)
                   setIsFacilityOpen(false)
@@ -1142,82 +1185,111 @@ export default function SearchPage() {
               >
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  <span>{selectedDistrict || selectedProvince || "지역"}</span>
+                  <span>
+                    {selectedProvince 
+                      ? (selectedDistrict ? `${selectedProvince} ${selectedDistrict}` : selectedProvince)
+                      : "지역"
+                    }
+                  </span>
                 </div>
                 <ChevronRight className={`w-4 h-4 transition-transform ${isRegionOpen ? "rotate-90" : ""}`} />
               </Button>
 
               {isRegionOpen && (
-                <div className="absolute top-full left-0 mt-2 w-[600px] bg-white rounded-lg shadow-xl border p-4 z-50 flex gap-4 h-80">
-                  <div className="w-1/3 border-r overflow-y-auto">
-                    <div className="p-2 font-bold text-sm text-muted-foreground mb-2">시/도 (다중선택 가능)</div>
-                    {Object.keys(regionData).map((province) => {
-                      const isSelectedProvince = selectedProvince === province
-                      return (
-                        <div
-                          key={province}
-                          className={`p-2 hover:bg-slate-100 cursor-pointer flex items-center gap-2 ${
-                            isSelectedProvince ? "bg-purple-50 text-purple-700 font-medium" : ""
-                          }`}
-                          onClick={() => {
-                            if (isSelectedProvince) {
-                              setSelectedProvince(null)
-                              setSelectedDistrict(null)
-                            } else {
-                              setSelectedProvince(province)
-                              setSelectedDistrict(null)
-                            }
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelectedProvince}
-                            readOnly
-                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                          />
-                          {province}
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div className="w-1/3 border-r overflow-y-auto">
-                    <div className="p-2 font-bold text-sm text-muted-foreground mb-2">시/군/구 (다중선택 가능)</div>
-                    {selectedProvince &&
-                      regionData[selectedProvince]?.map((district) => {
-                        const isSelectedDistrict = selectedDistrict === district
+                <div className="absolute top-full left-0 mt-2 w-[600px] bg-white rounded-lg shadow-xl border p-4 z-50 flex flex-col gap-4">
+                  <div className="flex gap-4 h-80">
+                    <div className="w-1/3 border-r overflow-y-auto">
+                      <div className="p-2 font-bold text-sm text-muted-foreground mb-2">시/도</div>
+                      {Object.keys(regionData).map((province) => {
+                        const isSelectedProvince = tempSelectedProvince === province
                         return (
                           <div
-                            key={district}
+                            key={province}
                             className={`p-2 hover:bg-slate-100 cursor-pointer flex items-center gap-2 ${
-                              isSelectedDistrict ? "bg-purple-50 text-purple-700 font-medium" : ""
+                              isSelectedProvince ? "bg-purple-50 text-purple-700 font-medium" : ""
                             }`}
                             onClick={() => {
-                              if (isSelectedDistrict) {
-                                setSelectedDistrict(null)
+                              if (isSelectedProvince) {
+                                setTempSelectedProvince(null)
+                                setTempSelectedDistrict(null)
                               } else {
-                                setSelectedDistrict(district)
+                                setTempSelectedProvince(province)
+                                setTempSelectedDistrict(null)
                               }
                             }}
                           >
                             <input
                               type="checkbox"
-                              checked={isSelectedDistrict}
+                              checked={isSelectedProvince}
                               readOnly
                               className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                             />
-                            {district}
+                            {province}
                           </div>
                         )
                       })}
+                    </div>
+                    <div className="w-1/3 border-r overflow-y-auto">
+                      <div className="p-2 font-bold text-sm text-muted-foreground mb-2">시/군/구</div>
+                      {tempSelectedProvince &&
+                        regionData[tempSelectedProvince]?.map((district) => {
+                          const isSelectedDistrict = tempSelectedDistrict === district
+                          return (
+                            <div
+                              key={district}
+                              className={`p-2 hover:bg-slate-100 cursor-pointer flex items-center gap-2 ${
+                                isSelectedDistrict ? "bg-purple-50 text-purple-700 font-medium" : ""
+                              }`}
+                              onClick={() => {
+                                if (isSelectedDistrict) {
+                                  setTempSelectedDistrict(null)
+                                } else {
+                                  setTempSelectedDistrict(district)
+                                }
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelectedDistrict}
+                                readOnly
+                                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                              />
+                              {district}
+                            </div>
+                          )
+                        })}
+                    </div>
+                    <div className="w-1/3 overflow-y-auto">
+                      <div className="p-2 font-bold text-sm text-muted-foreground mb-2">선택 지역</div>
+                      {tempSelectedProvince && (
+                        <div className="p-2 text-sm">
+                          {tempSelectedProvince}
+                          {tempSelectedDistrict ? ` ${tempSelectedDistrict}` : ""}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="w-1/3 overflow-y-auto">
-                    <div className="p-2 font-bold text-sm text-muted-foreground mb-2">선택 지역</div>
-                    {selectedProvince && (
-                      <div className="p-2 text-sm">
-                        {selectedProvince}
-                        {selectedDistrict ? ` ${selectedDistrict}` : ""}
-                      </div>
-                    )}
+                  <div className="flex gap-2 pt-2 border-t">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-100" 
+                      onClick={() => {
+                        setTempSelectedProvince(null)
+                        setTempSelectedDistrict(null)
+                      }}
+                    >
+                      초기화
+                    </Button>
+                    <Button 
+                      className="flex-1 bg-purple-600" 
+                      onClick={() => {
+                        setSelectedProvince(tempSelectedProvince)
+                        setSelectedDistrict(tempSelectedDistrict)
+                        setIsRegionOpen(false)
+                      }}
+                    >
+                      선택 완료
+                    </Button>
                   </div>
                 </div>
               )}
@@ -1229,6 +1301,15 @@ export default function SearchPage() {
                 variant="outline"
                 className="w-full lg:w-48 justify-between bg-transparent"
                 onClick={() => {
+                  if (!isDateOpen && selectedDateTime) {
+                    setTempSelectedDate(new Date(selectedDateTime))
+                    setSelectedHour(selectedDateTime.getHours())
+                    setSelectedMinute(selectedDateTime.getMinutes())
+                  } else if (!isDateOpen) {
+                    setTempSelectedDate(null)
+                    setSelectedHour(12)
+                    setSelectedMinute(0)
+                  }
                   setIsDateOpen(!isDateOpen)
                   setIsRegionOpen(false)
                   setIsFacilityOpen(false)
@@ -1236,7 +1317,7 @@ export default function SearchPage() {
               >
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  <span>{selectedDate === "이용날짜/시간" ? "이용날짜/시간" : selectedDate.split(" ")[0] + "..."}</span>
+                  <span>{selectedDate === "이용날짜/시간" ? "이용날짜/시간" : selectedDate}</span>
                 </div>
                 <ChevronRight className={`w-4 h-4 transition-transform ${isDateOpen ? "rotate-90" : ""}`} />
               </Button>
@@ -1281,37 +1362,136 @@ export default function SearchPage() {
                   </div>
                   <div className="border-t pt-4 space-y-4">
                     <div className="flex justify-center items-center gap-2">
-                      <select
-                        className="border rounded p-1"
-                        value={selectedAmPm}
-                        onChange={(e) => setSelectedAmPm(e.target.value)}
-                      >
-                        <option value="AM">AM</option>
-                        <option value="PM">PM</option>
-                      </select>
-                      <select
-                        className="border rounded p-1"
-                        value={selectedHour}
-                        onChange={(e) => setSelectedHour(Number(e.target.value))}
-                      >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                          <option key={h} value={h}>
-                            {h}
-                          </option>
-                        ))}
-                      </select>
-                      <span>:</span>
-                      <select
-                        className="border rounded p-1"
-                        value={selectedMinute}
-                        onChange={(e) => setSelectedMinute(Number(e.target.value))}
-                      >
-                        {[0, 10, 20, 30, 40, 50].map((m) => (
-                          <option key={m} value={m}>
-                            {m.toString().padStart(2, "0")}
-                          </option>
-                        ))}
-                      </select>
+                      {/* 시간 선택 컬럼 */}
+                      <div className="relative w-16 h-48 overflow-hidden">
+                        <div className="absolute inset-0 flex items-center pointer-events-none z-10">
+                          <div className="w-full h-12 bg-gray-100/50 border-y border-gray-300" />
+                        </div>
+                        <div
+                          ref={hourScrollRef}
+                          className="h-full overflow-y-scroll scroll-smooth hide-scrollbar"
+                          onScroll={(e) => {
+                            const scrollTop = e.currentTarget.scrollTop
+                            const itemHeight = 48
+                            const selectedIndex = Math.round(scrollTop / itemHeight)
+                            if (selectedIndex >= 0 && selectedIndex < 24 && selectedIndex !== selectedHour) {
+                              setSelectedHour(selectedIndex)
+                            }
+                            
+                            // 스크롤이 멈추면 가장 가까운 항목으로 스냅
+                            if (hourScrollTimeoutRef.current) {
+                              clearTimeout(hourScrollTimeoutRef.current)
+                            }
+                            hourScrollTimeoutRef.current = setTimeout(() => {
+                              if (hourScrollRef.current) {
+                                const currentScroll = hourScrollRef.current.scrollTop
+                                const nearestIndex = Math.round(currentScroll / itemHeight)
+                                const clampedIndex = Math.max(0, Math.min(23, nearestIndex))
+                                hourScrollRef.current.scrollTo({
+                                  top: clampedIndex * itemHeight,
+                                  behavior: 'smooth'
+                                })
+                                setSelectedHour(clampedIndex)
+                              }
+                            }, 150)
+                          }}
+                        >
+                          <div className="h-[96px]" />
+                          {Array.from({ length: 24 }, (_, i) => i).map((h) => {
+                            const isSelected = h === selectedHour
+                            return (
+                              <div
+                                key={h}
+                                className="h-12 flex items-center justify-center cursor-pointer transition-all"
+                                style={{
+                                  color: isSelected ? '#1f2937' : '#9ca3af',
+                                  fontWeight: isSelected ? 'bold' : 'normal',
+                                  fontSize: isSelected ? '16px' : '14px',
+                                }}
+                                onClick={() => {
+                                  setSelectedHour(h)
+                                  if (hourScrollRef.current) {
+                                    hourScrollRef.current.scrollTo({
+                                      top: h * 48,
+                                      behavior: 'smooth'
+                                    })
+                                  }
+                                }}
+                              >
+                                {h.toString().padStart(2, "0")}
+                              </div>
+                            )
+                          })}
+                          <div className="h-[96px]" />
+                        </div>
+                      </div>
+                      <span className="text-lg font-bold">:</span>
+                      {/* 분 선택 컬럼 */}
+                      <div className="relative w-16 h-48 overflow-hidden">
+                        <div className="absolute inset-0 flex items-center pointer-events-none z-10">
+                          <div className="w-full h-12 bg-gray-100/50 border-y border-gray-300" />
+                        </div>
+                        <div
+                          ref={minuteScrollRef}
+                          className="h-full overflow-y-scroll scroll-smooth hide-scrollbar"
+                          onScroll={(e) => {
+                            const scrollTop = e.currentTarget.scrollTop
+                            const itemHeight = 48
+                            const selectedIndex = Math.round(scrollTop / itemHeight)
+                            const minutes = [0, 10, 20, 30, 40, 50]
+                            const newMinute = minutes[selectedIndex]
+                            if (newMinute !== undefined && newMinute !== selectedMinute) {
+                              setSelectedMinute(newMinute)
+                            }
+                            
+                            // 스크롤이 멈추면 가장 가까운 항목으로 스냅
+                            if (minuteScrollTimeoutRef.current) {
+                              clearTimeout(minuteScrollTimeoutRef.current)
+                            }
+                            minuteScrollTimeoutRef.current = setTimeout(() => {
+                              if (minuteScrollRef.current) {
+                                const currentScroll = minuteScrollRef.current.scrollTop
+                                const nearestIndex = Math.round(currentScroll / itemHeight)
+                                const clampedIndex = Math.max(0, Math.min(5, nearestIndex))
+                                minuteScrollRef.current.scrollTo({
+                                  top: clampedIndex * itemHeight,
+                                  behavior: 'smooth'
+                                })
+                                const minutes = [0, 10, 20, 30, 40, 50]
+                                setSelectedMinute(minutes[clampedIndex])
+                              }
+                            }, 150)
+                          }}
+                        >
+                          <div className="h-[96px]" />
+                          {[0, 10, 20, 30, 40, 50].map((m, index) => {
+                            const isSelected = m === selectedMinute
+                            return (
+                              <div
+                                key={m}
+                                className="h-12 flex items-center justify-center cursor-pointer transition-all"
+                                style={{
+                                  color: isSelected ? '#1f2937' : '#9ca3af',
+                                  fontWeight: isSelected ? 'bold' : 'normal',
+                                  fontSize: isSelected ? '16px' : '14px',
+                                }}
+                                onClick={() => {
+                                  setSelectedMinute(m)
+                                  if (minuteScrollRef.current) {
+                                    minuteScrollRef.current.scrollTo({
+                                      top: index * 48,
+                                      behavior: 'smooth'
+                                    })
+                                  }
+                                }}
+                              >
+                                {m.toString().padStart(2, "0")}
+                              </div>
+                            )
+                          })}
+                          <div className="h-[96px]" />
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button 

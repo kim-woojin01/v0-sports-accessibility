@@ -1038,64 +1038,176 @@ export async function GET(request: NextRequest) {
 
     // ⭐ 마지막 6시간 net_people 시계열 생성
 
-    async function loadLast6Values(id: number, date: Date): Promise<number[]> {
+    // ⚡ 최적화 1: 배치 DB 쿼리 - 모든 시설의 last6Values를 한 번에 가져오기
+    async function loadAllLast6Values(
+      facilityIds: number[],
+      date: Date
+    ): Promise<Map<number, number[]>> {
+      if (facilityIds.length === 0) {
+        return new Map()
+      }
 
       const bucketMs = TEMPORAL_INTERVAL_MINUTES * 60 * 1000
-
       const bucketCount = TEMPORAL_BUCKETS
+      const windowStart = new Date(date.getTime() - TEMPORAL_WINDOW_MS)
 
+      // 한 번의 쿼리로 모든 시설의 로그 데이터 가져오기
+      const [rows] = await connection!.execute(
+        `
+        SELECT facility_id, timestamp, log_type
+        FROM facility_logs
+        WHERE facility_id IN (?)
+          AND timestamp > ?
+          AND timestamp <= ?
+        ORDER BY facility_id, timestamp ASC
+        `,
+        [facilityIds, windowStart, date]
+      )
+
+      // 시설별로 그룹화하여 처리
+      const resultMap = new Map<number, number[]>()
+
+      // 각 시설에 대해 빈 배열 초기화
+      facilityIds.forEach((id) => {
+        resultMap.set(id, new Array(bucketCount).fill(0))
+      })
+
+      // 로그 데이터를 시설별로 처리
+      for (const row of rows as Array<{
+        facility_id: number
+        timestamp: string | Date
+        log_type: string
+      }>) {
+        const facilityId = Number(row.facility_id)
+        if (!resultMap.has(facilityId)) continue
+
+        const ts = new Date(row.timestamp)
+        if (Number.isNaN(ts.getTime())) continue
+
+        const deltas = resultMap.get(facilityId)!
+        const bucketIndex = Math.min(
+          bucketCount - 1,
+          Math.max(0, Math.floor((ts.getTime() - windowStart.getTime()) / bucketMs))
+        )
+
+        if (row.log_type === "ENTRY") deltas[bucketIndex] += 1
+        else if (row.log_type === "EXIT") deltas[bucketIndex] -= 1
+      }
+
+      // 데이터가 없는 시설은 synthetic 데이터 생성
+      for (const [facilityId, deltas] of resultMap.entries()) {
+        if (!deltas.some((value) => value !== 0)) {
+          resultMap.set(facilityId, generateSyntheticSeries(facilityId, date))
+        }
+      }
+
+      return resultMap
+    }
+
+    // 기존 함수는 배치 데이터를 사용하도록 수정 (하위 호환성 유지)
+    async function loadLast6Values(id: number, date: Date): Promise<number[]> {
+      const bucketMs = TEMPORAL_INTERVAL_MINUTES * 60 * 1000
+      const bucketCount = TEMPORAL_BUCKETS
       const windowStart = new Date(date.getTime() - TEMPORAL_WINDOW_MS)
 
       const [rows] = await connection!.execute(
-
         `
-
         SELECT timestamp, log_type
-
         FROM facility_logs
-
         WHERE facility_id = ?
-
           AND timestamp > ?
-
           AND timestamp <= ?
-
         ORDER BY timestamp ASC
-
         `,
-
-        [id, windowStart, date],
-
+        [id, windowStart, date]
       )
 
       const deltas = new Array(bucketCount).fill(0)
 
       for (const row of rows as Array<{ timestamp: string | Date; log_type: string }>) {
-
         const ts = new Date(row.timestamp)
-
         if (Number.isNaN(ts.getTime())) continue
 
         const bucketIndex = Math.min(
-
           bucketCount - 1,
-
-          Math.max(0, Math.floor((ts.getTime() - windowStart.getTime()) / bucketMs)),
-
+          Math.max(0, Math.floor((ts.getTime() - windowStart.getTime()) / bucketMs))
         )
 
         if (row.log_type === "ENTRY") deltas[bucketIndex] += 1
-
         else if (row.log_type === "EXIT") deltas[bucketIndex] -= 1
-
       }
 
       return deltas.some((value) => value !== 0)
-
         ? deltas
-
         : generateSyntheticSeries(id, date)
+    }
 
+    // ⚡ 최적화 1: 배치 DB 쿼리 - 모든 접근성 시설의 last6Values를 한 번에 가져오기
+    async function loadAllAccessibleLast6Values(
+      facilityNames: string[],
+      facilityIdMap: Map<string, number>,
+      date: Date
+    ): Promise<Map<string, number[]>> {
+      if (facilityNames.length === 0) {
+        return new Map()
+      }
+
+      const bucketMs = TEMPORAL_INTERVAL_MINUTES * 60 * 1000
+      const bucketCount = TEMPORAL_BUCKETS
+      const windowStart = new Date(date.getTime() - TEMPORAL_WINDOW_MS)
+
+      // 한 번의 쿼리로 모든 접근성 시설의 로그 데이터 가져오기
+      const [rows] = await connection!.execute(
+        `
+        SELECT facility_name, created_at, log_type
+        FROM accessibility_facilities_logs
+        WHERE facility_name IN (?)
+          AND created_at > ?
+          AND created_at <= ?
+        ORDER BY facility_name, created_at ASC
+        `,
+        [facilityNames, windowStart, date]
+      )
+
+      // 시설별로 그룹화하여 처리
+      const resultMap = new Map<string, number[]>()
+
+      // 각 시설에 대해 빈 배열 초기화
+      facilityNames.forEach((name) => {
+        resultMap.set(name, new Array(bucketCount).fill(0))
+      })
+
+      // 로그 데이터를 시설별로 처리
+      for (const row of rows as Array<{
+        facility_name: string
+        created_at: string | Date
+        log_type: string
+      }>) {
+        const facilityName = row.facility_name
+        if (!resultMap.has(facilityName)) continue
+
+        const ts = new Date(row.created_at)
+        if (Number.isNaN(ts.getTime())) continue
+
+        const deltas = resultMap.get(facilityName)!
+        const bucketIndex = Math.min(
+          bucketCount - 1,
+          Math.max(0, Math.floor((ts.getTime() - windowStart.getTime()) / bucketMs))
+        )
+
+        if (row.log_type === "ENTRY") deltas[bucketIndex] += 1
+        else if (row.log_type === "EXIT") deltas[bucketIndex] -= 1
+      }
+
+      // 데이터가 없는 시설은 synthetic 데이터 생성
+      for (const [facilityName, deltas] of resultMap.entries()) {
+        if (!deltas.some((value) => value !== 0)) {
+          const facilityId = facilityIdMap.get(facilityName) || 0
+          resultMap.set(facilityName, generateSyntheticSeries(facilityId, date))
+        }
+      }
+
+      return resultMap
     }
 
     async function loadAccessibleLast6Values(
@@ -1176,6 +1288,13 @@ export async function GET(request: NextRequest) {
 
     const facilityRowsArray = facilityRows as any[]
 
+    // ⚡ 최적화 1: 배치 DB 쿼리 - 모든 시설의 last6Values를 미리 로드
+    let allLast6ValuesMap: Map<number, number[]> = new Map()
+    if (shouldPredict && facilityRowsArray.length > 0) {
+      const facilityIds = facilityRowsArray.map((f: any) => Number(f.id))
+      allLast6ValuesMap = await loadAllLast6Values(facilityIds, targetDate)
+    }
+
     // ⚡ 최적화 3: 배치로 나눠서 처리 (메모리 관리)
 
     for (let i = 0; i < facilityRowsArray.length; i += BATCH_SIZE) {
@@ -1208,7 +1327,8 @@ export async function GET(request: NextRequest) {
 
             try {
 
-              const last6 = await loadLast6Values(f.id, targetDate)
+              // ⚡ 최적화 1: 미리 로드된 배치 데이터 사용
+              const last6 = allLast6ValuesMap.get(Number(f.id)) || []
 
               const prediction = await predictFacility(f.id, last6, targetDate)
 
@@ -1352,6 +1472,25 @@ export async function GET(request: NextRequest) {
 
     const accessibleRowsArray = accessibleRows as any[]
 
+    // ⚡ 최적화 1: 배치 DB 쿼리 - 모든 접근성 시설의 last6Values를 미리 로드
+    let allAccessibleLast6ValuesMap: Map<string, number[]> = new Map()
+    const accessibleFacilityIdMap = new Map<string, number>()
+    
+    if (shouldPredict && accessibleRowsArray.length > 0) {
+      const facilityNames: string[] = []
+      accessibleRowsArray.forEach((f: any) => {
+        const name = f.facility_name
+        const id = Number(f.id)
+        facilityNames.push(name)
+        accessibleFacilityIdMap.set(name, id)
+      })
+      allAccessibleLast6ValuesMap = await loadAllAccessibleLast6Values(
+        facilityNames,
+        accessibleFacilityIdMap,
+        targetDate
+      )
+    }
+
     // ⚡ 최적화 3: 배치로 나눠서 처리
 
     for (let i = 0; i < accessibleRowsArray.length; i += BATCH_SIZE) {
@@ -1398,15 +1537,8 @@ export async function GET(request: NextRequest) {
 
             try {
 
-              const last6Accessible = await loadAccessibleLast6Values(
-
-                f.facility_name,
-
-                Number(f.id),
-
-                targetDate,
-
-              )
+              // ⚡ 최적화 1: 미리 로드된 배치 데이터 사용
+              const last6Accessible = allAccessibleLast6ValuesMap.get(f.facility_name) || []
 
               const prediction = await predictAccessibleFacility(
 
