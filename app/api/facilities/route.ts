@@ -14,22 +14,19 @@ import mysql from "mysql2/promise"
 
 // ---------------------------------------
 
+// Railway DB 설정 (51173 포트 - 통합 DB)
+// Vercel 환경 변수: RAILWAY_HOST, RAILWAY_PORT, RAILWAY_USER, RAILWAY_PASSWORD, RAILWAY_DATABASE
 const dbConfig = {
-
   host: process.env.RAILWAY_HOST || "nozomi.proxy.rlwy.net",
-
   port: Number(process.env.RAILWAY_PORT) || 51173,
-
   user: process.env.RAILWAY_USER || "root",
-
-  password:
-
-    process.env.RAILWAY_PASSWORD ||
-
-    "lRzqwghWSchqdRyErESveHwVyKYUfhME",
-
+  password: process.env.RAILWAY_PASSWORD || "lRzqwghWSchqdRyErESveHwVyKYUfhME",
   database: process.env.RAILWAY_DATABASE || "railway",
-
+  // 연결 안정성 향상 옵션
+  connectTimeout: 10000,
+  acquireTimeout: 10000,
+  timeout: 10000,
+  reconnect: true,
 }
 
 // ---------------------------------------
@@ -982,7 +979,27 @@ export async function GET(request: NextRequest) {
 
     const realTimeWindowStartSql = formatDateTime(realTimeWindowStart)
 
-    connection = await mysql.createConnection(dbConfig)
+    // DB 연결 시도 (에러 로깅 강화)
+    try {
+      connection = await mysql.createConnection(dbConfig)
+      console.log("✅ DB 연결 성공:", {
+        host: dbConfig.host,
+        port: dbConfig.port,
+        database: dbConfig.database,
+        user: dbConfig.user
+      })
+    } catch (dbError: any) {
+      console.error("❌ DB 연결 실패:", {
+        error: dbError.message,
+        code: dbError.code,
+        host: dbConfig.host,
+        port: dbConfig.port,
+        database: dbConfig.database,
+        user: dbConfig.user,
+        hasPassword: !!dbConfig.password
+      })
+      throw new Error(`Database connection failed: ${dbError.message}`)
+    }
 
     // -----------------------------------------
 
@@ -1628,15 +1645,36 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json([...facilityList, ...accessibleList], { status: 200 })
 
-  } catch (error) {
+  } catch (error: any) {
 
-    console.error("API Error:", error)
+    console.error("❌ API Error:", {
+      message: error?.message || String(error),
+      code: error?.code,
+      stack: error?.stack,
+      name: error?.name,
+      dbConfig: {
+        host: dbConfig.host,
+        port: dbConfig.port,
+        database: dbConfig.database,
+        user: dbConfig.user,
+        hasPassword: !!dbConfig.password
+      }
+    })
 
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ 
+      error: error?.message || String(error),
+      code: error?.code || "UNKNOWN_ERROR"
+    }, { status: 500 })
 
   } finally {
 
-    if (connection) connection.end()
+    if (connection) {
+      try {
+        await connection.end()
+      } catch (endError) {
+        console.error("❌ DB 연결 종료 실패:", endError)
+      }
+    }
 
   }
 

@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import mysql from 'mysql2/promise'
 
-// Railway DB 연결 설정
-// facility_favorites 테이블이 있는 Railway DB에 연결
-// nozomi.proxy.rlwy.net:51173 (리뷰 DB와 동일)
-// 이 DB는 Railway 대시보드에서 생성한 facility_favorites 테이블이 있는 DB입니다
+// Railway DB 설정 (51173 포트 - 통합 DB)
+// Vercel 환경 변수: RAILWAY_HOST, RAILWAY_PORT, RAILWAY_USER, RAILWAY_PASSWORD, RAILWAY_DATABASE
 const dbConfig = {
-  host: process.env.RAILWAY_REVIEWS_HOST || 'nozomi.proxy.rlwy.net',
-  port: Number(process.env.RAILWAY_REVIEWS_PORT) || 51173,
-  user: process.env.RAILWAY_REVIEWS_USER || 'root',
-  password: process.env.RAILWAY_REVIEWS_PASSWORD || 'lRzqwghWSchqdRyErESveHwVyKYUfhME',
-  database: process.env.RAILWAY_REVIEWS_DATABASE || 'railway',
+  host: process.env.RAILWAY_HOST || process.env.RAILWAY_REVIEWS_HOST || 'nozomi.proxy.rlwy.net',
+  port: Number(process.env.RAILWAY_PORT || process.env.RAILWAY_REVIEWS_PORT) || 51173,
+  user: process.env.RAILWAY_USER || process.env.RAILWAY_REVIEWS_USER || 'root',
+  password: process.env.RAILWAY_PASSWORD || process.env.RAILWAY_REVIEWS_PASSWORD || 'lRzqwghWSchqdRyErESveHwVyKYUfhME',
+  database: process.env.RAILWAY_DATABASE || process.env.RAILWAY_REVIEWS_DATABASE || 'railway',
+  connectTimeout: 10000,
+  acquireTimeout: 10000,
+  timeout: 10000,
+  reconnect: true,
 }
 
 // DB 연결 정보 확인 함수
