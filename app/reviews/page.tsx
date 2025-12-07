@@ -428,6 +428,11 @@ export default function ReviewsPage() {
                 className="pl-10 h-12"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch()
+                  }
+                }}
               />
             </div>
             <Button className="h-12 px-8 bg-purple-600" onClick={handleSearch}>
@@ -509,10 +514,24 @@ export default function ReviewsPage() {
 
         {!isLoading && totalPages > 0 && (
           <div className="flex justify-center items-center mt-12 gap-2">
+            {/* 맨 처음 버튼 */}
             <Button
               variant="ghost"
               size="icon"
-              className="w-8 h-8"
+              className="w-8 h-8 border border-gray-300"
+              onClick={() => {
+                setCurrentPage(1)
+                setPageBlock(0)
+              }}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 -ml-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 border border-gray-300"
               onClick={handlePrevBlock}
               disabled={pageBlock === 0}
             >
@@ -534,11 +553,25 @@ export default function ReviewsPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="w-8 h-8"
+              className="w-8 h-8 border border-gray-300"
               onClick={handleNextBlock}
               disabled={(pageBlock + 1) * 5 >= totalPages}
             >
               <ChevronRight className="w-4 h-4" />
+            </Button>
+            {/* 맨 끝 버튼 */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 border border-gray-300"
+              onClick={() => {
+                setCurrentPage(totalPages)
+                setPageBlock(Math.floor((totalPages - 1) / 5))
+              }}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 -ml-3" />
             </Button>
           </div>
         )}

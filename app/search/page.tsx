@@ -19,6 +19,11 @@ import {
   Crosshair,
   Loader2,
   Heart,
+  Check,
+  X,
+  DoorOpen,
+  Car,
+  Bath,
 } from "lucide-react"
 import Link from "next/link"
 import LoadingSpinner from "@/components/loading-spinner"
@@ -232,6 +237,10 @@ interface Facility {
   current_people?: number
   predicted_level?: "crowded" | "moderate" | "leisure"
   homepage?: string
+  isAccessible?: boolean
+  wheelchair_entrance?: string | number
+  wheelchair_parking?: string | number
+  wheelchair_toilet?: string | number
 }
 
 const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 }
@@ -333,6 +342,7 @@ export default function SearchPage() {
   const [highlightCongestion, setHighlightCongestion] = useState(false)
   const [highlightSearch, setHighlightSearch] = useState(false)
   const [favoriteFacilities, setFavoriteFacilities] = useState<number[]>([])
+  const [isMounted, setIsMounted] = useState(false) // Hydration mismatch 방지
   
   // 리뷰 모달 관련 상태
   const [selectedFacilityId, setSelectedFacilityId] = useState<number | null>(null)
@@ -346,6 +356,7 @@ export default function SearchPage() {
   const [selectedDate, setSelectedDate] = useState("이용날짜/시간")
   const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null)
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>([])
+  const [selectedAccessibility, setSelectedAccessibility] = useState<string[]>([]) // 접근성 정보 필터
   const [searchQuery, setSearchQuery] = useState("")
 
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -366,6 +377,11 @@ export default function SearchPage() {
   const locationWatchId = useRef<number | null>(null)
   const hasCenteredOnUser = useRef(false)
   const isInitialLoad = useRef(true) // 초기 로드 여부 추적
+
+  // 클라이언트 마운트 확인 (Hydration mismatch 방지)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     // URL 파라미터에서 혼잡도 하이라이트 확인
@@ -757,6 +773,10 @@ export default function SearchPage() {
           congestion,
           predicted_level: item.predicted_level,
           homepage: item.homepage,
+          isAccessible: item.isAccessible ?? false,
+          wheelchair_entrance: item.wheelchair_entrance,
+          wheelchair_parking: item.wheelchair_parking,
+          wheelchair_toilet: item.wheelchair_toilet,
         }
       })
 
@@ -823,6 +843,25 @@ export default function SearchPage() {
       results = results.filter((f) =>
         selectedFacilities.every((sf) => (f.features ?? []).includes(sf)),
       )
+    }
+
+    // 접근성 정보 필터링
+    if (selectedAccessibility.length > 0) {
+      results = results.filter((f) => {
+        if (!f.isAccessible) return false
+        return selectedAccessibility.every((accKey) => {
+          if (accKey === "wheelchair_entrance") {
+            return f.wheelchair_entrance === 0 || f.wheelchair_entrance === '0'
+          }
+          if (accKey === "wheelchair_parking") {
+            return f.wheelchair_parking === 0 || f.wheelchair_parking === '0'
+          }
+          if (accKey === "wheelchair_toilet") {
+            return f.wheelchair_toilet === 0 || f.wheelchair_toilet === '0'
+          }
+          return false
+        })
+      })
     }
 
     setFilteredFacilities(results)
@@ -1044,10 +1083,10 @@ export default function SearchPage() {
   const selectedFacility = facilitiesData.find((f) => String(f.id) === String(selectedFacilityId))
 
   return (
-    <div className={`flex flex-col min-h-screen items-center w-full relative ${isReviewModalOpen ? 'overflow-hidden' : ''}`}>
+    <div className={`flex flex-col min-h-screen items-center w-full relative ${isMounted && isReviewModalOpen ? 'overflow-hidden' : ''}`}>
       {/* Map Section */}
       <div className={`relative w-full h-[500px] rounded-2xl overflow-hidden shadow-lg bg-slate-100 mt-20 transition-all duration-300 ${
-        isReviewModalOpen ? 'opacity-50 z-0' : 'opacity-100 z-10'
+        isMounted && isReviewModalOpen ? 'opacity-50 z-0' : 'opacity-100 z-10'
       }`}>
         <FacilityMap facilities={currentFacilities} center={mapCenter} userLocation={userLocation} />
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-xl shadow-md text-sm font-medium text-slate-700">
@@ -1069,11 +1108,11 @@ export default function SearchPage() {
 
       {/* Search Filter Bar */}
       <div className={`sticky top-20 z-40 bg-white border-b shadow-sm w-full transition-all duration-300 ${
-        isReviewModalOpen ? 'opacity-50' : 'opacity-100'
+        isMounted && isReviewModalOpen ? 'opacity-50' : 'opacity-100'
       }`}>
         <div className="container py-4 mx-auto max-w-screen-2xl">
           <div className={`flex flex-col lg:flex-row gap-4 items-center justify-center transition-all duration-500 ${
-            highlightSearch ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-4 bg-yellow-50/50' : ''
+            isMounted && highlightSearch ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-4 bg-yellow-50/50' : ''
           }`}>
             {/* Facility Name Search */}
             <div className="relative w-full lg:w-64">
@@ -1082,6 +1121,11 @@ export default function SearchPage() {
                 className="pl-4"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch()
+                  }
+                }}
               />
             </div>
 
@@ -1305,7 +1349,7 @@ export default function SearchPage() {
               </Button>
 
               {isFacilityOpen && (
-                <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-lg shadow-xl border p-4 z-50">
+                <div className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-lg shadow-xl border p-4 z-50 max-h-96 overflow-y-auto">
                   <div className="grid grid-cols-2 gap-3">
                     {[
                       "엘리베이터",
@@ -1334,6 +1378,33 @@ export default function SearchPage() {
                       </label>
                     ))}
                   </div>
+                  {/* 접근성 정보 필터 */}
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-sm font-semibold text-muted-foreground mb-2">접근성 정보</div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {[
+                        { key: "wheelchair_entrance", label: "휠체어 이용 가능 출입구" },
+                        { key: "wheelchair_parking", label: "휠체어 이용 가능 주차장" },
+                        { key: "wheelchair_toilet", label: "휠체어 이용 가능 화장실" },
+                      ].map((item) => (
+                        <label key={item.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                            checked={selectedAccessibility.includes(item.key)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedAccessibility([...selectedAccessibility, item.key])
+                              } else {
+                                setSelectedAccessibility(selectedAccessibility.filter((f) => f !== item.key))
+                              }
+                            }}
+                          />
+                          {item.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1351,7 +1422,7 @@ export default function SearchPage() {
 
       {/* Results List */}
       <div className={`container py-12 max-w-7xl mx-auto transition-all duration-300 ${
-        isReviewModalOpen ? 'opacity-50' : 'opacity-100'
+        isMounted && isReviewModalOpen ? 'opacity-50' : 'opacity-100'
       }`}>
         {isLoading ? (
           <LoadingSpinner message="시설 목록을 불러오는 중입니다..." />
@@ -1363,7 +1434,7 @@ export default function SearchPage() {
               return (
               <div
                 key={facility.id}
-                className={`relative bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow ${isFavorite ? 'border-yellow-100 border-2' : ''}`}
+                className={`relative bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow ${isFavorite ? 'border-yellow-100 border-[3px]' : ''}`}
               >
                 {/* 즐겨찾기 버튼 - 카드 테두리 왼쪽 밖, 위쪽에 위치 */}
                 <div className="absolute -left-12 top-2 z-10">
@@ -1429,17 +1500,52 @@ export default function SearchPage() {
                   </div>
 
                   <div className="flex justify-between items-end mt-6">
-                      <div className="flex gap-2">
-                        {(facility.features ?? []).slice(0, 3).map((feature) => (
-                          <span key={feature} className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600">
-                            {feature}
-                          </span>
-                        ))}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          {(facility.features ?? []).slice(0, 3).map((feature) => (
+                            <span key={feature} className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600">
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
+                        {/* 접근성 정보 표시 - 카드 하단 왼쪽에 가로로, 각각 개별 테두리 */}
+                        {facility.isAccessible && (() => {
+                          const accessibleItems = []
+                          if (facility.wheelchair_entrance === 0 || facility.wheelchair_entrance === '0') {
+                            accessibleItems.push(
+                              <div key="entrance" className="flex items-center gap-1 text-xs border-2 border-gray-400 rounded-md px-3 py-2 bg-white shadow-sm">
+                                <DoorOpen className="w-4 h-4 text-slate-600" />
+                                <span className="text-slate-700">휠체어 이용 가능 출입구</span>
+                              </div>
+                            )
+                          }
+                          if (facility.wheelchair_parking === 0 || facility.wheelchair_parking === '0') {
+                            accessibleItems.push(
+                              <div key="parking" className="flex items-center gap-1 text-xs border-2 border-gray-400 rounded-md px-3 py-2 bg-white shadow-sm">
+                                <Car className="w-4 h-4 text-slate-600" />
+                                <span className="text-slate-700">휠체어 이용 가능 주차장</span>
+                              </div>
+                            )
+                          }
+                          if (facility.wheelchair_toilet === 0 || facility.wheelchair_toilet === '0') {
+                            accessibleItems.push(
+                              <div key="toilet" className="flex items-center gap-1 text-xs border-2 border-gray-400 rounded-md px-3 py-2 bg-white shadow-sm">
+                                <Bath className="w-4 h-4 text-slate-600" />
+                                <span className="text-slate-700">휠체어 이용 가능 화장실</span>
+                              </div>
+                            )
+                          }
+                          return accessibleItems.length > 0 ? (
+                            <div className="flex items-center gap-2">
+                              {accessibleItems}
+                            </div>
+                          ) : null
+                        })()}
                     </div>
                     <div className="flex items-center gap-2">
                       {/* Congestion Indicator */}
                       {selectedDate !== "이용날짜/시간" ? (
-                        <div className={`flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-2 bg-yellow-50/50' : ''}`}>
+                        <div className={`flex flex-col items-end transition-all duration-500 ${isMounted && highlightCongestion ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-2 bg-yellow-50/50' : ''}`}>
                           <span className="text-xs text-muted-foreground mb-1">예측 혼잡도</span>
                           <div className="flex items-center gap-1">
                             <div
@@ -1461,7 +1567,7 @@ export default function SearchPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className={`flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-2 bg-yellow-50/50' : ''}`}>
+                        <div className={`flex flex-col items-end transition-all duration-500 ${isMounted && highlightCongestion ? 'ring-4 ring-yellow-300 ring-offset-2 rounded-lg p-2 bg-yellow-50/50' : ''}`}>
                           <span className="text-xs text-muted-foreground mb-1">예측 혼잡도</span>
                           <div className="flex items-center gap-1 text-muted-foreground">
                             <div className="w-3 h-3 rounded-full bg-gray-300"></div>
@@ -1471,7 +1577,7 @@ export default function SearchPage() {
                       )}
 
                       {/* Real-time Congestion */}
-                      <div className={`ml-4 pl-4 border-l flex flex-col items-end transition-all duration-500 ${highlightCongestion ? 'ring-4 ring-yellow-400 ring-offset-2 rounded-lg p-2 bg-yellow-50' : ''}`}>
+                      <div className={`ml-4 pl-4 border-l flex flex-col items-end transition-all duration-500 ${isMounted && highlightCongestion ? 'ring-4 ring-yellow-400 ring-offset-2 rounded-lg p-2 bg-yellow-50' : ''}`}>
                         <span className="text-xs text-muted-foreground mb-1">실시간</span>
                         <div className="flex items-center gap-1">
                           <div
@@ -1504,10 +1610,27 @@ export default function SearchPage() {
 
         {!isLoading && totalPages > 0 && (
           <div className="flex justify-center items-center mt-12 gap-2">
+            {/* 맨 처음 버튼 */}
             <Button
               variant="ghost"
               size="icon"
-              className="w-8 h-8"
+              className="w-8 h-8 border border-gray-300"
+              onClick={() => {
+                setCurrentPage(1)
+                setPageBlock(0)
+                const newParams = new URLSearchParams(searchParams.toString())
+                newParams.set('page', '1')
+                router.replace(`/search?${newParams.toString()}`, { scroll: false })
+              }}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 -ml-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 border border-gray-300"
               onClick={handlePrevBlock}
               disabled={pageBlock === 0}
             >
@@ -1529,11 +1652,28 @@ export default function SearchPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="w-8 h-8"
+              className="w-8 h-8 border border-gray-300"
               onClick={handleNextBlock}
               disabled={(pageBlock + 1) * 5 >= totalPages}
             >
               <ChevronRight className="w-4 h-4" />
+            </Button>
+            {/* 맨 끝 버튼 */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 border border-gray-300"
+              onClick={() => {
+                setCurrentPage(totalPages)
+                setPageBlock(Math.floor((totalPages - 1) / 5))
+                const newParams = new URLSearchParams(searchParams.toString())
+                newParams.set('page', totalPages.toString())
+                router.replace(`/search?${newParams.toString()}`, { scroll: false })
+              }}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 -ml-3" />
             </Button>
           </div>
         )}
