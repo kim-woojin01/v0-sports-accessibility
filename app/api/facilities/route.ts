@@ -4,9 +4,20 @@ import fs from "fs"
 
 import path from "path"
 
-import ort from "onnxruntime-node"
-
 import mysql from "mysql2/promise"
+
+// onnxruntime-node는 optional로 처리 (Vercel에서 로드 실패할 수 있음)
+let ort: any = null
+let onnxAvailable = false
+
+try {
+  ort = require("onnxruntime-node")
+  onnxAvailable = true
+  console.log("✅ ONNX Runtime 로드 성공")
+} catch (error) {
+  console.warn("⚠️ ONNX Runtime 로드 실패 (예측 기능 비활성화):", error instanceof Error ? error.message : String(error))
+  onnxAvailable = false
+}
 
 // ---------------------------------------
 
@@ -58,7 +69,7 @@ const AVAILABLE_MODEL_FILES = (() => {
 
 })()
 
-const MODEL_SESSION_CACHE = new Map<string, Promise<ort.InferenceSession>>()
+const MODEL_SESSION_CACHE = new Map<string, Promise<any>>()
 
 const ACCESSIBLE_MODEL_DIRECTORY = path.join(
 
@@ -98,7 +109,7 @@ const ACCESSIBLE_MODEL_SESSION_CACHE = new Map<
 
   string,
 
-  Promise<ort.InferenceSession>
+  Promise<any>
 
 >()
 
@@ -150,7 +161,7 @@ function formatDateTime(date: Date) {
 
 async function loadModelSession(filename: string) {
 
-  if (!filename) return null
+  if (!filename || !onnxAvailable || !ort) return null
 
   if (!MODEL_SESSION_CACHE.has(filename)) {
 
@@ -178,7 +189,7 @@ async function loadModelSession(filename: string) {
 
 async function loadAccessibleModelSession(filename: string) {
 
-  if (!filename) return null
+  if (!filename || !onnxAvailable || !ort) return null
 
   if (!ACCESSIBLE_MODEL_SESSION_CACHE.has(filename)) {
 
@@ -674,7 +685,7 @@ async function runPredictionUsingModel(
 
   availableFiles: string[],
 
-  sessionLoader: (filename: string) => Promise<ort.InferenceSession | null>,
+  sessionLoader: (filename: string) => Promise<any | null>,
 
   facilityId: number,
 
@@ -686,7 +697,7 @@ async function runPredictionUsingModel(
 
 ): Promise<{ predicted_level: string } | null> {
 
-  if (!availableFiles.includes(modelFile)) return null
+  if (!availableFiles.includes(modelFile) || !onnxAvailable || !ort) return null
 
   const session = await sessionLoader(modelFile)
 
@@ -706,11 +717,11 @@ async function runPredictionUsingModel(
 
   const outputName = session.outputNames[0]
 
-  const outputTensor = output[outputName] as ort.Tensor
+  const outputTensor = output[outputName] as any
 
   if (!outputTensor) return null
 
-  const logits = Array.from(outputTensor.data as Float32Array)
+  const logits = Array.from(outputTensor.data as Float32Array | number[])
 
   const maxLogit = Math.max(...logits)
 
