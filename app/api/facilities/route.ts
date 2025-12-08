@@ -1011,6 +1011,59 @@ export async function GET(request: NextRequest) {
 
     // -----------------------------------------
 
+    // ⭐ 컬럼 존재 확인 및 추가 (phone, hours)
+
+    // -----------------------------------------
+
+    try {
+      // facility 테이블에 phone 컬럼이 있는지 확인
+      const [phoneColumns] = await connection.execute(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'facility' AND COLUMN_NAME = 'phone'`,
+        [dbConfig.database]
+      )
+      
+      if ((phoneColumns as any[]).length === 0) {
+        await connection.execute(`
+          ALTER TABLE facility 
+          ADD COLUMN phone VARCHAR(50) DEFAULT NULL COMMENT '전화번호'
+        `)
+        console.log("✅ facility 테이블에 phone 컬럼 추가 완료")
+      }
+
+      // facility 테이블에 hours 컬럼이 있는지 확인
+      const [hoursColumns] = await connection.execute(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'facility' AND COLUMN_NAME = 'hours'`,
+        [dbConfig.database]
+      )
+      
+      if ((hoursColumns as any[]).length === 0) {
+        await connection.execute(`
+          ALTER TABLE facility 
+          ADD COLUMN hours VARCHAR(200) DEFAULT NULL COMMENT '운영 시간'
+        `)
+        console.log("✅ facility 테이블에 hours 컬럼 추가 완료")
+      }
+
+      // accessible_facilities 테이블에 hours 컬럼이 있는지 확인
+      const [accessibleHoursColumns] = await connection.execute(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'accessible_facilities' AND COLUMN_NAME = 'hours'`,
+        [dbConfig.database]
+      )
+      
+      if ((accessibleHoursColumns as any[]).length === 0) {
+        await connection.execute(`
+          ALTER TABLE accessible_facilities 
+          ADD COLUMN hours VARCHAR(200) DEFAULT NULL COMMENT '운영 시간'
+        `)
+        console.log("✅ accessible_facilities 테이블에 hours 컬럼 추가 완료")
+      }
+    } catch (columnError: any) {
+      // 컬럼 추가 실패해도 계속 진행 (이미 존재하는 경우 등)
+      console.warn("⚠️ 컬럼 확인/추가 중 경고:", columnError.message)
+    }
+
+    // -----------------------------------------
+
     // ⭐ 일반 시설 데이터 로드
 
     // -----------------------------------------
@@ -1027,8 +1080,21 @@ export async function GET(request: NextRequest) {
 
       if (hasLogsTable) {
         // facility_logs 테이블이 있으면 JOIN 쿼리 사용
-        const [rows] = await connection.execute(
-          `
+        // 컬럼 존재 여부 재확인 (동시성 문제 대비)
+        const [phoneCols] = await connection.execute(
+          `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'facility' AND COLUMN_NAME IN ('phone', 'hours')`,
+          [dbConfig.database]
+        )
+        const existingColumns = (phoneCols as any[]).map((c: any) => c.COLUMN_NAME)
+        const hasPhone = existingColumns.includes('phone')
+        const hasHours = existingColumns.includes('hours')
+        
+        let selectPhone = hasPhone ? "COALESCE(f.phone, '') AS phone" : "'' AS phone"
+        let selectHours = hasHours ? "COALESCE(f.hours, '') AS hours" : "'' AS hours"
+        let groupByPhone = hasPhone ? ", f.phone" : ""
+        let groupByHours = hasHours ? ", f.hours" : ""
+        
+        const querySql = `
           SELECT 
             f.id,
             f.name,
@@ -1036,8 +1102,8 @@ export async function GET(request: NextRequest) {
             f.address,
             f.latitude AS lat,
             f.longitude AS lng,
-            COALESCE(f.phone, '') AS phone,
-            COALESCE(f.hours, '') AS hours,
+            ${selectPhone},
+            ${selectHours},
             COALESCE(SUM(
               CASE 
                 WHEN fl.timestamp > ? AND fl.timestamp <= ? THEN 
@@ -1047,31 +1113,80 @@ export async function GET(request: NextRequest) {
             ), 0) AS current_attendance
           FROM facility f
           LEFT JOIN facility_logs fl ON f.id = fl.facility_id
-          GROUP BY f.id, f.name, f.capacity, f.address, f.latitude, f.longitude, f.phone, f.hours
+          GROUP BY f.id, f.name, f.capacity, f.address, f.latitude, f.longitude${groupByPhone}${groupByHours}
           ORDER BY f.id
-          `,
-          [realTimeWindowStartSql, targetSql],
-        )
+        `
+        console.log(`🔍 쿼리 실행 (phone: ${hasPhone}, hours: ${hasHours}):`, querySql.substring(0, 200) + "...")
+        const [rows] = await connection.execute(querySql, [realTimeWindowStartSql, targetSql])
         facilityRows = rows as any[]
         console.log(`✅ 일반 시설 ${facilityRows.length}개 조회 성공 (로그 포함)`)
+        // 디버깅: phone과 hours가 포함되는지 확인
+        if (facilityRows.length > 0) {
+          const sample = facilityRows[0]
+          console.log(`📞 샘플 시설 데이터:`, {
+            id: sample.id,
+            name: sample.name,
+            hasPhone: 'phone' in sample,
+            phone: sample.phone,
+            hasHours: 'hours' in sample,
+            hours: sample.hours
+          })
+        }
       } else {
         // facility_logs 테이블이 없으면 facility만 조회
+        // 컬럼 존재 여부 확인
+        const [phoneCols] = await connection.execute(
+          `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'facility' AND COLUMN_NAME IN ('phone', 'hours')`,
+          [dbConfig.database]
+        )
+        const existingColumns = (phoneCols as any[]).map((c: any) => c.COLUMN_NAME)
+        const hasPhone = existingColumns.includes('phone')
+        const hasHours = existingColumns.includes('hours')
+        
+        let selectPhone = hasPhone ? "COALESCE(phone, '') AS phone" : "'' AS phone"
+        let selectHours = hasHours ? "COALESCE(hours, '') AS hours" : "'' AS hours"
+        
         const [rows] = await connection.execute(
-          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, COALESCE(phone, '') AS phone, COALESCE(hours, '') AS hours, 0 AS current_attendance FROM facility ORDER BY id`
+          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, ${selectPhone}, ${selectHours}, 0 AS current_attendance FROM facility ORDER BY id`
         )
         facilityRows = rows as any[]
         console.log(`✅ 일반 시설 ${facilityRows.length}개 조회 성공 (로그 없이)`)
+        // 디버깅: phone과 hours가 포함되는지 확인
+        if (facilityRows.length > 0) {
+          const sample = facilityRows[0]
+          console.log(`📞 샘플 시설 데이터:`, {
+            id: sample.id,
+            name: sample.name,
+            hasPhone: 'phone' in sample,
+            phone: sample.phone,
+            hasHours: 'hours' in sample,
+            hours: sample.hours
+          })
+        }
       }
     } catch (queryError: any) {
       console.error("❌ 시설 데이터 조회 실패:", {
         error: queryError.message,
         code: queryError.code,
-        sqlState: queryError.sqlState
+        sqlState: queryError.sqlState,
+        sql: queryError.sql
       })
-      // Fallback: facility 테이블만 조회 시도
+      // Fallback: facility 테이블만 조회 시도 (phone, hours 컬럼이 없을 수도 있음)
       try {
+        // 컬럼 존재 여부 확인
+        const [phoneCols] = await connection.execute(
+          `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'facility' AND COLUMN_NAME IN ('phone', 'hours')`,
+          [dbConfig.database]
+        )
+        const existingColumns = (phoneCols as any[]).map((c: any) => c.COLUMN_NAME)
+        const hasPhone = existingColumns.includes('phone')
+        const hasHours = existingColumns.includes('hours')
+        
+        let selectPhone = hasPhone ? "COALESCE(phone, '') AS phone" : "'' AS phone"
+        let selectHours = hasHours ? "COALESCE(hours, '') AS hours" : "'' AS hours"
+        
         const [rows] = await connection.execute(
-          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, COALESCE(phone, '') AS phone, COALESCE(hours, '') AS hours, 0 AS current_attendance FROM facility ORDER BY id`
+          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, ${selectPhone}, ${selectHours}, 0 AS current_attendance FROM facility ORDER BY id`
         )
         facilityRows = rows as any[]
         console.log(`✅ 시설 데이터 조회 성공 (fallback, ${facilityRows.length}개)`)
@@ -1420,6 +1535,10 @@ export async function GET(request: NextRequest) {
             isAccessible: false,
 
             image: "/gymnasium.jpg",
+
+            // phone과 hours가 명시적으로 포함되도록 보장
+            phone: f.phone ?? "",
+            hours: f.hours ?? "",
 
           }
 

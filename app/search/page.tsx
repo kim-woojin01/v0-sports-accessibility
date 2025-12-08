@@ -746,8 +746,17 @@ export default function SearchPage() {
             ? Number(rawLng)
             : undefined
 
-        // 위치 디버그 로그
-        console.debug("시설 위치 디버그:", item.name, rawLat, rawLng, latNum, lngNum)
+        // 디버깅: phone과 hours 확인
+        if (item.id === 2 || item.id === 16 || item.name?.includes("북구국민체육센터") || item.name?.includes("강남스포츠문화센터")) {
+          console.log("📞 시설 데이터 확인:", {
+            id: item.id,
+            name: item.name,
+            phone: item.phone,
+            hours: item.hours,
+            hasPhone: 'phone' in item,
+            hasHours: 'hours' in item
+          })
+        }
 
         // 리뷰 통계에서 평점 가져오기
         const stats = reviewStats.get(Number(item.id))
