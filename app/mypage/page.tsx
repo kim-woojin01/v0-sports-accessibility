@@ -613,6 +613,22 @@ export default function MyPage() {
 
   const handleSaveProfile = async () => {
     try {
+      // 프로필 사진 URL 처리: 
+      // - profileImageUrl이 빈 문자열이면 null (삭제됨)
+      // - profileImageUrl이 있으면 사용
+      // - 없으면 기존 profile.profileImageUrl 사용
+      let finalProfileImageUrl: string | null = null
+      if (profileImageUrl === "") {
+        // 빈 문자열은 삭제를 의미
+        finalProfileImageUrl = null
+      } else if (profileImageUrl) {
+        // 새로 업로드된 이미지
+        finalProfileImageUrl = profileImageUrl
+      } else if (profile.profileImageUrl) {
+        // 기존 이미지 유지
+        finalProfileImageUrl = profile.profileImageUrl
+      }
+
       const response = await fetch('/api/auth/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -622,7 +638,7 @@ export default function MyPage() {
           name: profile.name,
           disabilityType: profile.disabilityType,
           exercisePurposes: profile.exercisePurposes,
-          profileImageUrl: profileImageUrl || profile.profileImageUrl || null,
+          profileImageUrl: finalProfileImageUrl,
         }),
       })
 
@@ -633,8 +649,7 @@ export default function MyPage() {
         return
       }
 
-      // 로컬 스토리지 업데이트
-      const finalProfileImageUrl = profileImageUrl || profile.profileImageUrl || null
+      // 로컬 스토리지 업데이트 (위에서 계산한 finalProfileImageUrl 사용)
       const updatedUser = {
         id: profile.id,
         idEmail: profile.idEmail,
@@ -663,6 +678,10 @@ export default function MyPage() {
   const handleCancelEdit = () => {
     setProfile({ ...originalProfile })
     setIsEditing(false)
+    // 프로필 사진 관련 상태도 원래대로 복원
+    setProfileImage(null)
+    setProfileImagePreview(originalProfile.profileImageUrl || "")
+    setProfileImageUrl("")
   }
 
   // 현재 비밀번호 확인 함수
@@ -817,6 +836,21 @@ export default function MyPage() {
       setProfileImagePreview(profile.profileImageUrl || "")
     } finally {
       setIsUploadingImage(false)
+    }
+  }
+
+  // 프로필 사진 삭제 핸들러
+  const handleDeleteProfileImage = () => {
+    if (confirm('프로필 사진을 삭제하시겠습니까?')) {
+      // 프로필 사진 관련 상태 초기화
+      setProfileImage(null)
+      setProfileImagePreview("")
+      setProfileImageUrl("")
+      // 프로필 상태에서도 제거 (null로 설정하여 삭제 표시)
+      setProfile((prev) => ({
+        ...prev,
+        profileImageUrl: null,
+      }))
     }
   }
 
@@ -999,26 +1033,43 @@ export default function MyPage() {
                   />
                   <div className="space-y-2 mt-4">
                     <Label>프로필 사진 변경</Label>
-                    <div className="flex items-center gap-4">
-                      {profileImagePreview ? (
-                        <img 
-                          src={profileImagePreview} 
-                          alt="프로필 미리보기" 
-                          className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
-                        />
+                    <div className="flex items-start gap-4">
+                      {profileImagePreview || profile.profileImageUrl ? (
+                        <div className="relative">
+                          <img 
+                            src={profileImagePreview || profile.profileImageUrl || ""} 
+                            alt="프로필 미리보기" 
+                            className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+                          />
+                        </div>
                       ) : (
                         <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
                           <User className="w-10 h-10 text-gray-400" aria-hidden="true" />
                         </div>
                       )}
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        disabled={isUploadingImage}
-                        className="cursor-pointer"
-                        aria-label="프로필 사진 선택"
-                      />
+                      <div className="flex flex-col gap-2 flex-1">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          disabled={isUploadingImage}
+                          className="cursor-pointer"
+                          aria-label="프로필 사진 선택"
+                        />
+                        {(profileImagePreview || profile.profileImageUrl) && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleDeleteProfileImage}
+                            disabled={isUploadingImage}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            사진 삭제
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     {isUploadingImage && (
                       <p className="text-xs text-muted-foreground">업로드 중...</p>
