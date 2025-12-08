@@ -1036,6 +1036,8 @@ export async function GET(request: NextRequest) {
             f.address,
             f.latitude AS lat,
             f.longitude AS lng,
+            COALESCE(f.phone, '') AS phone,
+            COALESCE(f.hours, '') AS hours,
             COALESCE(SUM(
               CASE 
                 WHEN fl.timestamp > ? AND fl.timestamp <= ? THEN 
@@ -1045,7 +1047,7 @@ export async function GET(request: NextRequest) {
             ), 0) AS current_attendance
           FROM facility f
           LEFT JOIN facility_logs fl ON f.id = fl.facility_id
-          GROUP BY f.id, f.name, f.capacity, f.address, f.latitude, f.longitude
+          GROUP BY f.id, f.name, f.capacity, f.address, f.latitude, f.longitude, f.phone, f.hours
           ORDER BY f.id
           `,
           [realTimeWindowStartSql, targetSql],
@@ -1055,7 +1057,7 @@ export async function GET(request: NextRequest) {
       } else {
         // facility_logs 테이블이 없으면 facility만 조회
         const [rows] = await connection.execute(
-          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, 0 AS current_attendance FROM facility ORDER BY id`
+          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, COALESCE(phone, '') AS phone, COALESCE(hours, '') AS hours, 0 AS current_attendance FROM facility ORDER BY id`
         )
         facilityRows = rows as any[]
         console.log(`✅ 일반 시설 ${facilityRows.length}개 조회 성공 (로그 없이)`)
@@ -1069,7 +1071,7 @@ export async function GET(request: NextRequest) {
       // Fallback: facility 테이블만 조회 시도
       try {
         const [rows] = await connection.execute(
-          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, 0 AS current_attendance FROM facility ORDER BY id`
+          `SELECT id, name, capacity, address, latitude AS lat, longitude AS lng, COALESCE(phone, '') AS phone, COALESCE(hours, '') AS hours, 0 AS current_attendance FROM facility ORDER BY id`
         )
         facilityRows = rows as any[]
         console.log(`✅ 시설 데이터 조회 성공 (fallback, ${facilityRows.length}개)`)
@@ -1455,6 +1457,8 @@ export async function GET(request: NextRequest) {
 
         af.phone,
 
+        COALESCE(af.hours, '') AS hours,
+
         af.wheelchair_entrance,
 
         af.wheelchair_parking,
@@ -1496,6 +1500,8 @@ export async function GET(request: NextRequest) {
         af.homepage,
 
         af.phone,
+
+        af.hours,
 
         af.wheelchair_entrance,
 
@@ -1639,7 +1645,9 @@ export async function GET(request: NextRequest) {
 
             homepage: f.homepage,
 
-            phone: f.phone,
+            phone: f.phone ?? "",
+
+            hours: f.hours ?? "",
 
             wheelchair_entrance: f.wheelchair_entrance,
 

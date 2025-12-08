@@ -58,3 +58,4 @@ RAILWAY_REVIEWS_DATABASE=railway
 - 기존 `MYSQL_*` 변수는 그대로 두어도 됩니다 (사용하지 않음)
 - `RAILWAY_*` 변수가 우선적으로 사용됩니다
 - 환경 변수 변경 후 **반드시 재배포**해야 합니다
+

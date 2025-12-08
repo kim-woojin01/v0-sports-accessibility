@@ -88,3 +88,4 @@ RAILWAY_DATABASE=railway
 - `RAILWAY_*` 변수가 없으면 기본값(51173)을 사용합니다
 - 연결 안정성을 위해 timeout 및 reconnect 옵션이 설정되어 있습니다
 - 에러 발생 시 상세한 로그가 출력됩니다
+

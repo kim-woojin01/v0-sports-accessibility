@@ -86,3 +86,4 @@ RAILWAY_REVIEWS_DATABASE=railway
 - `.env.local` 파일은 `.gitignore`에 포함되어 있어야 합니다
 - Vercel에서는 환경 변수를 대시보드에서만 설정해야 합니다
 - 환경 변수 변경 후에는 반드시 재배포가 필요합니다
+
